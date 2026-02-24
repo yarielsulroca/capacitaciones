@@ -5,7 +5,6 @@ namespace App\Mail;
 use App\Models\Curso;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -29,7 +28,7 @@ class EnrollmentCancelled extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Solicitud de Capacitación Cancelada - ' . $this->curso->nombre,
+            subject: 'Solicitud de Capacitación Cancelada - '.$this->curso->nombre,
         );
     }
 

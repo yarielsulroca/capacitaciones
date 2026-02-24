@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Departamento;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DepartamentoController extends Controller
 {
@@ -23,6 +23,7 @@ class DepartamentoController extends Controller
         ]);
 
         $departamento = Departamento::create($validated);
+
         return response()->json($departamento, 201);
     }
 
@@ -40,12 +41,14 @@ class DepartamentoController extends Controller
         ]);
 
         $departamento->update($validated);
+
         return response()->json($departamento);
     }
 
     public function destroy(Departamento $departamento): JsonResponse
     {
         $departamento->delete();
+
         return response()->json(null, 204);
     }
 }

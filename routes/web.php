@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Controllers\Api\CourseController;
+use App\Http\Controllers\Web\AdminCphController;
+use App\Http\Controllers\Web\ColaboradorController;
+use App\Http\Controllers\Web\CourseController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -11,58 +13,40 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('dashboard', function (\Illuminate\Http\Request $request) {
-    $user = auth()->user();
-
-    // 1. Calculate Stats (Using names from join to avoid ID hardcoding issues)
-    $stats = [
-        'available' => \App\Models\Curso::count(),
-        'solicitado' => $user->cursos()->wherePivotIn('curso_estado', \App\Models\EstadoCurso::where('estado', 'solicitado')->pluck('id'))->count(),
-        'matriculado' => $user->cursos()->wherePivotIn('curso_estado', \App\Models\EstadoCurso::where('estado', 'matriculado')->pluck('id'))->count(),
-        'terminado' => $user->cursos()->wherePivotIn('curso_estado', \App\Models\EstadoCurso::where('estado', 'terminado')->pluck('id'))->count(),
-        'certificado' => $user->cursos()->wherePivotIn('curso_estado', \App\Models\EstadoCurso::where('estado', 'certificado')->pluck('id'))->count(),
-        'incompleto' => $user->cursos()->wherePivotIn('curso_estado', \App\Models\EstadoCurso::where('estado', 'incompleto')->pluck('id'))->count(),
-        'cancelado' => $user->cursos()->wherePivotIn('curso_estado', \App\Models\EstadoCurso::where('estado', 'cancelado')->pluck('id'))->count(),
-    ];
-
-    // 2. Handle Filtering or Featured
-    $statusFilter = $request->query('status');
-
-    if ($statusFilter) {
-        $courses = $user->cursos()
-            ->wherePivotIn('curso_estado', \App\Models\EstadoCurso::where('estado', $statusFilter)->pluck('id'))
-            ->with(['habilidad', 'categoria'])
-            ->get();
-
-        $courses->transform(function($curso) {
-            $curso->status = \App\Models\EstadoCurso::find($curso->pivot->curso_estado)?->estado;
-            return $curso;
-        });
-    } else {
-        $featured = \App\Models\Curso::latest()
-            ->with(['habilidad', 'categoria'])
-            ->take(3)
-            ->get();
-
-        $courses = $featured->map(function ($curso) use ($user) {
-            $enrollment = $user->cursos()->where('id_curso', $curso->id)->first();
-            $curso->status = $enrollment ? \App\Models\EstadoCurso::find($enrollment->pivot->curso_estado)?->estado : null;
-            return $curso;
-        });
-    }
-
-    return Inertia::render('dashboard', [
-        'stats' => $stats,
-        'featured' => \App\Http\Resources\CursoResource::collection($courses),
-        'activeStatus' => $statusFilter
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Colaborador
+    Route::get('dashboard', [ColaboradorController::class, 'dashboard'])->name('dashboard');
     Route::get('courses', [CourseController::class, 'index'])->name('courses.index');
     Route::get('courses/{curso}', [CourseController::class, 'show'])->name('courses.show');
     Route::post('courses/{curso}/enroll', [CourseController::class, 'enroll'])->name('courses.enroll');
     Route::post('courses/{curso}/cancelado', [CourseController::class, 'cancel'])->name('courses.cancel');
+
+    // Admin CPH
+    Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(function () {
+        Route::get('/', [AdminCphController::class, 'dashboard'])->name('admin.dashboard');
+        Route::get('/users', [AdminCphController::class, 'users'])->name('admin.users');
+        Route::get('/courses', [AdminCphController::class, 'courses'])->name('admin.courses');
+        Route::get('/structure', [AdminCphController::class, 'structure'])->name('admin.structure');
+
+        // Course management
+        Route::post('/courses', [\App\Http\Controllers\Api\Admin\AdminController::class, 'storeCourse']);
+        Route::patch('/courses/{course}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'updateCourse']);
+
+        // User management (data fetch for search)
+        Route::get('/users/list', [\App\Http\Controllers\Api\Admin\AdminController::class, 'users']);
+        Route::post('/users', [\App\Http\Controllers\Api\Admin\AdminController::class, 'storeUser']);
+        Route::patch('/users/{user}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'updateUser']);
+
+        // Resource management
+        Route::post('/structure/{type}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'storeResource']);
+        Route::patch('/structure/{type}/{id}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'updateResource']);
+        Route::delete('/structure/{type}/{id}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'destroyResource']);
+
+        // Enrollment management
+        Route::post('/enrollments/update-status', [\App\Http\Controllers\Api\Admin\AdminController::class, 'updateStatus']);
+        Route::post('/courses/{course}/enroll-manual', [\App\Http\Controllers\Api\Admin\AdminController::class, 'enrollManual']);
+        Route::get('/courses/{course}/enrollments', [\App\Http\Controllers\Api\Admin\AdminController::class, 'courseEnrollments']);
+    });
 });
 
 require __DIR__.'/settings.php';

@@ -6,7 +6,6 @@ use App\Models\Categoria;
 use App\Models\Cdc;
 use App\Models\EstadoCurso;
 use App\Models\Habilidad;
-use App\Models\ProgramaAsociado;
 use Illuminate\Database\Seeder;
 
 class BusinessDefaultsSeeder extends Seeder
@@ -43,7 +42,7 @@ class BusinessDefaultsSeeder extends Seeder
             'desarrollo', 'business_development', 'acceso_a_ventas', 'capital_humano',
             'registros', 'oncologia_y_hematologia', 'produccion_victoria', 'compras',
             'administracion_de_ventas', 'impuestos', 'it', 'comercial_lacteos',
-            'api_supply_chain', 'abastecimiento', 'control_de_gestion'
+            'api_supply_chain', 'abastecimiento', 'control_de_gestion',
         ];
         foreach ($cdcs as $cdc) {
             Cdc::firstOrCreate(['cdc' => $cdc]);

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Area;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AreaController extends Controller
 {
@@ -23,6 +23,7 @@ class AreaController extends Controller
         ]);
 
         $area = Area::create($validated);
+
         return response()->json($area, 201);
     }
 
@@ -40,12 +41,14 @@ class AreaController extends Controller
         ]);
 
         $area->update($validated);
+
         return response()->json($area);
     }
 
     public function destroy(Area $area): JsonResponse
     {
         $area->delete();
+
         return response()->json(null, 204);
     }
 }

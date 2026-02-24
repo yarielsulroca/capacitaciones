@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Curso;
-use App\Models\User;
-use App\Models\EstadoCurso;
 use App\Mail\EnrollmentRequested;
-use App\Mail\EnrollmentCancelled;
-use App\Mail\StatusUpdated;
+use App\Models\Curso;
+use App\Models\EstadoCurso;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 
@@ -37,7 +35,9 @@ class EnrollmentService
     public function updateState(User $user, Curso $curso, string $newStateName, User $modifier)
     {
         $enrollment = $user->cursos()->where('id_curso', $curso->id)->withPivot('curso_estado')->first();
-        if (!$enrollment) throw new \Exception("Matrícula no encontrada.");
+        if (! $enrollment) {
+            throw new \Exception('Matrícula no encontrada.');
+        }
 
         $currentState = EstadoCurso::find($enrollment->pivot?->curso_estado);
 

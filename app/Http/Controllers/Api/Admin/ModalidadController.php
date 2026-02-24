@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Modalidad;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ModalidadController extends Controller
 {
@@ -22,6 +22,7 @@ class ModalidadController extends Controller
         ]);
 
         $modalidad = Modalidad::create($validated);
+
         return response()->json($modalidad, 201);
     }
 
@@ -38,12 +39,14 @@ class ModalidadController extends Controller
         ]);
 
         $modalidad->update($validated);
+
         return response()->json($modalidad);
     }
 
     public function destroy(Modalidad $modalidad): JsonResponse
     {
         $modalidad->delete();
+
         return response()->json(null, 204);
     }
 }

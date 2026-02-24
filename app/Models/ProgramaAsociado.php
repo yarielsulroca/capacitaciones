@@ -8,10 +8,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ProgramaAsociado extends Model
 {
     protected $table = 'programas_asociados';
-    protected $fillable = ['nombre'];
+
+    protected $fillable = ['programa', 'descripcion', 'activo'];
+
+    protected $casts = [
+        'activo' => 'boolean',
+    ];
 
     public function cursos(): HasMany
     {
-        return $this->hasMany(Curso::class, 'prog_asociado_id');
+        return $this->hasMany(Curso::class, 'id_programa_asociado');
     }
 }

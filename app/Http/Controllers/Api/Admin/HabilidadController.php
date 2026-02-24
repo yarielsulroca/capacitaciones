@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Habilidad;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class HabilidadController extends Controller
 {
@@ -22,6 +22,7 @@ class HabilidadController extends Controller
         ]);
 
         $habilidad = Habilidad::create($validated);
+
         return response()->json($habilidad, 201);
     }
 
@@ -38,12 +39,14 @@ class HabilidadController extends Controller
         ]);
 
         $habilidad->update($validated);
+
         return response()->json($habilidad);
     }
 
     public function destroy(Habilidad $habilidad): JsonResponse
     {
         $habilidad->delete();
+
         return response()->json(null, 204);
     }
 }

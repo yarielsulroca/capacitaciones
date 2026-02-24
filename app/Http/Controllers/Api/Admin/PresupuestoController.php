@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Presupuesto;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class PresupuestoController extends Controller
 {
@@ -23,6 +23,7 @@ class PresupuestoController extends Controller
         ]);
 
         $presupuesto = Presupuesto::create($validated);
+
         return response()->json($presupuesto, 201);
     }
 
@@ -40,12 +41,14 @@ class PresupuestoController extends Controller
         ]);
 
         $presupuesto->update($validated);
+
         return response()->json($presupuesto);
     }
 
     public function destroy(Presupuesto $presupuesto): JsonResponse
     {
         $presupuesto->delete();
+
         return response()->json(null, 204);
     }
 }

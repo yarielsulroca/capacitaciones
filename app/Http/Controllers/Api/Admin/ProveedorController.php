@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Proveedor;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ProveedorController extends Controller
 {
@@ -24,6 +24,7 @@ class ProveedorController extends Controller
         ]);
 
         $proveedor = Proveedor::create($validated);
+
         return response()->json($proveedor, 201);
     }
 
@@ -42,12 +43,14 @@ class ProveedorController extends Controller
         ]);
 
         $proveedor->update($validated);
+
         return response()->json($proveedor);
     }
 
     public function destroy(Proveedor $proveedor): JsonResponse
     {
         $proveedor->delete();
+
         return response()->json(null, 204);
     }
 }

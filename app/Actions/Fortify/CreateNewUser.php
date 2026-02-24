@@ -36,7 +36,7 @@ class CreateNewUser implements CreatesNewUsers
             $username = explode('@', $input['email'])[0];
             $ldapUser = $this->ldap->authenticate($username, $input['password']);
 
-            if (!$ldapUser) {
+            if (! $ldapUser) {
                 $validator->errors()->add('email', 'Las credenciales no coinciden con los registros del dominio.');
             } else {
                 $ldapAttributes = $this->ldap->getAttributes($ldapUser);
@@ -53,11 +53,11 @@ class CreateNewUser implements CreatesNewUsers
         $empresa = \App\Models\Empresa::firstOrCreate(['nombre' => 'Tuteur']);
         $area = \App\Models\Area::firstOrCreate([
             'nombre' => $areaName,
-            'id_empresa' => $empresa->id
+            'id_empresa' => $empresa->id,
         ]);
         $dept = \App\Models\Departamento::firstOrCreate([
             'nombre' => $deptName,
-            'id_area' => $area->id
+            'id_area' => $area->id,
         ]);
 
         return User::create([

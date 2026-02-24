@@ -22,7 +22,7 @@ class CourseFinished extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '¡Felicidades por finalizar tu curso! - ' . $this->curso->nombre,
+            subject: '¡Felicidades por finalizar tu curso! - '.$this->curso->nombre,
         );
     }
 

@@ -22,7 +22,7 @@ class EnrollmentRequested extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Solicitud de Capacitación Enviada - ' . $this->curso->nombre,
+            subject: 'Solicitud de Capacitación Enviada - '.$this->curso->nombre,
         );
     }
 

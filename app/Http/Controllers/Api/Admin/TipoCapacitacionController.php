@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TipoCapacitacion;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TipoCapacitacionController extends Controller
 {
@@ -23,6 +23,7 @@ class TipoCapacitacionController extends Controller
         ]);
 
         $tipo = TipoCapacitacion::create($validated);
+
         return response()->json($tipo, 201);
     }
 
@@ -40,12 +41,14 @@ class TipoCapacitacionController extends Controller
         ]);
 
         $tipo->update($validated);
+
         return response()->json($tipo);
     }
 
     public function destroy(TipoCapacitacion $tipo): JsonResponse
     {
         $tipo->delete();
+
         return response()->json(null, 204);
     }
 }

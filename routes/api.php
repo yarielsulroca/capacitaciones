@@ -1,17 +1,17 @@
 <?php
 
-use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\Admin\AdminController;
+use App\Http\Controllers\Api\Admin\AreaController;
+use App\Http\Controllers\Api\Admin\CategoriaController;
+use App\Http\Controllers\Api\Admin\CdcController;
+use App\Http\Controllers\Api\Admin\DepartamentoController;
+use App\Http\Controllers\Api\Admin\EmpresaController;
+use App\Http\Controllers\Api\Admin\HabilidadController;
+use App\Http\Controllers\Api\Admin\ModalidadController;
+use App\Http\Controllers\Api\Admin\PresupuestoController;
+use App\Http\Controllers\Api\Admin\ProveedorController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseController;
-use App\Http\Controllers\Api\AreaController;
-use App\Http\Controllers\Api\DepartamentoController;
-use App\Http\Controllers\Api\EmpresaController;
-use App\Http\Controllers\Api\CdcController;
-use App\Http\Controllers\Api\HabilidadController;
-use App\Http\Controllers\Api\CategoriaController;
-use App\Http\Controllers\Api\PresupuestoController;
-use App\Http\Controllers\Api\ProveedorController;
-use App\Http\Controllers\Api\ModalidadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,12 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/courses/{curso}/cancelado', [CourseController::class, 'cancel']);
 
     // Admin RH (Full CRUD and management)
-    Route::middleware('role:admin')->prefix('admin')->group(function () {
-        Route::get('/metadata', [AdminController::class, 'metadata']);
-        Route::get('/users', [AdminController::class, 'users']);
-        Route::get('/courses', [AdminController::class, 'courses']);
-        Route::post('/enrollments/update-status', [AdminController::class, 'updateStatus']);
-
+    Route::prefix('admin')->group(function () {
         // Full CRUD Resources
         Route::apiResource('areas', AreaController::class);
         Route::apiResource('departamentos', DepartamentoController::class);

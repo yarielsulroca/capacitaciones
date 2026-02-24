@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Mail\CourseFinished;
+use App\Mail\EnrollmentConfirmed;
 use App\Models\Curso;
 use App\Models\EstadoCurso;
 use App\Models\User;
-use App\Mail\EnrollmentConfirmed;
-use App\Mail\CourseFinished;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;

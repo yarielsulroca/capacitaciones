@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Empresa;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class EmpresaController extends Controller
 {
@@ -22,6 +22,7 @@ class EmpresaController extends Controller
         ]);
 
         $empresa = Empresa::create($validated);
+
         return response()->json($empresa, 201);
     }
 
@@ -38,12 +39,14 @@ class EmpresaController extends Controller
         ]);
 
         $empresa->update($validated);
+
         return response()->json($empresa);
     }
 
     public function destroy(Empresa $empresa): JsonResponse
     {
         $empresa->delete();
+
         return response()->json(null, 204);
     }
 }

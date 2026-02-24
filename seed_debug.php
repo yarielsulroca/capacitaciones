@@ -1,11 +1,12 @@
 <?php
+
 require 'vendor/autoload.php';
 $app = require_once 'bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 try {
     echo "Running BusinessDefaultsSeeder...\n";
-    (new Database\Seeders\BusinessDefaultsSeeder())->run();
+    (new Database\Seeders\BusinessDefaultsSeeder)->run();
     echo "BusinessDefaultsSeeder SUCCESS\n";
 
     echo "Running DatabaseSeeder custom part...\n";
@@ -39,6 +40,6 @@ try {
     echo "Course created\n";
 
 } catch (\Exception $e) {
-    echo "ERROR: " . $e->getMessage() . "\n";
+    echo 'ERROR: '.$e->getMessage()."\n";
     echo $e->getTraceAsString();
 }

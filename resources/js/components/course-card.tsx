@@ -7,8 +7,12 @@ import { cn } from '@/lib/utils';
 interface CourseCardProps {
     curso: Curso;
     status?: EnrollmentStatus;
+    isAdmin?: boolean;
     onEnroll?: (id: number) => void;
     onCancel?: (id: number) => void;
+    onEdit?: (curso: Curso) => void;
+    onManageUsers?: (curso: Curso) => void;
+    onManageEnrollments?: (curso: Curso) => void;
     className?: string;
 }
 
@@ -23,7 +27,7 @@ const statusStyles: Record<string, { bg: string, border: string, accent: string,
     'incompleto': { bg: 'bg-slate-50/50', border: 'border-slate-200', accent: 'bg-slate-500', text: 'text-slate-600' },
 };
 
-export function CourseCard({ curso, status, onEnroll, onCancel, className }: CourseCardProps) {
+export function CourseCard({ curso, status, isAdmin, onEnroll, onCancel, onEdit, onManageUsers, onManageEnrollments, className }: CourseCardProps) {
     const style = status ? statusStyles[status] : { bg: 'bg-white', border: 'border-slate-100', accent: 'bg-slate-200', text: 'text-slate-100' };
 
     const formatSchedule = (horarios: any) => {
@@ -100,7 +104,32 @@ export function CourseCard({ curso, status, onEnroll, onCancel, className }: Cou
                         </span>
                     </div>
 
-                    {!status ? (
+                    {isAdmin ? (
+                        <div className="flex flex-col gap-2 flex-1">
+                            <Button
+                                onClick={() => onEdit?.(curso)}
+                                className="bg-primary hover:bg-primary/90 text-white text-[12px] font-black uppercase tracking-wider rounded-lg h-11 px-6 w-full shadow-lg shadow-black/20 border-white border-2"
+                            >
+                                EDITAR CURSO
+                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => onManageUsers?.(curso)}
+                                    variant="secondary"
+                                    className="text-[10px] font-black uppercase tracking-wider rounded-lg h-9 px-3 flex-1 border-2 border-slate-100"
+                                >
+                                    Colaboradores
+                                </Button>
+                                <Button
+                                    onClick={() => onManageEnrollments?.(curso)}
+                                    variant="outline"
+                                    className="text-[10px] font-black uppercase tracking-wider rounded-lg h-9 px-3 flex-1 border-2"
+                                >
+                                    Matrículas
+                                </Button>
+                            </div>
+                        </div>
+                    ) : !status ? (
                         <Button
                             onClick={() => onEnroll?.(curso.id)}
                             className="bg-[#E30613] hover:bg-[#c40510] text-white text-[12px] font-black uppercase tracking-wider rounded-lg h-11 px-6 flex-1 shadow-lg shadow-black/20 border-white border-2"

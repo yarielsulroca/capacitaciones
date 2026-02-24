@@ -1,9 +1,10 @@
 <?php
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 
-require __DIR__ . '/vendor/autoload.php';
-$app = require_once __DIR__ . '/bootstrap/app.php';
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+require __DIR__.'/vendor/autoload.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
@@ -14,7 +15,7 @@ Schema::table('users', function (Blueprint $table) {
         try {
             $table->dropForeign(['id_departamento']);
         } catch (\Exception $e) {
-            echo "Warning: Could not drop foreign key (might already be gone): " . $e->getMessage() . "\n";
+            echo 'Warning: Could not drop foreign key (might already be gone): '.$e->getMessage()."\n";
         }
         $table->dropColumn(['id_departamento']);
         echo "Success.\n";

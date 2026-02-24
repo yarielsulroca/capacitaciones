@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Departamento;
 use App\Models\Area;
+use App\Models\Departamento;
 use App\Models\Empresa;
+use App\Models\User;
 use App\Services\LdapService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -32,7 +32,7 @@ class AuthController extends Controller
 
         $ldapEntry = $this->ldapService->authenticate($credentials['username'], $credentials['password']);
 
-        if (!$ldapEntry) {
+        if (! $ldapEntry) {
             return response()->json(['message' => 'Credenciales invalidas.'], 401);
         }
 
@@ -56,12 +56,12 @@ class AuthController extends Controller
 
         $area = Area::firstOrCreate([
             'nombre' => $attributes['area'] ?? 'General',
-            'id_empresa' => $empresa->id
+            'id_empresa' => $empresa->id,
         ]);
 
         $dept = Departamento::firstOrCreate([
             'nombre' => $attributes['department'] ?? 'General',
-            'id_area' => $area->id
+            'id_area' => $area->id,
         ]);
 
         // Sync User

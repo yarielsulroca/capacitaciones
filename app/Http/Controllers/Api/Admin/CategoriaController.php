@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Categoria;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class CategoriaController extends Controller
 {
@@ -22,6 +22,7 @@ class CategoriaController extends Controller
         ]);
 
         $categoria = Categoria::create($validated);
+
         return response()->json($categoria, 201);
     }
 
@@ -38,12 +39,14 @@ class CategoriaController extends Controller
         ]);
 
         $categoria->update($validated);
+
         return response()->json($categoria);
     }
 
     public function destroy(Categoria $categoria): JsonResponse
     {
         $categoria->delete();
+
         return response()->json(null, 204);
     }
 }

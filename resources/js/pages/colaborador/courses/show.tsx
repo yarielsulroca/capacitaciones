@@ -1,4 +1,4 @@
-import { AppLayout } from '@/layouts/app-layout';
+import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Curso, EnrollmentStatus } from '@/types/capacitaciones';
@@ -139,7 +139,7 @@ export default function Show({ curso, status }: ShowProps) {
                                     <Button
                                         variant="outline"
                                         className="w-full py-6 border-white/20 text-white hover:bg-white/10"
-                                        onClick={() => router.post(route('courses.cancel', curso.id))}
+                                        onClick={() => router.post(`/courses/${curso.id}/cancelado`)}
                                     >
                                         Cancelar Inscripción
                                     </Button>
@@ -147,7 +147,7 @@ export default function Show({ curso, status }: ShowProps) {
                             ) : (
                                 <Button
                                     className="w-full py-8 text-lg font-bold shadow-indigo-500/20 shadow-lg hover:shadow-indigo-500/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                                    onClick={() => router.post(route('courses.enroll', curso.id))}
+                                    onClick={() => router.post(`/courses/${curso.id}/enroll`)}
                                 >
                                     Solicitar mi lugar
                                 </Button>

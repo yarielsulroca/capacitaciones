@@ -19,6 +19,9 @@ class Curso extends Model
         'capacidad',
         'habilidad_id',
         'categoria_id',
+        'id_programa_asociado',
+        'id_proveedor',
+        'publicado',
     ];
 
     protected $casts = [
@@ -27,6 +30,7 @@ class Curso extends Model
         'fin' => 'date',
         'costo' => 'decimal:2',
         'cant_horas' => 'decimal:2',
+        'publicado' => 'boolean',
     ];
 
     public function habilidad(): BelongsTo
@@ -39,11 +43,30 @@ class Curso extends Model
         return $this->belongsTo(Categoria::class, 'categoria_id');
     }
 
+    public function tipoCapacitacion(): BelongsTo
+    {
+        return $this->belongsTo(TipoCapacitacion::class, 'id_tipo_capacitacion');
+    }
+
+    public function cdc(): BelongsTo
+    {
+        return $this->belongsTo(Cdc::class, 'id_cdc');
+    }
+
+    public function programa(): BelongsTo
+    {
+        return $this->belongsTo(ProgramaAsociado::class, 'id_programa_asociado');
+    }
+
+    public function proveedor(): BelongsTo
+    {
+        return $this->belongsTo(Proveedor::class, 'id_proveedor');
+    }
+
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'cursos_users', 'id_curso', 'id_user')
             ->withPivot('id', 'curso_estado', 'id_user_mod')
             ->withTimestamps();
     }
-
 }

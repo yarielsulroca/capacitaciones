@@ -46,16 +46,16 @@ class FortifyServiceProvider extends ServiceProvider
                 // Find or update user
                 $user = \App\Models\User::where('email', $email)->first();
 
-                if (!$user) {
+                if (! $user) {
                     // This handles cases where user exists in LDAP but wasn't registered in DB
                     $empresa = \App\Models\Empresa::firstOrCreate(['nombre' => 'Tuteur']);
                     $area = \App\Models\Area::firstOrCreate([
                         'nombre' => $attributes['area'] ?? 'General',
-                        'id_empresa' => $empresa->id
+                        'id_empresa' => $empresa->id,
                     ]);
                     $dept = \App\Models\Departamento::firstOrCreate([
                         'nombre' => $attributes['department'] ?? 'General',
-                        'id_area' => $area->id
+                        'id_area' => $area->id,
                     ]);
 
                     $user = \App\Models\User::create([

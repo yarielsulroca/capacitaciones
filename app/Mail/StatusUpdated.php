@@ -23,7 +23,7 @@ class StatusUpdated extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Actualización de Estado de Capacitación - ' . $this->curso->nombre,
+            subject: 'Actualización de Estado de Capacitación - '.$this->curso->nombre,
         );
     }
 

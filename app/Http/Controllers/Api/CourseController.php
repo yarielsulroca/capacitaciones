@@ -7,9 +7,8 @@ use App\Http\Resources\CursoResource;
 use App\Models\Curso;
 use App\Services\CourseService;
 use App\Services\EnrollmentService;
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
@@ -21,7 +20,7 @@ class CourseController extends Controller
     /**
      * Display a listing of courses with filters.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $query = Curso::query()->with(['habilidad', 'categoria']);
 
@@ -31,40 +30,17 @@ class CourseController extends Controller
 
         $courses = $query->latest()->paginate($request->get('limit', 15));
 
-        if ($request->wantsJson()) {
-            return CursoResource::collection($courses);
-        }
-
-        return \Inertia\Inertia::render('courses/index', [
-            'courses' => CursoResource::collection($courses),
-            'habilidades' => \App\Models\Habilidad::all(),
-            'cdcs' => \App\Models\Cdc::all(),
-            'categorias' => \App\Models\Categoria::all(),
-            'filters' => $request->all(['search', 'habilidad_id', 'cdc_id', 'categoria_id']),
-        ]);
+        return response()->json(CursoResource::collection($courses));
     }
 
     /**
      * Display the specified course.
      */
-    public function show(Request $request, Curso $curso)
+    public function show(Request $request, Curso $curso): JsonResponse
     {
         $curso->load(['habilidad', 'categoria']);
 
-        $enrollment = $request->user()?->cursos()->where('id_curso', $curso->id)->first();
-        $status = null;
-        if ($enrollment) {
-            $status = \App\Models\EstadoCurso::find($enrollment->pivot->curso_estado)?->estado;
-        }
-
-        if ($request->wantsJson()) {
-            return new CursoResource($curso);
-        }
-
-        return \Inertia\Inertia::render('courses/show', [
-            'curso' => new CursoResource($curso),
-            'status' => $status,
-        ]);
+        return response()->json(new CursoResource($curso));
     }
 
     /**
@@ -79,22 +55,23 @@ class CourseController extends Controller
     }
 
     /**
-     * Enroll in a course
+     * Enroll in a course (for API usage)
      */
-    public function enroll(Request $request, Curso $curso)
+    public function enroll(Request $request, Curso $curso): JsonResponse
     {
         try {
             $this->enrollmentService->enroll($request->user(), $curso);
-            return back()->with('success', 'Solicitud enviada con éxito.');
+
+            return response()->json(['message' => 'Solicitud enviada con éxito.']);
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 
     /**
-     * Cancel enrollment
+     * Cancel enrollment (for API usage)
      */
-    public function cancel(Request $request, Curso $curso)
+    public function cancel(Request $request, Curso $curso): JsonResponse
     {
         try {
             $this->enrollmentService->updateState(
@@ -103,9 +80,10 @@ class CourseController extends Controller
                 'cancelado',
                 $request->user()
             );
-            return back()->with('success', 'Matrícula cancelada.');
+
+            return response()->json(['message' => 'Matrícula cancelada.']);
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 }

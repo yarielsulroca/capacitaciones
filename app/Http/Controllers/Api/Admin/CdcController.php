@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cdc;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class CdcController extends Controller
 {
@@ -22,6 +22,7 @@ class CdcController extends Controller
         ]);
 
         $cdc = Cdc::create($validated);
+
         return response()->json($cdc, 201);
     }
 
@@ -38,12 +39,14 @@ class CdcController extends Controller
         ]);
 
         $cdc->update($validated);
+
         return response()->json($cdc);
     }
 
     public function destroy(Cdc $cdc): JsonResponse
     {
         $cdc->delete();
+
         return response()->json(null, 204);
     }
 }

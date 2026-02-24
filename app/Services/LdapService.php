@@ -20,8 +20,9 @@ class LdapService
     {
         \Illuminate\Support\Facades\Log::info("LDAP: Attempting authentication for $username");
 
-        if (!$this->bindSystem()) {
-            \Illuminate\Support\Facades\Log::error("LDAP: System bind failed for " . config('services.ldap.username'));
+        if (! $this->bindSystem()) {
+            \Illuminate\Support\Facades\Log::error('LDAP: System bind failed for '.config('services.ldap.username'));
+
             return false;
         }
 
@@ -31,6 +32,7 @@ class LdapService
 
         if ($entries['count'] === 0) {
             \Illuminate\Support\Facades\Log::warning("LDAP: User not found for filter $filter");
+
             return false;
         }
 
@@ -39,10 +41,12 @@ class LdapService
 
         if (@ldap_bind($this->connection, $userDn, $password)) {
             \Illuminate\Support\Facades\Log::info("LDAP: Authentication successful for $username");
+
             return $entries[0];
         }
 
         \Illuminate\Support\Facades\Log::warning("LDAP: Authentication failed (bind) for $username");
+
         return false;
     }
 
