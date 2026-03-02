@@ -1,9 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { Button, Input } from 'antd';
 import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/password/confirm';
 
@@ -16,29 +13,34 @@ export default function ConfirmPassword() {
             <Head title="Confirm password" />
 
             <Form {...store.form()} resetOnSuccess={['password']}>
-                {({ processing, errors }) => (
+                {({ processing, errors, data, setData }: any) => (
                     <div className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
+                            <label htmlFor="password" className="text-sm font-medium leading-none">Password</label>
+                            <Input.Password
                                 id="password"
-                                type="password"
                                 name="password"
                                 placeholder="Password"
                                 autoComplete="current-password"
                                 autoFocus
+                                size="large"
+                                value={data?.password}
+                                onChange={e => setData && setData('password', e.target.value)}
+                                status={errors?.password ? 'error' : ''}
                             />
 
-                            <InputError message={errors.password} />
+                            <InputError message={errors?.password} />
                         </div>
 
                         <div className="flex items-center">
                             <Button
+                                type="primary"
+                                htmlType="submit"
                                 className="w-full"
-                                disabled={processing}
+                                size="large"
+                                loading={processing}
                                 data-test="confirm-password-button"
                             >
-                                {processing && <Spinner />}
                                 Confirm password
                             </Button>
                         </div>

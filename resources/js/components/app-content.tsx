@@ -1,21 +1,23 @@
 import * as React from 'react';
-import { SidebarInset } from '@/components/ui/sidebar';
+import { Layout } from 'antd';
 
-type Props = React.ComponentProps<'main'> & {
+const { Content } = Layout;
+
+type Props = React.ComponentProps<typeof Content> & {
     variant?: 'header' | 'sidebar';
 };
 
-export function AppContent({ variant = 'header', children, ...props }: Props) {
+export function AppContent({ variant = 'header', children, className, ...props }: Props) {
     if (variant === 'sidebar') {
-        return <SidebarInset {...props}>{children}</SidebarInset>;
+        return <Content className={`flex flex-col flex-1 bg-background ${className || ''}`} {...props}>{children}</Content>;
     }
 
     return (
-        <main
-            className="mx-auto flex h-full w-full max-w-7xl flex-1 flex-col gap-4 rounded-xl"
+        <Content
+            className={`flex h-full w-full flex-1 flex-col gap-4 rounded-xl bg-background p-4 ${className || ''}`}
             {...props}
         >
             {children}
-        </main>
+        </Content>
     );
 }

@@ -1,9 +1,4 @@
 import { CourseCard } from '@/components/course-card';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
@@ -13,6 +8,9 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { Search, SlidersHorizontal, Loader2, BookOpen, Award, Layers } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Modal, Button, Input, Select, Switch, Table } from 'antd';
+
+const { TextArea } = Input;
 
 interface CourseGalleryProps {
     courses: { data: Curso[] };
@@ -80,7 +78,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
             fin: curso.fin || '',
             capacidad: curso.capacidad || 0,
             cant_horas: curso.cant_horas || 0,
-            modalidad: curso.modalidad || 'Presencial',
+            modalidad: typeof curso.modalidad === 'object' ? curso.modalidad?.modalidad || 'Presencial' : curso.modalidad || 'Presencial',
             id_habilidad: (curso as any).id_habilidad?.toString() || '',
             id_categoria: (curso as any).id_categoria?.toString() || '',
             id_cdc: (curso as any).id_cdc?.toString() || '',
@@ -139,7 +137,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
             toast.success(res.message);
             // Optionally refresh the list if both modals are related, but for now just success
         })
-        .catch(() => toast.error('Error al matricular colaborador'));
+        .catch(() => toast.error('Error al inscribir colaborador'));
     };
 
     const [search, setSearch] = useState(filters.search || '');
@@ -172,6 +170,56 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
             });
         }
     }, [debouncedSearch]);
+
+    const enrollmentColumns = [
+        { title: 'Colaborador', key: 'colaborador', render: (_: any, r: any) => (
+            <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-700">{r.name}</span>
+                <span className="text-[10px] text-slate-400 font-medium">{r.email}</span>
+            </div>
+        )},
+        { title: 'Área / Cargo', key: 'area', render: (_: any, r: any) => (
+            <div className="flex flex-col">
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tighter">{r.area || 'N/A'}</span>
+                <span className="text-[9px] text-slate-400 font-medium uppercase">{r.cargo || 'Sin cargo'}</span>
+            </div>
+        )},
+        { title: 'Estado', key: 'estado', align: 'center' as const, render: (_: any, r: any) => (
+            <span className={cn(
+                "px-2 py-1 text-[9px] font-black uppercase rounded-md border",
+                r.estado === 'solicitado' ? "bg-amber-100 text-amber-700 border-amber-200" :
+                r.estado === 'matriculado' ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
+                "bg-slate-100 text-slate-600 border-slate-200"
+            )}>
+                {r.estado}
+            </span>
+        )},
+        { title: 'Acciones', key: 'acciones', align: 'right' as const, render: (_: any, r: any) => (
+            r.estado === 'solicitado' ? (
+                <Button
+                    size="small"
+                    type="primary"
+                    className="bg-primary text-white border-none font-black uppercase text-[10px] px-3 h-7 rounded-md"
+                    onClick={() => {
+                        router.post('/admin/enrollments/update-status', {
+                            user_id: r.id,
+                            curso_id: selectedCourse?.id,
+                            estado_slug: 'matriculado'
+                        }, {
+                            onSuccess: () => {
+                                toast.success("Estado actualizado");
+                                fetch(`/admin/courses/${selectedCourse?.id}/enrollments`)
+                                    .then(res => res.json())
+                                    .then(data => setEnrollments(data));
+                            }
+                        });
+                    }}
+                >
+                    Aprobar
+                </Button>
+            ) : null
+        )}
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -235,50 +283,56 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                 {/* Glassmorphism Filter Bar */}
                 <div className="sticky top-4 z-10 backdrop-blur-xl bg-white/70 border border-white/20 shadow-premium-sm rounded-2xl p-4 flex flex-col md:flex-row gap-4">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
                         <Input
                             placeholder="Buscar cursos..."
-                            className="pl-10 bg-white/50 border-none shadow-inner focus-visible:ring-primary/20"
+                            className="pl-10 h-10 bg-white/50 border-none shadow-inner rounded-xl w-full"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
 
                     <div className="flex gap-2 items-center overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-                        <Select onValueChange={(val) => handleFilterChange('habilidad_id', val)} defaultValue={filters.habilidad_id}>
-                            <SelectTrigger className="w-[160px] bg-white/50 border-none shadow-sm capitalize">
-                                <SelectValue placeholder="Habilidad" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {metadata?.habilidades.map(h => (
-                                    <SelectItem key={h.id} value={h.id.toString()}>{h.habilidad}</SelectItem>
-                                ))}
-                            </SelectContent>
+                        <Select
+                            className="w-[160px]"
+                            size="large"
+                            value={filters.habilidad_id || undefined}
+                            onChange={(val) => handleFilterChange('habilidad_id', val)}
+                            placeholder="Habilidad"
+                            allowClear
+                        >
+                            {metadata?.habilidades.map(h => (
+                                <Select.Option key={h.id} value={h.id.toString()}>{h.habilidad}</Select.Option>
+                            ))}
                         </Select>
 
-                        <Select onValueChange={(val) => handleFilterChange('cdc_id', val)} defaultValue={filters.cdc_id}>
-                            <SelectTrigger className="w-[160px] bg-white/50 border-none shadow-sm capitalize">
-                                <SelectValue placeholder="Centro de Costo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {metadata?.cdcs.map(c => (
-                                    <SelectItem key={c.id} value={c.id.toString()}>{c.cdc}</SelectItem>
-                                ))}
-                            </SelectContent>
+                        <Select
+                            className="w-[160px]"
+                            size="large"
+                            value={filters.cdc_id || undefined}
+                            onChange={(val) => handleFilterChange('cdc_id', val)}
+                            placeholder="Centro de Costo"
+                            allowClear
+                        >
+                            {metadata?.cdcs.map(c => (
+                                <Select.Option key={c.id} value={c.id.toString()}>{c.cdc}</Select.Option>
+                            ))}
                         </Select>
 
-                        <Select onValueChange={(val) => handleFilterChange('categoria_id', val)} defaultValue={filters.categoria_id}>
-                            <SelectTrigger className="w-[160px] bg-white/50 border-none shadow-sm capitalize">
-                                <SelectValue placeholder="Categoría" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {metadata?.categorias.map(c => (
-                                    <SelectItem key={c.id} value={c.id.toString()}>{c.categoria}</SelectItem>
-                                ))}
-                            </SelectContent>
+                        <Select
+                            className="w-[160px]"
+                            size="large"
+                            value={filters.categoria_id || undefined}
+                            onChange={(val) => handleFilterChange('categoria_id', val)}
+                            placeholder="Categoría"
+                            allowClear
+                        >
+                            {metadata?.categorias.map(c => (
+                                <Select.Option key={c.id} value={c.id.toString()}>{c.categoria}</Select.Option>
+                            ))}
                         </Select>
 
-                        <Button variant="ghost" size="icon" className="shrink-0 hover:bg-white/50">
+                        <Button type="text" className="shrink-0 hover:bg-white/50 h-10 w-10 p-0 flex items-center justify-center">
                             <SlidersHorizontal className="w-4 h-4" />
                         </Button>
                     </div>
@@ -306,333 +360,256 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                 </div>
             </div>
 
-            <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                <DialogContent className="max-w-2xl bg-white border-2 border-slate-200 shadow-2xl overflow-hidden p-0 rounded-2xl">
-                    <div className="bg-slate-900 py-6 px-8 border-b border-slate-800">
-                        <DialogTitle className="text-2xl font-black text-white tracking-tight uppercase">
-                            Configuración del Curso
-                        </DialogTitle>
-                        <DialogDescription className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            Administración de Capacitación Tuteur
-                        </DialogDescription>
+            <Modal open={isEditing} onCancel={() => setIsEditing(false)} footer={null} width={700} className="p-0" centered closable={false}>
+                <div className="bg-slate-900 py-6 px-8 border-b border-slate-800 rounded-t-xl relative">
+                    <h2 className="text-2xl font-black text-white tracking-tight uppercase">
+                        Configuración del Curso
+                    </h2>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        Administración de Capacitación Tuteur
+                    </p>
+                </div>
+
+                <form onSubmit={handleUpdate} className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider flex justify-between">
+                                Nombre del Curso
+                                {errors.nombre && <span className="text-red-500 lowercase">{errors.nombre}</span>}
+                            </label>
+                            <Input
+                                value={data.nombre}
+                                onChange={e => setData('nombre', e.target.value)}
+                                className="h-12 border-2 border-slate-100 hover:border-primary focus:border-primary transition-all font-bold text-slate-700 rounded-xl"
+                            />
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Cupos Disponibles</label>
+                            <Input
+                                type="number"
+                                value={data.capacidad}
+                                onChange={e => setData('capacidad', parseInt(e.target.value))}
+                                className="h-12 border-2 border-slate-100 hover:border-primary focus:border-primary transition-all font-bold text-slate-700 rounded-xl"
+                            />
+                        </div>
                     </div>
 
-                    <form onSubmit={handleUpdate} className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-3">
-                                <Label className="text-[11px] font-black uppercase text-slate-400 tracking-wider flex justify-between">
-                                    Nombre del Curso
-                                    {errors.nombre && <span className="text-red-500 lowercase">{errors.nombre}</span>}
-                                </Label>
-                                <Input
-                                    value={data.nombre}
-                                    onChange={e => setData('nombre', e.target.value)}
-                                    className="h-12 border-2 border-slate-100 focus:border-primary transition-all font-bold text-slate-700 rounded-xl"
-                                />
-                            </div>
-                            <div className="space-y-3">
-                                <Label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Cupos Disponibles</Label>
-                                <Input
-                                    type="number"
-                                    value={data.capacidad}
-                                    onChange={e => setData('capacidad', parseInt(e.target.value))}
-                                    className="h-12 border-2 border-slate-100 focus:border-primary transition-all font-bold text-slate-700 rounded-xl"
-                                />
-                            </div>
-                        </div>
+                    <div className="space-y-3">
+                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Descripción del Programa</label>
+                        <TextArea
+                            className="rounded-xl border-2 border-slate-100 bg-background px-4 py-3 text-sm font-medium hover:border-primary focus:border-primary transition-all"
+                            value={data.descripcion}
+                            onChange={e => setData('descripcion', e.target.value)}
+                            placeholder="Escribe aquí los objetivos y alcance de la capacitación..."
+                            autoSize={{ minRows: 4, maxRows: 6 }}
+                        />
+                    </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-3">
-                            <Label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Descripción del Programa</Label>
-                            <textarea
-                                className="flex min-h-[120px] w-full rounded-xl border-2 border-slate-100 bg-background px-4 py-3 text-sm font-medium ring-offset-background placeholder:text-muted-foreground focus:border-primary transition-all outline-none"
-                                value={data.descripcion}
-                                onChange={e => setData('descripcion', e.target.value)}
-                                placeholder="Escribe aquí los objetivos y alcance de la capacitación..."
+                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Fecha de Inicio</label>
+                            <Input
+                                type="date"
+                                value={data.inicio}
+                                onChange={e => setData('inicio', e.target.value)}
+                                className="h-12 border-2 border-slate-100 font-bold rounded-xl"
                             />
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-3">
-                                <Label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Fecha de Inicio</Label>
-                                <Input
-                                    type="date"
-                                    value={data.inicio}
-                                    onChange={e => setData('inicio', e.target.value)}
-                                    className="h-12 border-2 border-slate-100 focus:border-primary transition-all font-bold rounded-xl"
-                                />
-                            </div>
-                            <div className="space-y-3">
-                                <Label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Fecha de Cierre</Label>
-                                <Input
-                                    type="date"
-                                    value={data.fin}
-                                    onChange={e => setData('fin', e.target.value)}
-                                    className="h-12 border-2 border-slate-100 focus:border-primary transition-all font-bold rounded-xl"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-3">
-                                <Label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Habilidad</Label>
-                                <Select value={data.id_habilidad} onValueChange={val => setData('id_habilidad', val)}>
-                                    <SelectTrigger className="h-12 border-2 border-slate-100 font-bold rounded-xl">
-                                        <SelectValue placeholder="Elegir..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                        {metadata?.habilidades.map(h => (
-                                            <SelectItem key={h.id} value={h.id.toString()}>{h.habilidad}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-3">
-                                <Label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Categoría</Label>
-                                <Select value={data.id_categoria} onValueChange={val => setData('id_categoria', val)}>
-                                    <SelectTrigger className="h-12 border-2 border-slate-100 font-bold rounded-xl">
-                                        <SelectValue placeholder="Elegir..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                        {metadata?.categorias.map(c => (
-                                            <SelectItem key={c.id} value={c.id.toString()}>{c.categoria}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-3">
-                                <Label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Centro de Costo</Label>
-                                <Select value={data.id_cdc} onValueChange={val => setData('id_cdc', val)}>
-                                    <SelectTrigger className="h-12 border-2 border-slate-100 font-bold rounded-xl">
-                                        <SelectValue placeholder="Elegir..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                        {metadata?.cdcs.map(cdc => (
-                                            <SelectItem key={cdc.id} value={cdc.id.toString()}>{cdc.cdc}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-3">
-                                <Label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Programa Asociado</Label>
-                                <Select value={data.id_programa_asociado} onValueChange={val => setData('id_programa_asociado', val)}>
-                                    <SelectTrigger className="h-12 border-2 border-slate-100 font-bold rounded-xl">
-                                        <SelectValue placeholder="Sin programa" />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                        <SelectItem value="null">Ninguno</SelectItem>
-                                        {metadata?.programas?.map(p => (
-                                            <SelectItem key={p.id} value={p.id.toString()}>{p.programa}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2 bg-slate-50 p-4 rounded-xl border-2 border-slate-100">
-                            <input
-                                type="checkbox"
-                                id="publicado"
-                                checked={data.publicado}
-                                onChange={e => setData('publicado', e.target.checked)}
-                                className="w-5 h-5 rounded border-2 border-slate-300 text-primary focus:ring-primary"
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Fecha de Cierre</label>
+                            <Input
+                                type="date"
+                                value={data.fin}
+                                onChange={e => setData('fin', e.target.value)}
+                                className="h-12 border-2 border-slate-100 font-bold rounded-xl"
                             />
-                            <Label htmlFor="publicado" className="text-sm font-black uppercase text-slate-600 tracking-wide cursor-pointer">
-                                Publicar curso en el Dashboard y Catálogo
-                            </Label>
                         </div>
+                    </div>
 
-                        <div className="flex flex-col md:flex-row justify-end gap-4 pt-8 mt-4 border-t-2 border-slate-50">
-                            <Button type="button" variant="outline" onClick={() => setIsEditing(false)} className="h-12 px-8 font-black uppercase text-[11px] tracking-widest border-2 rounded-xl hover:bg-slate-50">
-                                Cancelar y Salir
-                            </Button>
-                            <Button type="submit" disabled={processing} className="h-12 px-12 font-black uppercase text-[11px] tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 rounded-xl active:scale-95 transition-all">
-                                {processing ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Guardando...
-                                    </>
-                                ) : 'Actualizar Capacitación'}
-                            </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Habilidad</label>
+                            <Select
+                                value={data.id_habilidad || undefined}
+                                onChange={val => setData('id_habilidad', val)}
+                                className="w-full h-12"
+                                placeholder="Elegir..."
+                            >
+                                {metadata?.habilidades.map(h => (
+                                    <Select.Option key={h.id} value={h.id.toString()}>{h.habilidad}</Select.Option>
+                                ))}
+                            </Select>
                         </div>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Categoría</label>
+                            <Select
+                                value={data.id_categoria || undefined}
+                                onChange={val => setData('id_categoria', val)}
+                                className="w-full h-12"
+                                placeholder="Elegir..."
+                            >
+                                {metadata?.categorias.map(c => (
+                                    <Select.Option key={c.id} value={c.id.toString()}>{c.categoria}</Select.Option>
+                                ))}
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Centro de Costo</label>
+                            <Select
+                                value={data.id_cdc || undefined}
+                                onChange={val => setData('id_cdc', val)}
+                                className="w-full h-12"
+                                placeholder="Elegir..."
+                            >
+                                {metadata?.cdcs.map(cdc => (
+                                    <Select.Option key={cdc.id} value={cdc.id.toString()}>{cdc.cdc}</Select.Option>
+                                ))}
+                            </Select>
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Programa Asociado</label>
+                            <Select
+                                value={data.id_programa_asociado === 'null' ? undefined : data.id_programa_asociado}
+                                onChange={val => setData('id_programa_asociado', val)}
+                                className="w-full h-12"
+                                placeholder="Sin programa"
+                                allowClear
+                            >
+                                {metadata?.programas?.map(p => (
+                                    <Select.Option key={p.id} value={p.id.toString()}>{p.programa}</Select.Option>
+                                ))}
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3 bg-slate-50 p-4 rounded-xl border-2 border-slate-100">
+                        <Switch
+                            checked={data.publicado}
+                            onChange={c => setData('publicado', c)}
+                        />
+                        <label className="text-sm font-black uppercase text-slate-600 tracking-wide cursor-pointer">
+                            Publicar curso en el Dashboard y Catálogo
+                        </label>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row justify-end gap-4 pt-8 mt-4 border-t-2 border-slate-50">
+                        <Button onClick={() => setIsEditing(false)} className="h-12 px-8 font-black uppercase text-[11px] tracking-widest border-2 rounded-xl hover:bg-slate-50">
+                            Cancelar y Salir
+                        </Button>
+                        <Button type="primary" htmlType="submit" loading={processing} className="h-12 px-12 font-black uppercase text-[11px] tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 rounded-xl transition-all border-none">
+                            Actualizar Capacitación
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Modal: Añadir Colaboradores */}
-            <Dialog open={isManagingUsers} onOpenChange={(open) => { setIsManagingUsers(open); if(!open) setSelectedCourse(null); }}>
-                <DialogContent className="max-w-xl bg-white border-2 border-slate-200 shadow-2xl rounded-2xl p-0 overflow-hidden">
-                    <div className="bg-slate-900 py-6 px-8 border-b border-slate-800">
-                        <DialogTitle className="text-xl font-black text-white uppercase tracking-tight">
-                            Añadir Colaboradores
-                        </DialogTitle>
-                        <DialogDescription className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">
-                            {selectedCourse?.nombre}
-                        </DialogDescription>
+            <Modal open={isManagingUsers} onCancel={() => { setIsManagingUsers(false); setSelectedCourse(null); }} footer={null} width={600} className="p-0" centered closable={false}>
+                <div className="bg-slate-900 py-6 px-8 border-b border-slate-800 rounded-t-xl">
+                    <h2 className="text-xl font-black text-white uppercase tracking-tight">
+                        Añadir Colaboradores
+                    </h2>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">
+                        {selectedCourse?.nombre}
+                    </p>
+                </div>
+
+                <div className="p-6 space-y-6">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
+                        <Input
+                            placeholder="Buscar colaborador por nombre o email..."
+                            className="pl-10 h-11 border-2 focus:border-primary rounded-xl w-full hover:border-primary"
+                            value={userSearch}
+                            onChange={(e) => setUserSearch(e.target.value)}
+                        />
                     </div>
 
-                    <div className="p-6 space-y-6">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <Input
-                                placeholder="Buscar colaborador por nombre o email..."
-                                className="pl-10 h-11 border-2 focus:border-primary rounded-xl"
-                                value={userSearch}
-                                onChange={(e) => setUserSearch(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="max-h-[350px] overflow-y-auto space-y-2 pr-2 scrollbar-thin min-h-[100px]">
-                            {loadingUsers ? (
-                                <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>
-                            ) : (
-                                <>
-                                    <p className="text-[10px] font-black uppercase text-slate-400 mb-4 px-1">Resultados de búsqueda ({availableUsers.length})</p>
-                                    <div className="space-y-2">
-                                        {availableUsers.map(u => (
-                                            <div key={u.id} className="flex items-center justify-between p-3 rounded-xl border-2 border-slate-50 bg-slate-50/30 hover:bg-slate-50 transition-colors">
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-bold text-slate-700">{u.name}</span>
-                                                    <span className="text-[10px] text-slate-400 font-medium">{u.email}</span>
-                                                </div>
-                                                <Button
-                                                    size="sm"
-                                                    className="h-8 px-4 text-[10px] font-black uppercase bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-md"
-                                                    onClick={() => handleManualEnroll(u.id)}
-                                                >
-                                                    Matricular
-                                                </Button>
+                    <div className="max-h-[350px] overflow-y-auto space-y-2 pr-2 scrollbar-thin min-h-[100px]">
+                        {loadingUsers ? (
+                            <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>
+                        ) : (
+                            <>
+                                <p className="text-[10px] font-black uppercase text-slate-400 mb-4 px-1">Resultados de búsqueda ({availableUsers.length})</p>
+                                <div className="space-y-2">
+                                    {availableUsers.map(u => (
+                                        <div key={u.id} className="flex items-center justify-between p-3 rounded-xl border-2 border-slate-50 bg-slate-50/30 hover:bg-slate-50 transition-colors">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-slate-700">{u.name}</span>
+                                                <span className="text-[10px] text-slate-400 font-medium">{u.email}</span>
                                             </div>
-                                        ))}
-                                        {availableUsers.length === 0 && <p className="text-center py-10 text-slate-400 text-sm italic">No se encontraron colaboradores.</p>}
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                                            <Button
+                                                type="primary"
+                                                className="h-8 px-4 text-[10px] font-black uppercase bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-md border-none"
+                                                onClick={() => handleManualEnroll(u.id)}
+                                            >
+                                                Inscribir
+                                            </Button>
+                                        </div>
+                                    ))}
+                                    {availableUsers.length === 0 && <p className="text-center py-10 text-slate-400 text-sm italic">No se encontraron colaboradores.</p>}
+                                </div>
+                            </>
+                        )}
                     </div>
+                </div>
 
-                    <div className="p-4 bg-slate-50 border-t-2 border-slate-100 flex justify-end">
-                        <Button variant="outline" onClick={() => setIsManagingUsers(false)} className="font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl">
-                            Cerrar
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+                <div className="p-4 bg-slate-50 border-t-2 border-slate-100 flex justify-end rounded-b-xl">
+                    <Button onClick={() => setIsManagingUsers(false)} className="font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl border-2 border-slate-200">
+                        Cerrar
+                    </Button>
+                </div>
+            </Modal>
 
             {/* Modal: Gestión de Matrículas */}
-            <Dialog open={isManagingEnrollments} onOpenChange={(open) => { setIsManagingEnrollments(open); if(!open) setSelectedCourse(null); }}>
-                <DialogContent className="max-w-4xl bg-white border-2 border-slate-200 shadow-2xl rounded-2xl p-0 overflow-hidden">
-                    <div className="bg-slate-900 py-6 px-8 border-b border-slate-800 flex justify-between items-center">
-                        <div>
-                            <DialogTitle className="text-xl font-black text-white uppercase tracking-tight">
-                                Gestión de Matrículas
-                            </DialogTitle>
-                            <DialogDescription className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">
-                                {selectedCourse?.nombre}
-                            </DialogDescription>
+            <Modal open={isManagingEnrollments} onCancel={() => { setIsManagingEnrollments(false); setSelectedCourse(null); }} footer={null} width={800} className="p-0" centered closable={false}>
+                <div className="bg-slate-900 py-6 px-8 border-b border-slate-800 flex justify-between items-center rounded-t-xl">
+                    <div>
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight">
+                            Gestión de Matrículas
+                        </h2>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">
+                            {selectedCourse?.nombre}
+                        </p>
+                    </div>
+                    <div className="flex gap-2">
+                        <div className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
+                            <span className="text-[9px] font-black text-amber-500 uppercase italic">{enrollments.filter(e => e.estado === 'solicitado').length} Solicitados</span>
                         </div>
-                        <div className="flex gap-2">
-                            <div className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
-                                <span className="text-[9px] font-black text-amber-500 uppercase italic">{enrollments.filter(e => e.estado === 'solicitado').length} Solicitados</span>
-                            </div>
-                            <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                                <span className="text-[9px] font-black text-emerald-500 uppercase italic">{enrollments.filter(e => e.estado === 'matriculado').length} Matriculados</span>
-                            </div>
+                        <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                            <span className="text-[9px] font-black text-emerald-500 uppercase italic">{enrollments.filter(e => e.estado === 'matriculado').length} Inscriptos</span>
                         </div>
                     </div>
+                </div>
 
-                    <div className="p-0">
-                        <div className="w-full overflow-x-auto min-h-[300px]">
-                            {loadingEnrollments ? (
-                                <div className="flex justify-center py-20"><Loader2 className="animate-spin text-primary" /></div>
-                            ) : (
-                                <table className="w-full border-collapse">
-                                    <thead className="bg-slate-50/50 border-b-2 border-slate-100">
-                                        <tr>
-                                            <th className="px-6 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-wider">Colaborador</th>
-                                            <th className="px-6 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-wider">Área / Cargo</th>
-                                            <th className="px-6 py-4 text-center text-[10px] font-black uppercase text-slate-400 tracking-wider">Estado</th>
-                                            <th className="px-6 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-wider">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y-2 divide-slate-50">
-                                        {enrollments.map(enrollment => (
-                                            <tr key={enrollment.id} className="hover:bg-slate-50/30 transition-colors">
-                                                <td className="px-6 py-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-bold text-slate-700">{enrollment.name}</span>
-                                                        <span className="text-[10px] text-slate-400 font-medium">{enrollment.email}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tighter">{enrollment.area || 'N/A'}</span>
-                                                        <span className="text-[9px] text-slate-400 font-medium uppercase">{enrollment.cargo || 'Sin cargo'}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <span className={cn(
-                                                        "px-2 py-1 text-[9px] font-black uppercase rounded-md border",
-                                                        enrollment.estado === 'solicitado' ? "bg-amber-100 text-amber-700 border-amber-200" :
-                                                        enrollment.estado === 'matriculado' ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                                                        "bg-slate-100 text-slate-600 border-slate-200"
-                                                    )}>
-                                                        {enrollment.estado}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex justify-end gap-1">
-                                                        {/* We could add status update buttons here directly using the existing api/admin/enrollments/update-status */}
-                                                        {enrollment.estado === 'solicitado' && (
-                                                            <Button
-                                                                size="sm"
-                                                                className="h-7 px-3 text-[9px] font-black uppercase bg-primary text-white"
-                                                                onClick={() => {
-                                                                    router.post('/admin/enrollments/update-status', {
-                                                                        user_id: enrollment.id,
-                                                                        curso_id: selectedCourse?.id,
-                                                                        estado_slug: 'matriculado'
-                                                                    }, {
-                                                                        onSuccess: () => {
-                                                                            toast.success("Estado actualizado");
-                                                                            // Refresh the list
-                                                                            fetch(`/admin/courses/${selectedCourse?.id}/enrollments`)
-                                                                                .then(res => res.json())
-                                                                                .then(data => setEnrollments(data));
-                                                                        }
-                                                                    });
-                                                                }}
-                                                            >
-                                                                Aprobar
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {enrollments.length === 0 && (
-                                            <tr>
-                                                <td colSpan={4} className="px-6 py-20 text-center text-slate-400 text-sm italic">
-                                                    No hay inscritos en este curso todavía.
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
+                <div className="p-0">
+                    <div className="w-full min-h-[300px]">
+                        {loadingEnrollments ? (
+                            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-primary" /></div>
+                        ) : (
+                            <Table
+                                columns={enrollmentColumns}
+                                dataSource={enrollments}
+                                rowKey="id"
+                                pagination={false}
+                                className="[&_.ant-table-thead_th]:bg-slate-50/50 [&_.ant-table-thead_th]:text-[10px] [&_.ant-table-thead_th]:font-black [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-thead_th]:tracking-wider"
+                                size="small"
+                                scroll={{ y: 300 }}
+                            />
+                        )}
                     </div>
+                </div>
 
-                    <div className="p-4 bg-slate-50 border-t-2 border-slate-100 flex justify-end">
-                        <Button variant="outline" onClick={() => setIsManagingEnrollments(false)} className="font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl">
-                            Cerrar Panel
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+                <div className="p-4 bg-slate-50 border-t-2 border-slate-100 flex justify-end rounded-b-xl">
+                    <Button onClick={() => setIsManagingEnrollments(false)} className="font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl border-2 border-slate-200">
+                        Cerrar Panel
+                    </Button>
+                </div>
+            </Modal>
         </AppLayout>
     );
 }

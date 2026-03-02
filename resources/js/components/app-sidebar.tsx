@@ -1,31 +1,16 @@
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Users, Building2 } from 'lucide-react';
-import { NavFooter } from '@/components/nav-footer';
-import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-} from '@/components/ui/sidebar';
+import { Layout, Menu } from 'antd';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
+import { useCurrentUrl } from '@/hooks/use-current-url';
+import { NavUser } from '@/components/nav-user';
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Documentación',
-        href: 'https://laravel.com/docs',
-        icon: BookOpen,
-    },
-];
+const { Sider } = Layout;
 
 export function AppSidebar() {
-    const { auth } = usePage().props as any;
-    const user = auth.user;
+    const { auth, sidebarOpen } = usePage().props as any;
+    const { isCurrentUrl } = useCurrentUrl();
 
     const mainNavItems: NavItem[] = [
         {
@@ -38,35 +23,46 @@ export function AppSidebar() {
             href: '/courses',
             icon: BookOpen,
         },
+        {
+            title: 'Administración',
+            href: '/admin',
+            icon: Folder,
+        }
     ];
 
-    mainNavItems.push({
-        title: 'Administración',
-        href: '/admin',
-        icon: Folder,
-    });
+    const menuItems = mainNavItems.map(item => ({
+        key: item.href,
+        icon: item.icon ? <item.icon className="h-4 w-4" /> : null,
+        label: <Link href={item.href}>{item.title}</Link>,
+    }));
+
+    const activeKey = menuItems.find(item => isCurrentUrl(item.key))?.key;
 
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href="/dashboard" prefetch>
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarHeader>
+        <Sider
+            theme="light"
+            collapsible
+            collapsed={!sidebarOpen}
+            className="border-r border-neutral-200 dark:border-neutral-800 hidden md:block min-h-screen"
+            width={260}
+        >
+            <div className="flex h-16 items-center px-4 mb-4">
+                <Link href="/dashboard" prefetch className="flex items-center gap-2">
+                    <AppLogo />
+                </Link>
+            </div>
 
-            <SidebarContent>
-                <NavMain items={mainNavItems} />
-            </SidebarContent>
-
-            <SidebarFooter>
-                <NavUser />
-            </SidebarFooter>
-        </Sidebar>
+            <div className="flex flex-col justify-between h-[calc(100vh-80px)]">
+                <Menu
+                    mode="inline"
+                    selectedKeys={activeKey ? [activeKey] : []}
+                    items={menuItems}
+                    className="border-r-0"
+                />
+                <div className="p-2 border-t border-neutral-200 dark:border-neutral-800 hidden md:block">
+                    <NavUser />
+                </div>
+            </div>
+        </Sider>
     );
 }

@@ -31,13 +31,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Course management
         Route::post('/courses', [\App\Http\Controllers\Api\Admin\AdminController::class, 'storeCourse']);
         Route::patch('/courses/{course}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'updateCourse']);
+        Route::delete('/courses/{course}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'destroyCourse']);
 
         // User management (data fetch for search)
         Route::get('/users/list', [\App\Http\Controllers\Api\Admin\AdminController::class, 'users']);
         Route::post('/users', [\App\Http\Controllers\Api\Admin\AdminController::class, 'storeUser']);
+        Route::post('/users/sync-ad', [\App\Http\Controllers\Api\Admin\AdminController::class, 'syncActiveDirectory']);
         Route::patch('/users/{user}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'updateUser']);
 
-        // Resource management
+        // Resource management (structure tabs: empresas, areas, departamentos, cdcs, categorias, habilidades, proveedores, programas_asociados, presupuestos, cursos)
         Route::post('/structure/{type}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'storeResource']);
         Route::patch('/structure/{type}/{id}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'updateResource']);
         Route::delete('/structure/{type}/{id}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'destroyResource']);
@@ -46,6 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/enrollments/update-status', [\App\Http\Controllers\Api\Admin\AdminController::class, 'updateStatus']);
         Route::post('/courses/{course}/enroll-manual', [\App\Http\Controllers\Api\Admin\AdminController::class, 'enrollManual']);
         Route::get('/courses/{course}/enrollments', [\App\Http\Controllers\Api\Admin\AdminController::class, 'courseEnrollments']);
+        Route::delete('/enrollments/{id}', [\App\Http\Controllers\Api\Admin\AdminController::class, 'destroyEnrollment']);
     });
 });
 

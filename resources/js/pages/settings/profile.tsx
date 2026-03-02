@@ -3,9 +3,7 @@ import { Form, Head, Link, usePage } from '@inertiajs/react';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button, Input } from 'antd';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import type { BreadcrumbItem } from '@/types';
@@ -50,44 +48,52 @@ export default function Profile({
                         }}
                         className="space-y-6"
                     >
-                        {({ processing, recentlySuccessful, errors }) => (
+                        {({ processing, recentlySuccessful, errors, data, setData }: any) => (
                             <>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name">Name</Label>
+                                    <label htmlFor="name" className="text-sm font-medium leading-none">Name</label>
 
                                     <Input
                                         id="name"
                                         className="mt-1 block w-full"
                                         defaultValue={auth.user.name}
+                                        value={data?.name}
+                                        onChange={(e) => setData && setData('name', e.target.value)}
                                         name="name"
                                         required
                                         autoComplete="name"
                                         placeholder="Full name"
+                                        size="large"
+                                        status={errors?.name ? 'error' : ''}
                                     />
 
                                     <InputError
                                         className="mt-2"
-                                        message={errors.name}
+                                        message={errors?.name}
                                     />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="email">Email address</Label>
+                                    <label htmlFor="email" className="text-sm font-medium leading-none">Email address</label>
 
                                     <Input
                                         id="email"
                                         type="email"
                                         className="mt-1 block w-full"
                                         defaultValue={auth.user.email}
+                                        value={data?.email}
+                                        onChange={(e) => setData && setData('email', e.target.value)}
                                         name="email"
                                         required
                                         autoComplete="username"
                                         placeholder="Email address"
+                                        size="large"
+                                        status={errors?.email ? 'error' : ''}
                                     />
 
                                     <InputError
                                         className="mt-2"
-                                        message={errors.email}
+                                        message={errors?.email}
                                     />
                                 </div>
 
@@ -120,8 +126,11 @@ export default function Profile({
 
                                 <div className="flex items-center gap-4">
                                     <Button
-                                        disabled={processing}
+                                        type="primary"
+                                        htmlType="submit"
+                                        loading={processing}
                                         data-test="update-profile-button"
+                                        size="large"
                                     >
                                         Save
                                     </Button>

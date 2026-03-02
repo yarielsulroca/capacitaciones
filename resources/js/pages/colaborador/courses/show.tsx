@@ -2,8 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Curso, EnrollmentStatus } from '@/types/capacitaciones';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button, Tag } from 'antd';
 import { StatusBadge } from '@/components/status-badge';
 import { Calendar, Clock, MapPin, Users, BookOpen, ChevronLeft, CreditCard } from 'lucide-react';
 
@@ -25,11 +24,11 @@ export default function Show({ curso, status }: ShowProps) {
 
             <div className="p-6 lg:p-10 max-w-5xl mx-auto w-full">
                 <Button
-                    variant="ghost"
-                    className="mb-6 -ml-2 text-slate-500 hover:text-slate-900"
+                    type="text"
+                    className="mb-6 -ml-2 text-slate-500 hover:text-slate-900 font-bold"
                     onClick={() => window.history.back()}
+                    icon={<ChevronLeft className="w-4 h-4" />}
                 >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
                     Volver al catálogo
                 </Button>
 
@@ -37,7 +36,7 @@ export default function Show({ curso, status }: ShowProps) {
                     <div className="lg:col-span-2 space-y-8">
                         <div>
                             <div className="flex items-center gap-3 mb-4">
-                                <Badge variant="secondary" className="px-3 py-1 text-sm">{curso.categoria}</Badge>
+                                <Tag color="default" className="px-3 py-1 text-sm rounded-full border-none bg-slate-100 text-slate-600 font-bold m-0">{curso.categoria}</Tag>
                                 {status && <StatusBadge status={status} />}
                             </div>
                             <h1 className="text-4xl font-black text-slate-900 leading-tight mb-4">
@@ -132,13 +131,12 @@ export default function Show({ curso, status }: ShowProps) {
 
                             {status ? (
                                 <div className="space-y-4">
-                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                                        <p className="text-xs text-slate-400 mb-1">Tu estado actual:</p>
-                                        <StatusBadge status={status} className="w-full justify-center py-2" />
+                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center">
+                                        <p className="text-xs text-slate-400 mb-2">Tu estado actual:</p>
+                                        <StatusBadge status={status} className="w-full text-center py-2" />
                                     </div>
                                     <Button
-                                        variant="outline"
-                                        className="w-full py-6 border-white/20 text-white hover:bg-white/10"
+                                        className="w-full h-14 bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white hover:border-white/40 font-bold uppercase tracking-wider rounded-xl transition-all"
                                         onClick={() => router.post(`/courses/${curso.id}/cancelado`)}
                                     >
                                         Cancelar Inscripción
@@ -146,7 +144,8 @@ export default function Show({ curso, status }: ShowProps) {
                                 </div>
                             ) : (
                                 <Button
-                                    className="w-full py-8 text-lg font-bold shadow-indigo-500/20 shadow-lg hover:shadow-indigo-500/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                    type="primary"
+                                    className="w-full h-14 text-lg font-black shadow-indigo-500/20 shadow-lg border-none hover:shadow-indigo-500/40 transition-all rounded-xl"
                                     onClick={() => router.post(`/courses/${curso.id}/enroll`)}
                                 >
                                     Solicitar mi lugar

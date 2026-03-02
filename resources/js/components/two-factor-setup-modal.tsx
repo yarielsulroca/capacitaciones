@@ -1,26 +1,12 @@
 import { Form } from '@inertiajs/react';
-import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Check, Copy, ScanLine } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from '@/components/ui/input-otp';
+import { Button, Modal, Input } from 'antd';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import AlertError from './alert-error';
-import { Spinner } from './ui/spinner';
 import { confirm } from '@/routes/two-factor';
 
 function GridScanIcon() {
@@ -89,21 +75,21 @@ function TwoFactorSetupStep({
                                         }}
                                     />
                                 ) : (
-                                    <Spinner />
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex w-full space-x-5">
-                        <Button className="w-full" onClick={onNextStep}>
+                    <div className="flex w-full space-x-5 my-4">
+                        <Button type="primary" className="w-full" size="large" onClick={onNextStep}>
                             {buttonText}
                         </Button>
                     </div>
 
-                    <div className="relative flex w-full items-center justify-center">
+                    <div className="relative flex w-full items-center justify-center my-4">
                         <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
-                        <span className="relative bg-card px-2 py-1">
+                        <span className="relative bg-card px-2 py-1 text-sm text-neutral-500">
                             or, enter the code manually
                         </span>
                     </div>
@@ -112,7 +98,7 @@ function TwoFactorSetupStep({
                         <div className="flex w-full items-stretch overflow-hidden rounded-xl border border-border">
                             {!manualSetupKey ? (
                                 <div className="flex h-full w-full items-center justify-center bg-muted p-3">
-                                    <Spinner />
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
                                 </div>
                             ) : (
                                 <>
@@ -124,7 +110,7 @@ function TwoFactorSetupStep({
                                     />
                                     <button
                                         onClick={() => copy(manualSetupKey)}
-                                        className="border-l border-border px-3 hover:bg-muted"
+                                        className="border-l border-border px-3 hover:bg-muted bg-white h-full"
                                     >
                                         <IconComponent className="w-4" />
                                     </button>
@@ -146,13 +132,6 @@ function TwoFactorVerificationStep({
     onBack: () => void;
 }) {
     const [code, setCode] = useState<string>('');
-    const pinInputContainerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        setTimeout(() => {
-            pinInputContainerRef.current?.querySelector('input')?.focus();
-        }, 0);
-    }, []);
 
     return (
         <Form
@@ -170,30 +149,14 @@ function TwoFactorVerificationStep({
             }) => (
                 <>
                     <div
-                        ref={pinInputContainerRef}
                         className="relative w-full space-y-3"
                     >
-                        <div className="flex w-full flex-col items-center space-y-3 py-2">
-                            <InputOTP
-                                id="otp"
-                                name="code"
-                                maxLength={OTP_MAX_LENGTH}
+                        <div className="flex w-full flex-col items-center space-y-3 py-4">
+                            <Input.OTP
+                                length={OTP_MAX_LENGTH}
                                 onChange={setCode}
                                 disabled={processing}
-                                pattern={REGEXP_ONLY_DIGITS}
-                            >
-                                <InputOTPGroup>
-                                    {Array.from(
-                                        { length: OTP_MAX_LENGTH },
-                                        (_, index) => (
-                                            <InputOTPSlot
-                                                key={index}
-                                                index={index}
-                                            />
-                                        ),
-                                    )}
-                                </InputOTPGroup>
-                            </InputOTP>
+                            />
                             <InputError
                                 message={
                                     errors?.confirmTwoFactorAuthentication?.code
@@ -203,8 +166,8 @@ function TwoFactorVerificationStep({
 
                         <div className="flex w-full space-x-5">
                             <Button
-                                type="button"
-                                variant="outline"
+                                type="default"
+                                size="large"
                                 className="flex-1"
                                 onClick={onBack}
                                 disabled={processing}
@@ -212,11 +175,14 @@ function TwoFactorVerificationStep({
                                 Back
                             </Button>
                             <Button
-                                type="submit"
+                                type="primary"
+                                htmlType="submit"
+                                size="large"
                                 className="flex-1"
                                 disabled={
                                     processing || code.length < OTP_MAX_LENGTH
                                 }
+                                loading={processing}
                             >
                                 Confirm
                             </Button>
@@ -315,33 +281,37 @@ export default function TwoFactorSetupModal({
     }, [onClose, resetModalState]);
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader className="flex items-center justify-center">
-                    <GridScanIcon />
-                    <DialogTitle>{modalConfig.title}</DialogTitle>
-                    <DialogDescription className="text-center">
-                        {modalConfig.description}
-                    </DialogDescription>
-                </DialogHeader>
+        <Modal
+            open={isOpen}
+            onCancel={handleClose}
+            footer={null}
+            destroyOnClose
+            centered
+        >
+            <div className="flex flex-col items-center justify-center mb-6">
+                <GridScanIcon />
+                <h2 className="text-xl font-semibold mb-2">{modalConfig.title}</h2>
+                <p className="text-center text-neutral-500">
+                    {modalConfig.description}
+                </p>
+            </div>
 
-                <div className="flex flex-col items-center space-y-5">
-                    {showVerificationStep ? (
-                        <TwoFactorVerificationStep
-                            onClose={onClose}
-                            onBack={() => setShowVerificationStep(false)}
-                        />
-                    ) : (
-                        <TwoFactorSetupStep
-                            qrCodeSvg={qrCodeSvg}
-                            manualSetupKey={manualSetupKey}
-                            buttonText={modalConfig.buttonText}
-                            onNextStep={handleModalNextStep}
-                            errors={errors}
-                        />
-                    )}
-                </div>
-            </DialogContent>
-        </Dialog>
+            <div className="flex flex-col items-center space-y-5">
+                {showVerificationStep ? (
+                    <TwoFactorVerificationStep
+                        onClose={onClose}
+                        onBack={() => setShowVerificationStep(false)}
+                    />
+                ) : (
+                    <TwoFactorSetupStep
+                        qrCodeSvg={qrCodeSvg}
+                        manualSetupKey={manualSetupKey}
+                        buttonText={modalConfig.buttonText}
+                        onNextStep={handleModalNextStep}
+                        errors={errors}
+                    />
+                )}
+            </div>
+        </Modal>
     );
 }

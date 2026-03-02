@@ -4,8 +4,7 @@ import { useState } from 'react';
 import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Tag, Button } from 'antd';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
@@ -55,7 +54,7 @@ export default function TwoFactor({
                     />
                     {twoFactorEnabled ? (
                         <div className="flex flex-col items-start justify-start space-y-4">
-                            <Badge variant="default">Enabled</Badge>
+                            <Tag color="success">Enabled</Tag>
                             <p className="text-muted-foreground">
                                 With two-factor authentication enabled, you will
                                 be prompted for a secure, random pin during
@@ -73,11 +72,13 @@ export default function TwoFactor({
                                 <Form {...disable.form()}>
                                     {({ processing }) => (
                                         <Button
-                                            variant="destructive"
-                                            type="submit"
-                                            disabled={processing}
+                                            danger
+                                            type="primary"
+                                            htmlType="submit"
+                                            loading={processing}
+                                            icon={<ShieldBan className="w-4 h-4" />}
                                         >
-                                            <ShieldBan /> Disable 2FA
+                                            Disable 2FA
                                         </Button>
                                     )}
                                 </Form>
@@ -85,7 +86,7 @@ export default function TwoFactor({
                         </div>
                     ) : (
                         <div className="flex flex-col items-start justify-start space-y-4">
-                            <Badge variant="destructive">Disabled</Badge>
+                            <Tag color="error">Disabled</Tag>
                             <p className="text-muted-foreground">
                                 When you enable two-factor authentication, you
                                 will be prompted for a secure pin during login.
@@ -97,8 +98,8 @@ export default function TwoFactor({
                                 {hasSetupData ? (
                                     <Button
                                         onClick={() => setShowSetupModal(true)}
+                                        icon={<ShieldCheck className="w-4 h-4" />}
                                     >
-                                        <ShieldCheck />
                                         Continue Setup
                                     </Button>
                                 ) : (
@@ -110,10 +111,10 @@ export default function TwoFactor({
                                     >
                                         {({ processing }) => (
                                             <Button
-                                                type="submit"
-                                                disabled={processing}
+                                                htmlType="submit"
+                                                loading={processing}
+                                                icon={<ShieldCheck className="w-4 h-4" />}
                                             >
-                                                <ShieldCheck />
                                                 Enable 2FA
                                             </Button>
                                         )}

@@ -3,9 +3,7 @@ import { Form, Head } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button, Input } from 'antd';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { email } from '@/routes/password';
@@ -26,10 +24,10 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
             <div className="space-y-6">
                 <Form {...email.form()}>
-                    {({ processing, errors }) => (
+                    {({ processing, errors, data, setData }: any) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <label htmlFor="email" className="text-sm font-medium leading-none">Email address</label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -37,20 +35,24 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     autoComplete="off"
                                     autoFocus
                                     placeholder="email@example.com"
+                                    value={data?.email}
+                                    onChange={(e) => setData && setData('email', e.target.value)}
+                                    size="large"
+                                    status={errors?.email ? 'error' : ''}
                                 />
 
-                                <InputError message={errors.email} />
+                                <InputError message={errors?.email} />
                             </div>
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button
+                                    type="primary"
+                                    htmlType="submit"
                                     className="w-full"
-                                    disabled={processing}
+                                    size="large"
+                                    loading={processing}
                                     data-test="email-password-reset-link-button"
                                 >
-                                    {processing && (
-                                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                                    )}
                                     Email password reset link
                                 </Button>
                             </div>

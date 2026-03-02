@@ -1,6 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { Layout } from 'antd';
 
 type Props = {
     children: ReactNode;
@@ -8,13 +8,10 @@ type Props = {
 };
 
 export function AppShell({ children, variant = 'header' }: Props) {
-    const isOpen = usePage().props.sidebarOpen;
-
     if (variant === 'header') {
         return (
-            <div className="flex min-h-screen w-full flex-col">{children}</div>
+            <Layout className="min-h-screen w-full bg-background">{children}</Layout>
         );
     }
-
-    return <SidebarProvider defaultOpen={isOpen}>{children}</SidebarProvider>;
+    return <Layout className="min-h-screen w-full bg-background" hasSider>{children}</Layout>;
 }

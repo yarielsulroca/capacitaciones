@@ -3,9 +3,7 @@ import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button, Input } from 'antd';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import type { BreadcrumbItem } from '@/types';
@@ -20,8 +18,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Password() {
-    const passwordInput = useRef<HTMLInputElement>(null);
-    const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const passwordInput = useRef<any>(null);
+    const currentPasswordInput = useRef<any>(null);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -59,69 +57,81 @@ export default function Password() {
                         }}
                         className="space-y-6"
                     >
-                        {({ errors, processing, recentlySuccessful }) => (
+                        {({ errors, processing, recentlySuccessful, data, setData }: any) => (
                             <>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="current_password">
+                                    <label htmlFor="current_password" className="text-sm font-medium leading-none">
                                         Current password
-                                    </Label>
+                                    </label>
 
-                                    <Input
+                                    <Input.Password
                                         id="current_password"
                                         ref={currentPasswordInput}
                                         name="current_password"
-                                        type="password"
                                         className="mt-1 block w-full"
                                         autoComplete="current-password"
                                         placeholder="Current password"
+                                        size="large"
+                                        value={data?.current_password}
+                                        onChange={e => setData && setData('current_password', e.target.value)}
+                                        status={errors?.current_password ? 'error' : ''}
                                     />
 
                                     <InputError
-                                        message={errors.current_password}
+                                        message={errors?.current_password}
                                     />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="password">
+                                    <label htmlFor="password" className="text-sm font-medium leading-none">
                                         New password
-                                    </Label>
+                                    </label>
 
-                                    <Input
+                                    <Input.Password
                                         id="password"
                                         ref={passwordInput}
                                         name="password"
-                                        type="password"
                                         className="mt-1 block w-full"
                                         autoComplete="new-password"
                                         placeholder="New password"
+                                        size="large"
+                                        value={data?.password}
+                                        onChange={e => setData && setData('password', e.target.value)}
+                                        status={errors?.password ? 'error' : ''}
                                     />
 
-                                    <InputError message={errors.password} />
+                                    <InputError message={errors?.password} />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="password_confirmation">
+                                    <label htmlFor="password_confirmation" className="text-sm font-medium leading-none">
                                         Confirm password
-                                    </Label>
+                                    </label>
 
-                                    <Input
+                                    <Input.Password
                                         id="password_confirmation"
                                         name="password_confirmation"
-                                        type="password"
                                         className="mt-1 block w-full"
                                         autoComplete="new-password"
                                         placeholder="Confirm password"
+                                        size="large"
+                                        value={data?.password_confirmation}
+                                        onChange={e => setData && setData('password_confirmation', e.target.value)}
+                                        status={errors?.password_confirmation ? 'error' : ''}
                                     />
 
                                     <InputError
-                                        message={errors.password_confirmation}
+                                        message={errors?.password_confirmation}
                                     />
                                 </div>
 
                                 <div className="flex items-center gap-4">
                                     <Button
-                                        disabled={processing}
+                                        type="primary"
+                                        htmlType="submit"
+                                        loading={processing}
                                         data-test="update-password-button"
+                                        size="large"
                                     >
                                         Save password
                                     </Button>

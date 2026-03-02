@@ -9,6 +9,9 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 
+use App\Models\Presupuesto;
+use App\Models\Cdc;
+
 class EnrollmentService
 {
     /**
@@ -34,12 +37,13 @@ class EnrollmentService
      */
     public function updateState(User $user, Curso $curso, string $newStateName, User $modifier)
     {
-        $enrollment = $user->cursos()->where('id_curso', $curso->id)->withPivot('curso_estado')->first();
+        $enrollment = $user->cursos()->where('id_curso', $curso->id)->withPivot('curso_estado', 'id_presupuesto')->first();
         if (! $enrollment) {
             throw new \Exception('Matrícula no encontrada.');
         }
 
         $currentState = EstadoCurso::find($enrollment->pivot?->curso_estado);
+        $currentStateName = $currentState?->estado;
 
         // Core Transition Rule: 7-day rule for cancellation by bosses
         if ($newStateName === 'cancelado' && ($modifier->id !== $user->id)) {
@@ -52,8 +56,20 @@ class EnrollmentService
         }
 
         // Logic for "Incompleto" if matriculado user cancels themselves
-        if ($newStateName === 'cancelado' && $modifier->id === $user->id && $currentState?->estado === 'matriculado') {
+        if ($newStateName === 'cancelado' && $modifier->id === $user->id && $currentStateName === 'matriculado') {
             $newStateName = 'incompleto';
+        }
+
+        // --- Budget Logic Transition ---
+        // 1. If becoming "matriculado" from a non-matriculado state: DEDUCT
+        if ($newStateName === 'matriculado' && $currentStateName !== 'matriculado') {
+            if (!$this->deductBudget($user, $curso, $curso->id_presupuesto)) {
+                throw new \Exception('Presupuesto insuficiente.');
+            }
+        }
+        // 2. If leaving "matriculado" to "cancelado" or "incompleto": RESTORE
+        elseif (in_array($newStateName, ['cancelado', 'incompleto']) && $currentStateName === 'matriculado') {
+            $this->restoreBudget($user, $curso, $enrollment->pivot->id_presupuesto);
         }
 
         $newState = EstadoCurso::where('estado', $newStateName)->firstOrFail();
@@ -61,6 +77,7 @@ class EnrollmentService
         $user->cursos()->updateExistingPivot($curso->id, [
             'curso_estado' => $newState->id,
             'id_user_mod' => $modifier->id,
+            'id_presupuesto' => $curso->id_presupuesto, // Ensure group ID is saved
             'updated_at' => now(),
         ]);
 
@@ -73,4 +90,81 @@ class EnrollmentService
             Mail::to($user->email)->send(new \App\Mail\StatusUpdated($user, $curso, $newStateName));
         }
     }
+
+    /**
+     * Deduct budget for an enrollment.
+     */
+    public function deductBudget(User $user, Curso $curso, ?int $groupId): bool
+    {
+        if ($curso->costo_cero) return true;
+
+        $cdcEntries = $curso->cdcs()->get();
+        if ($cdcEntries->isNotEmpty()) {
+            foreach ($cdcEntries as $cdc) {
+                $monto = (float) $cdc->pivot->monto;
+                if ($monto > 0 && $cdc->id_departamento) {
+                    $query = Presupuesto::where('id_departamento', $cdc->id_departamento);
+                    if ($groupId) {
+                        $query->where('id_grupo', $groupId);
+                    } else {
+                        $query->where('fecha', now()->year);
+                    }
+                    $presupuesto = $query->first();
+                    if (!$presupuesto || !$presupuesto->deduct($monto)) return false;
+                }
+            }
+        } elseif ($curso->id_cdc) {
+            $cdc = Cdc::find($curso->id_cdc);
+            if ($cdc && $cdc->inversion > 0 && $cdc->id_departamento) {
+                $query = Presupuesto::where('id_departamento', $cdc->id_departamento);
+                if ($groupId) {
+                    $query->where('id_grupo', $groupId);
+                } else {
+                    $query->where('fecha', now()->year);
+                }
+                $presupuesto = $query->first();
+                if (!$presupuesto || !$presupuesto->deduct((float) $cdc->inversion)) return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Restore budget for an enrollment.
+     */
+    public function restoreBudget(User $user, Curso $curso, ?int $groupId): void
+    {
+        if ($curso->costo_cero) return;
+
+        $cdcEntries = $curso->cdcs()->get();
+        if ($cdcEntries->isNotEmpty()) {
+            foreach ($cdcEntries as $cdc) {
+                $monto = (float) $cdc->pivot->monto;
+                if ($monto > 0 && $cdc->id_departamento) {
+                    $query = Presupuesto::where('id_departamento', $cdc->id_departamento);
+                    if ($groupId) {
+                        $query->where('id_grupo', $groupId);
+                    } else {
+                        $query->where('fecha', now()->year);
+                    }
+                    $presupuesto = $query->first();
+                    $presupuesto?->restore($monto);
+                }
+            }
+        } elseif ($curso->id_cdc) {
+            $cdc = Cdc::find($curso->id_cdc);
+            if ($cdc && $cdc->inversion > 0 && $cdc->id_departamento) {
+                $query = Presupuesto::where('id_departamento', $cdc->id_departamento);
+                if ($groupId) {
+                    $query->where('id_grupo', $groupId);
+                } else {
+                    $query->where('fecha', now()->year);
+                }
+                $presupuesto = $query->first();
+                $presupuesto?->restore((float) $cdc->inversion);
+            }
+        }
+    }
 }
+

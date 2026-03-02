@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(BusinessDefaultsSeeder::class);
+        $this->call(PresupuestoSeeder::class);
 
         // [LDAP MODE] Users are managed via domain login
         /*

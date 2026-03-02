@@ -42,6 +42,10 @@ export interface Cdc {
     id: number;
     cdc: string;
     descripcion?: string;
+    inversion?: number;
+    id_departamento?: number;
+    departamento?: Departamento;
+    pivot?: { monto: number };
 }
 
 export interface Categoria {
@@ -53,6 +57,25 @@ export interface Categoria {
 export interface ProgramaAsociado {
     id: number;
     nombre: string;
+}
+
+export interface PresupuestoGrupo {
+    id: number;
+    fecha: number;
+    descripcion: string;
+    total_inicial?: number;
+    total_actual?: number;
+}
+
+export interface Presupuesto {
+    id: number;
+    fecha: number;
+    inicial: number;
+    actual: number;
+    id_departamento: number;
+    departamento?: Departamento;
+    id_grupo?: number;
+    grupo?: PresupuestoGrupo;
 }
 
 export interface Curso {
@@ -69,19 +92,53 @@ export interface Curso {
     cdc?: string;
     categoria?: string;
     programa?: string;
-    modalidad?: string;
+    modalidad?: string | Modalidad;
+    id_modalidad?: number;
+    tipo?: string | CursoTipo;
+    id_tipo?: number;
+    mes_pago?: string;
+    twiins?: boolean;
+    jornadas?: string;
+    certificado?: boolean;
+    anio_formacion?: number;
+    mes_formacion?: string;
     instructores?: string;
     rating?: number;
     users_count?: number;
+    cdcs?: Cdc[];
+    users?: User[];
+    id_presupuesto?: number;
+    presupuesto?: PresupuestoGrupo;
+    costo_cero?: boolean;
 }
 
 export type EnrollmentStatus = 'solicitado' | 'procesando' | 'aceptado' | 'matriculado' | 'cancelar' | 'terminado' | 'incompleto' | 'certificado';
 
+export interface Modalidad {
+    id: number;
+    modalidad: string;
+    descripcion?: string;
+}
+
+export interface CursoTipo {
+    id: number;
+    tipo: string;
+}
+
+export interface Proveedor {
+    id: number;
+    provedor: string;
+    email?: string;
+    telefono?: string;
+}
+
 export interface Enrollment {
     id: number;
     id_user: number;
+    user?: User;
     id_curso: number;
     curso_estado: number;
     status_label?: EnrollmentStatus;
     curso?: Curso;
+    id_presupuesto?: number;
 }

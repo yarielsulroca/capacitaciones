@@ -1,120 +1,143 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import AuthLayout from '@/layouts/auth-layout';
-import { register } from '@/routes';
+import { Button, Input } from 'antd';
+import AppLogoIcon from '@/components/app-logo-icon';
 import { store } from '@/routes/login';
-import { request } from '@/routes/password';
+import { Lock, Mail } from 'lucide-react';
 
 type Props = {
     status?: string;
-    canResetPassword: boolean;
-    canRegister: boolean;
 };
 
-export default function Login({
-    status,
-    canResetPassword,
-    canRegister,
-}: Props) {
+export default function Login({ status }: Props) {
     return (
-        <AuthLayout
-            title="Log in to your account"
-            description="Enter your email and password below to log in"
-        >
-            <Head title="Log in" />
+        <div className="flex min-h-screen">
+            <Head title="Iniciar Sesión — Tuteur" />
 
-            <Form
-                {...store.form()}
-                resetOnSuccess={['password']}
-                className="flex flex-col gap-6"
-            >
-                {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
+            {/* Left panel — branding */}
+            <div className="hidden lg:flex lg:w-[45%] flex-col justify-between bg-linear-to-br from-tuteur-red to-[#8a0b1f] p-12 text-white relative overflow-hidden">
+                {/* Background decoration */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
-                            <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={request().url}
-                                            className="ml-auto text-sm"
-                                            tabIndex={5}
-                                        >
-                                            Forgot password?
-                                        </TextLink>
-                                    )}
-                                </div>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    name="password"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="current-password"
-                                    placeholder="Password"
-                                />
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
-                                <Label htmlFor="remember">Remember me</Label>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="mt-4 w-full"
-                                tabIndex={4}
-                                disabled={processing}
-                                data-test="login-button"
-                            >
-                                {processing && <Spinner />}
-                                Log in
-                            </Button>
-                        </div>
-
-                        {canRegister && (
-                            <div className="text-center text-sm text-muted-foreground">
-                                Don't have an account?{' '}
-                                <TextLink href={register().url} tabIndex={5}>
-                                    Sign up
-                                </TextLink>
-                            </div>
-                        )}
-                    </>
-                )}
-            </Form>
-
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
+                <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-2">
+                        <AppLogoIcon className="size-10 fill-current text-white" />
+                        <span className="text-2xl font-black tracking-tight">Tuteur</span>
+                    </div>
+                    <p className="text-white/60 text-sm font-medium">Plataforma de Capacitaciones</p>
                 </div>
-            )}
-        </AuthLayout>
+
+                <div className="relative z-10 space-y-6">
+                    <h2 className="text-4xl font-extrabold leading-tight">
+                        Potencia tu<br />
+                        <span className="text-white/90">Crecimiento Profesional</span>
+                    </h2>
+                    <p className="text-white/70 text-lg leading-relaxed max-w-md">
+                        Accede a tu plataforma de capacitación, gestiona tus cursos y obtén tus certificados con tus credenciales de dominio.
+                    </p>
+                </div>
+
+                <div className="relative z-10">
+                    <p className="text-white/40 text-xs">
+                        &copy; {new Date().getFullYear()} Tuteur S.A.C.I.F.I.A. Todos los derechos reservados.
+                    </p>
+                </div>
+            </div>
+
+            {/* Right panel — login form */}
+            <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-white">
+                {/* Mobile logo */}
+                <div className="lg:hidden mb-8 flex flex-col items-center gap-2">
+                    <AppLogoIcon className="size-12 fill-current text-tuteur-red" />
+                    <span className="text-xl font-black text-tuteur-grey tracking-tight">Tuteur</span>
+                </div>
+
+                <div className="w-full max-w-md">
+                    <div className="mb-8">
+                        <h1 className="text-2xl font-bold text-tuteur-grey">Iniciar Sesión</h1>
+                        <p className="text-tuteur-grey-mid mt-1 text-sm">
+                            Ingresa con tus credenciales de dominio corporativo.
+                        </p>
+                    </div>
+
+                    <Form
+                        {...store.form()}
+                        resetOnSuccess={['password']}
+                        className="flex flex-col gap-5"
+                    >
+                        {({ processing, errors }: any) => (
+                            <>
+                                <div className="space-y-5">
+                                    <div className="space-y-2">
+                                        <label htmlFor="email" className="text-sm font-semibold text-tuteur-grey">
+                                            Correo electrónico
+                                        </label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            name="email"
+                                            required
+                                            autoFocus
+                                            tabIndex={1}
+                                            autoComplete="email"
+                                            placeholder="tu.nombre@tuteur.com"
+                                            size="large"
+                                            prefix={<Mail className="h-4 w-4 text-tuteur-grey-mid" />}
+                                            status={errors?.email ? 'error' : ''}
+                                            className="rounded-lg"
+                                        />
+                                        <InputError message={errors?.email} />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label htmlFor="password" className="text-sm font-semibold text-tuteur-grey">
+                                            Contraseña
+                                        </label>
+                                        <Input.Password
+                                            id="password"
+                                            name="password"
+                                            required
+                                            tabIndex={2}
+                                            autoComplete="current-password"
+                                            placeholder="••••••••"
+                                            size="large"
+                                            prefix={<Lock className="h-4 w-4 text-tuteur-grey-mid" />}
+                                            status={errors?.password ? 'error' : ''}
+                                            className="rounded-lg"
+                                        />
+                                        <InputError message={errors?.password} />
+                                    </div>
+
+                                    <Button
+                                        type="primary"
+                                        htmlType="submit"
+                                        className="w-full h-12 text-base font-bold rounded-lg border-none shadow-lg shadow-red-100"
+                                        style={{ backgroundColor: '#c8102e', borderColor: '#c8102e' }}
+                                        tabIndex={3}
+                                        loading={processing}
+                                        data-test="login-button"
+                                    >
+                                        Iniciar Sesión
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </Form>
+
+                    {status && (
+                        <div className="mt-4 text-center text-sm font-medium text-tuteur-grey bg-gray-50 p-3 rounded-lg">
+                            {status}
+                        </div>
+                    )}
+
+                    <div className="mt-8 text-center">
+                        <p className="text-xs text-tuteur-grey-mid">
+                            La autenticación se realiza mediante Active Directory (LDAP).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }

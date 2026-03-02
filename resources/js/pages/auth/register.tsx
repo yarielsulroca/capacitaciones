@@ -1,10 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { Button, Input } from 'antd';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 
@@ -30,7 +27,7 @@ export default function Register() {
             <form onSubmit={submit} className="flex flex-col gap-6">
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Correo Electrónico</Label>
+                        <label htmlFor="email" className="text-sm font-medium leading-none">Correo Electrónico</label>
                         <Input
                             id="email"
                             type="email"
@@ -38,41 +35,46 @@ export default function Register() {
                             tabIndex={1}
                             autoComplete="email"
                             name="email"
+                            size="large"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
                             placeholder="usuario@tuteur.com.ar"
+                            status={errors.email ? 'error' : ''}
                         />
                         <InputError message={errors.email} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password">Contraseña de Dominio</Label>
-                        <Input
+                        <label htmlFor="password" className="text-sm font-medium leading-none">Contraseña de Dominio</label>
+                        <Input.Password
                             id="password"
-                            type="password"
                             required
                             tabIndex={2}
                             autoComplete="new-password"
                             name="password"
+                            size="large"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             placeholder="••••••••"
+                            status={errors.password ? 'error' : ''}
                         />
                         <InputError message={errors.password} />
                     </div>
 
-                    <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                    <div className="rounded-md p-3 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
                         <p><strong>Nota:</strong> Tu nombre, cargo, área y departamento se sincronizarán automáticamente desde el Active Directory después de la validación.</p>
                     </div>
 
                     <Button
-                        type="submit"
-                        className="mt-2 w-full bg-[#E30613] hover:bg-[#c40510]"
+                        type="primary"
+                        htmlType="submit"
+                        className="mt-2 w-full"
+                        style={{ backgroundColor: '#E30613' }}
+                        size="large"
                         tabIndex={3}
-                        disabled={processing}
+                        loading={processing}
                         data-test="register-user-button"
                     >
-                        {processing && <Spinner />}
                         Validar y Registrar
                     </Button>
                 </div>

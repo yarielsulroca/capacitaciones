@@ -21,11 +21,32 @@ class User extends Authenticatable
         'role',
         'cargo',
         'area',
+        'pais',
+        'ciudad',
+        'oficina',
+        'id_empresa',
+        'id_area',
+        'id_jefe',
     ];
 
     public function departamento(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Departamento::class, 'id_departamento');
+    }
+
+    public function empresa(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Empresa::class, 'id_empresa');
+    }
+
+    public function areaRel(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Area::class, 'id_area');
+    }
+
+    public function jefe(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'id_jefe');
     }
 
     public function cursos(): \Illuminate\Database\Eloquent\Relations\BelongsToMany

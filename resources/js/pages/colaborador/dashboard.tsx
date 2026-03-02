@@ -117,7 +117,7 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                         </div>
                     </button>
 
-                    {/* Matriculado */}
+                    {/* Inscripto */}
                     <button
                         onClick={() => handleFilter('matriculado')}
                         className={cn(
@@ -130,7 +130,7 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                                 <GraduationCap size={20} />
                             </div>
                             <h3 className="text-xl font-bold text-slate-900">{stats.matriculado}</h3>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Matriculado</p>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Inscripto</p>
                         </div>
                     </button>
 

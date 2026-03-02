@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('cdcs', function (Blueprint $table) {
             $table->id();
             $table->string('cdc');
+            $table->decimal('inversion', 15, 2)->default(0);
             $table->text('descripcion')->nullable();
             $table->timestamps();
         });
