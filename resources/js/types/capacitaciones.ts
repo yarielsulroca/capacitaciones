@@ -65,6 +65,7 @@ export interface PresupuestoGrupo {
     descripcion: string;
     total_inicial?: number;
     total_actual?: number;
+    presupuestos?: Presupuesto[];
 }
 
 export interface Presupuesto {
@@ -110,6 +111,7 @@ export interface Curso {
     id_presupuesto?: number;
     presupuesto?: PresupuestoGrupo;
     costo_cero?: boolean;
+    publicado?: boolean;
 }
 
 export type EnrollmentStatus = 'solicitado' | 'procesando' | 'aceptado' | 'matriculado' | 'cancelar' | 'terminado' | 'incompleto' | 'certificado';

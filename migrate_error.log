@@ -1,0 +1,199 @@
+
+  Dropping all tables  237.50ms DONE
+
+   INFO  Preparing database.  
+
+  Creating migration table  62.51ms DONE
+
+   INFO  Running migrations.  
+
+  0001_01_01_000000_create_users_table  266.75ms DONE
+  0001_01_01_000001_create_cache_table  181.46ms DONE
+  0001_01_01_000002_create_jobs_table  166.39ms DONE
+  2025_08_14_170933_add_two_factor_columns_to_users_table  107.18ms DONE
+  2026_02_23_020549_create_empresas_table  65.57ms DONE
+  2026_02_23_020552_create_areas_table  85.48ms DONE
+  2026_02_23_020554_create_departamentos_table  86.42ms DONE
+  2026_02_23_020556_add_department_id_and_role_to_users_table  122.54ms DONE
+  2026_02_23_020559_create_habilidads_table  64.68ms DONE
+  2026_02_23_020602_create_cdcs_table  66.35ms DONE
+  2026_02_23_020605_create_categorias_table  61.99ms DONE
+  2026_02_23_020612_create_cursos_table  95.65ms DONE
+  2026_02_23_020614_create_estado_curso_table  49.13ms DONE
+  2026_02_23_020617_create_cursos_users_table  152.53ms DONE
+  2026_02_23_020620_create_capacitaciones_table  98.81ms DONE
+  2026_02_23_022045_create_personal_access_tokens_table  127.68ms DONE
+  2026_02_23_031729_add_cargo_and_area_to_users_table  79.80ms DONE
+  2026_02_23_125222_create_presupuestos_table  76.23ms DONE
+  2026_02_23_125230_create_proveedors_table  59.38ms DONE
+  2026_02_23_125236_create_modalidads_table  69.22ms DONE
+  2026_02_24_111932_create_programas_asociados_table  57.86ms DONE
+  2026_02_24_111951_add_programa_asociado_and_publicado_to_cursos_table  103.95ms DONE
+  2026_02_24_125043_add_proveedor_id_to_cursos_table  95.90ms DONE
+  2026_02_24_130220_rename_nombre_to_provedor_in_proveedors_table  88.07ms FAIL
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong. (Connection: sqlsrv, Host: 10.128.225.6, Port: 1433, Database: Capacitaciones, SQL: sp_rename N'"proveedors"."nombre"', "provedor", N'COLUMN')
+
+  at vendor\laravel\framework\src\Illuminate\Database\Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+  1   vendor\laravel\framework\src\Illuminate\Database\Connection.php:584
+      PDOException::("SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.")
+
+  2   vendor\laravel\framework\src\Illuminate\Database\Connection.php:584
+      PDOStatement::execute()
+
+  3   vendor\laravel\framework\src\Illuminate\Database\Connection.php:827
+      Illuminate\Database\Connection::Illuminate\Database\{closure}()
+
+  4   vendor\laravel\framework\src\Illuminate\Database\Connection.php:794
+      Illuminate\Database\Connection::runQueryCallback()
+
+  5   vendor\laravel\framework\src\Illuminate\Database\Connection.php:573
+      Illuminate\Database\Connection::run()
+
+  6   vendor\laravel\framework\src\Illuminate\Database\Schema\Blueprint.php:121
+      Illuminate\Database\Connection::statement()
+
+  7   vendor\laravel\framework\src\Illuminate\Database\Schema\Builder.php:686
+      Illuminate\Database\Schema\Blueprint::build()
+
+  8   vendor\laravel\framework\src\Illuminate\Database\Schema\Builder.php:494
+      Illuminate\Database\Schema\Builder::build()
+
+  9   vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:363
+      Illuminate\Database\Schema\Builder::table()
+
+  10  database\migrations\2026_02_24_130220_rename_nombre_to_provedor_in_proveedors_table.php:14
+      Illuminate\Support\Facades\Facade::__callStatic()
+
+  11  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:517
+      Illuminate\Database\Migrations\Migration@anonymous\C:\www\capacitaciones2\database\migrations\2026_02_24_130220_rename_nombre_to_provedor_in_proveedors_table.php:7$15e::up()
+
+  12  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:442
+      Illuminate\Database\Migrations\Migrator::runMethod()
+
+  13  vendor\laravel\framework\src\Illuminate\Database\Concerns\ManagesTransactions.php:35
+      Illuminate\Database\Migrations\Migrator::Illuminate\Database\Migrations\{closure}()
+
+  14  vendor\laravel\framework\src\Illuminate\Database\SqlServerConnection.php:38
+      Illuminate\Database\Connection::transaction()
+
+  15  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:450
+      Illuminate\Database\SqlServerConnection::transaction()
+
+  16  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:253
+      Illuminate\Database\Migrations\Migrator::runMigration()
+
+  17  vendor\laravel\framework\src\Illuminate\Console\View\Components\Task.php:41
+      Illuminate\Database\Migrations\Migrator::Illuminate\Database\Migrations\{closure}()
+
+  18  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:814
+      Illuminate\Console\View\Components\Task::render()
+
+  19  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:253
+      Illuminate\Database\Migrations\Migrator::write()
+
+  20  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:211
+      Illuminate\Database\Migrations\Migrator::runUp()
+
+  21  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:138
+      Illuminate\Database\Migrations\Migrator::runPending()
+
+  22  vendor\laravel\framework\src\Illuminate\Database\Console\Migrations\MigrateCommand.php:116
+      Illuminate\Database\Migrations\Migrator::run()
+
+  23  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:671
+      Illuminate\Database\Console\Migrations\MigrateCommand::Illuminate\Database\Console\Migrations\{closure}()
+
+  24  vendor\laravel\framework\src\Illuminate\Database\Console\Migrations\MigrateCommand.php:109
+      Illuminate\Database\Migrations\Migrator::usingConnection()
+
+  25  vendor\laravel\framework\src\Illuminate\Database\Console\Migrations\MigrateCommand.php:88
+      Illuminate\Database\Console\Migrations\MigrateCommand::runMigrations()
+
+  26  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+      Illuminate\Database\Console\Migrations\MigrateCommand::handle()
+
+  27  vendor\laravel\framework\src\Illuminate\Container\Util.php:43
+      Illuminate\Container\BoundMethod::Illuminate\Container\{closure}()
+
+  28  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:96
+      Illuminate\Container\Util::unwrapIfClosure()
+
+  29  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+      Illuminate\Container\BoundMethod::callBoundMethod()
+
+  30  vendor\laravel\framework\src\Illuminate\Container\Container.php:799
+      Illuminate\Container\BoundMethod::call()
+
+  31  vendor\laravel\framework\src\Illuminate\Console\Command.php:211
+      Illuminate\Container\Container::call()
+
+  32  vendor\symfony\console\Command\Command.php:341
+      Illuminate\Console\Command::execute()
+
+  33  vendor\laravel\framework\src\Illuminate\Console\Command.php:180
+      Symfony\Component\Console\Command\Command::run()
+
+  34  vendor\laravel\framework\src\Illuminate\Console\Concerns\CallsCommands.php:68
+      Illuminate\Console\Command::run()
+
+  35  vendor\laravel\framework\src\Illuminate\Console\Concerns\CallsCommands.php:29
+      Illuminate\Console\Command::runCommand()
+
+  36  vendor\laravel\framework\src\Illuminate\Database\Console\Migrations\FreshCommand.php:81
+      Illuminate\Console\Command::call()
+
+  37  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+      Illuminate\Database\Console\Migrations\FreshCommand::handle()
+
+  38  vendor\laravel\framework\src\Illuminate\Container\Util.php:43
+      Illuminate\Container\BoundMethod::Illuminate\Container\{closure}()
+
+  39  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:96
+      Illuminate\Container\Util::unwrapIfClosure()
+
+  40  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+      Illuminate\Container\BoundMethod::callBoundMethod()
+
+  41  vendor\laravel\framework\src\Illuminate\Container\Container.php:799
+      Illuminate\Container\BoundMethod::call()
+
+  42  vendor\laravel\framework\src\Illuminate\Console\Command.php:211
+      Illuminate\Container\Container::call()
+
+  43  vendor\symfony\console\Command\Command.php:341
+      Illuminate\Console\Command::execute()
+
+  44  vendor\laravel\framework\src\Illuminate\Console\Command.php:180
+      Symfony\Component\Console\Command\Command::run()
+
+  45  vendor\symfony\console\Application.php:1102
+      Illuminate\Console\Command::run()
+
+  46  vendor\symfony\console\Application.php:356
+      Symfony\Component\Console\Application::doRunCommand()
+
+  47  vendor\symfony\console\Application.php:195
+      Symfony\Component\Console\Application::doRun()
+
+  48  vendor\laravel\framework\src\Illuminate\Foundation\Console\Kernel.php:198
+      Symfony\Component\Console\Application::run()
+
+  49  vendor\laravel\framework\src\Illuminate\Foundation\Application.php:1235
+      Illuminate\Foundation\Console\Kernel::handle()
+
+  50  artisan:16
+      Illuminate\Foundation\Application::handleCommand()
+

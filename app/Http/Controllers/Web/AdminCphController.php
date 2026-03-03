@@ -137,6 +137,8 @@ class AdminCphController extends Controller
             'metadata' => [
                 'habilidades'  => Habilidad::all(),
                 'categorias'   => Categoria::all(),
+                'areas'        => \App\Models\Area::all(),
+                'departamentos' => \App\Models\Departamento::with('area')->get(),
                 'cdcs'         => Cdc::with('departamento.area')->get(),
                 'proveedores'  => \App\Models\Proveedor::all(),
                 'modalidades'  => \App\Models\Modalidad::all(),
@@ -197,6 +199,41 @@ class AdminCphController extends Controller
             ])->orderBy('inicio', 'desc')->get(),
             'cursos_tipos'        => \App\Models\CursoTipo::all(),
             'modalidades'         => \App\Models\Modalidad::all(),
+        ]);
+    }
+
+    public function metrics()
+    {
+        $cursos = \App\Models\Curso::with([
+            'cdcs.departamento.area',
+            'users.departamento.area',
+            'habilidad',
+            'categoria',
+            'tipo',
+            'modalidad',
+            'proveedor',
+        ])
+            ->withCount('users')
+            ->orderBy('inicio', 'desc')
+            ->get();
+
+        $presupuestoGrupos = \App\Models\PresupuestoGrupo::with('presupuestos.departamento.area')
+            ->orderBy('fecha', 'desc')
+            ->get();
+
+        return Inertia::render('admincph/metrics', [
+            'cursos'       => $cursos,
+            'presupuestoGrupos' => $presupuestoGrupos,
+            'areas'        => Area::all(),
+            'departamentos' => Departamento::with('area')->get(),
+            'users'        => User::with('departamento.area')->whereNotNull('id_departamento')->count(),
+            'stats' => [
+                'totalCursos'     => $cursos->count(),
+                'totalInscritos'  => $cursos->sum('users_count'),
+                'totalCosto'      => $cursos->sum('costo'),
+                'totalPresupuesto' => $presupuestoGrupos->flatMap->presupuestos->sum('inicial'),
+                'totalGastado'    => $presupuestoGrupos->flatMap->presupuestos->sum('inicial') - $presupuestoGrupos->flatMap->presupuestos->sum('actual'),
+            ],
         ]);
     }
 }

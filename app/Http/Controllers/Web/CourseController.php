@@ -16,33 +16,13 @@ use Inertia\Inertia;
 class CourseController extends Controller
 {
     public function __construct(
-        protected EnrollmentService $enrollmentService
+        protected EnrollmentService $enrollmentService,
+        protected \App\Services\CourseService $courseService
     ) {}
 
     public function index(Request $request)
     {
-        $query = Curso::query()->with(['habilidad', 'categoria', 'programa', 'proveedor', 'cdc']);
-
-        // Visibility filter: only published for non-admins
-        if ($request->user()->role !== 'admin') {
-            $query->where('publicado', 1);
-        }
-
-        if ($request->filled('search')) {
-            $query->where('nombre', 'like', '%'.$request->search.'%');
-        }
-
-        if ($request->filled('habilidad_id') && $request->habilidad_id !== 'null') {
-            $query->where('habilidad_id', $request->habilidad_id);
-        }
-
-        if ($request->filled('categoria_id') && $request->categoria_id !== 'null') {
-            $query->where('categoria_id', $request->categoria_id);
-        }
-
-        if ($request->filled('cdc_id') && $request->cdc_id !== 'null') {
-            $query->where('id_cdc', $request->cdc_id);
-        }
+        $query = $this->courseService->getFilteredCoursesQuery($request, $request->user()->role === 'admin');
 
         $courses = $query->latest()->paginate($request->get('limit', 15));
 
@@ -66,6 +46,11 @@ class CourseController extends Controller
 
     public function show(Request $request, Curso $curso)
     {
+        // Visibility check
+        if ($request->user()->role !== 'admin' && !$curso->publicado) {
+            abort(404);
+        }
+
         $curso->load(['habilidad', 'categoria']);
 
         $enrollment = $request->user()?->cursos()->where('id_curso', $curso->id)->first();

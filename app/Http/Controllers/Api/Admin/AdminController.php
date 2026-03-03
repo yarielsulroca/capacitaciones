@@ -34,6 +34,7 @@ class AdminController extends Controller
             'modalidades'  => \App\Models\Modalidad::all(),
             'cursos_tipos' => \App\Models\CursoTipo::all(),
             'users'        => User::with('departamento.area')->get(),
+            'presupuestos' => \App\Models\PresupuestoGrupo::with('presupuestos')->get(),
             'roles'        => ['user', 'jefe_area', 'jefe_general', 'admin'],
         ]);
     }
@@ -188,16 +189,7 @@ class AdminController extends Controller
 
         $course = Curso::create($courseData);
 
-        // Sync CDCs pivot
-        if (!empty($cdcItems)) {
-            $syncData = [];
-            foreach ($cdcItems as $item) {
-                $syncData[$item['cdc_id']] = ['monto' => $item['monto']];
-            }
-            $course->cdcs()->sync($syncData);
-        }
-
-        // Enroll selected users and deduct from all related CDC budgets
+        // We will sync users first, so we know who is enrolled, then sync the CDC fractions
         if ($request->has('selected_users') && is_array($request->selected_users)) {
             $estadoMatriculado = \App\Models\EstadoCurso::where('estado', 'matriculado')->first();
             if ($estadoMatriculado) {
@@ -205,6 +197,11 @@ class AdminController extends Controller
                     $this->attachUserToCourse($course, $userId, $estadoMatriculado->id, $request->user()?->id);
                 }
             }
+        }
+
+        // Sync CDCs pivot and deduct global budget (distributing among users if any)
+        if (!empty($cdcItems)) {
+            $this->distributeCdcFractions($course, $cdcItems, true);
         }
 
         return redirect()->back();
@@ -247,15 +244,27 @@ class AdminController extends Controller
         $cdcItems = $validated['cdc_items'] ?? null;
         unset($validated['cdc_items']);
 
+        $oldCostoCero = $course->costo_cero;
+        $oldPresupuesto = $course->id_presupuesto;
+        $oldCdcs = $course->cdcs()->get(); // fetch relation before update
+
+        // 1. REFUND old amounts
+        if ($oldPresupuesto && !$oldCostoCero) {
+            foreach ($oldCdcs as $oldCdc) {
+                $monto = (float) $oldCdc->pivot->monto;
+                if ($monto > 0 && $oldCdc->id_departamento) {
+                    $presupuesto = \App\Models\Presupuesto::where('id_departamento', $oldCdc->id_departamento)
+                        ->where('id_grupo', $oldPresupuesto)
+                        ->first();
+                    $presupuesto?->restore($monto);
+                }
+            }
+        }
+
         $course->update($validated);
 
-        // Sync CDCs pivot if provided
         if ($cdcItems !== null) {
-            $syncData = [];
-            foreach ($cdcItems as $item) {
-                $syncData[$item['cdc_id']] = ['monto' => $item['monto']];
-            }
-            $course->cdcs()->sync($syncData);
+            $this->distributeCdcFractions($course, $cdcItems, true);
         }
 
         return redirect()->back();
@@ -266,6 +275,25 @@ class AdminController extends Controller
      */
     public function destroyCourse(Curso $course)
     {
+        // Restore budget before delete (using grouped original totals)
+        if ($course->id_presupuesto && !$course->costo_cero) {
+            $totals = \Illuminate\Support\Facades\DB::table('cdc_curso')
+                ->where('curso_id', $course->id)
+                ->selectRaw('cdc_id, id_departamento, SUM(monto) as total')
+                ->groupBy('cdc_id', 'id_departamento')
+                ->get();
+
+            foreach ($totals as $oldCdc) {
+                $monto = (float) $oldCdc->total;
+                if ($monto > 0 && $oldCdc->id_departamento) {
+                    $presupuesto = \App\Models\Presupuesto::where('id_departamento', $oldCdc->id_departamento)
+                        ->where('id_grupo', $course->id_presupuesto)
+                        ->first();
+                    $presupuesto?->restore($monto);
+                }
+            }
+        }
+
         $course->delete();
         return redirect()->back();
     }
@@ -311,7 +339,7 @@ class AdminController extends Controller
         $user             = User::findOrFail($validated['user_id']);
         $estadoMatriculado = \App\Models\EstadoCurso::where('estado', 'matriculado')->firstOrFail();
 
-        // If already enrolled, use updateState to handle potential budget transitions
+        // If already enrolled, use updateState
         if ($course->users()->where('id_user', $user->id)->exists()) {
             try {
                 app(\App\Services\EnrollmentService::class)->updateState(
@@ -324,37 +352,22 @@ class AdminController extends Controller
                 return response()->json(['message' => $e->getMessage()], 422);
             }
         } else {
-            $presupuestoId = $this->attachUserToCourse($course, $user->id, $estadoMatriculado->id, $request->user()->id);
-            if ($presupuestoId === false) {
-                return response()->json([
-                    'message' => 'Presupuesto insuficiente.',
-                ], 422);
-            }
+            $this->attachUserToCourse($course, $user->id, $estadoMatriculado->id, $request->user()->id);
         }
 
         return response()->json(['message' => 'Colaborador matriculado correctamente.']);
     }
 
     /**
-     * Attach a user to a course and deduct budget if applicable.
-     * Returns the presupuesto ID used (or null if no CDC), or false if budget insufficient.
+     * Attach a user to a course.
      */
-    private function attachUserToCourse(Curso $course, int $userId, int $estadoId, ?int $modUserId): int|null|false
+    private function attachUserToCourse(Curso $course, int $userId, int $estadoId, ?int $modUserId): void
     {
-        $service = app(\App\Services\EnrollmentService::class);
-
-        // Use the service to check/deduct budget
-        if (!$service->deductBudget(User::find($userId), $course, $course->id_presupuesto)) {
-            return false;
-        }
-
         $course->users()->attach($userId, [
-            'curso_estado'  => $estadoId,
-            'id_user_mod'   => $modUserId,
+            'curso_estado'   => $estadoId,
+            'id_user_mod'    => $modUserId,
             'id_presupuesto' => $course->id_presupuesto,
         ]);
-
-        return $course->id_presupuesto;
     }
 
     /**
@@ -364,17 +377,11 @@ class AdminController extends Controller
     {
         $enrollment = \App\Models\CursoUser::findOrFail($id);
         $course = Curso::find($enrollment->id_curso);
-        $user = User::find($enrollment->id_user);
-
-        if ($course && $user) {
-            // Restore budget if they were matriculado
-            $estado = \App\Models\EstadoCurso::find($enrollment->curso_estado);
-            if ($estado && $estado->estado === 'matriculado') {
-                app(\App\Services\EnrollmentService::class)->restoreBudget($user, $course, $enrollment->id_presupuesto);
-            }
-        }
 
         $enrollment->delete();
+
+        // Recalculate fractions for remaining participants
+        $this->recalculateExistingCdcFractions($course);
 
         return redirect()->back();
     }
@@ -527,6 +534,8 @@ class AdminController extends Controller
                 'inicial'          => 'sometimes|numeric|min:0',
                 'actual'           => 'sometimes|numeric|min:0',
                 'id_departamento'  => 'sometimes|nullable|exists:departamentos,id',
+                'id_grupo'         => 'sometimes|nullable|exists:presupuesto_grupos,id',
+                'descripcion'      => 'nullable|string|max:500',
             ],
             'cursos' => [
                 'nombre'           => 'required|string|max:255',
@@ -578,4 +587,75 @@ class AdminController extends Controller
 
         return response()->json($enrollments);
     }
+
+    private function distributeCdcFractions(Curso $course, array $cdcItems, bool $deductBudget = false): void
+    {
+        $users = $course->users()->pluck('users.id')->toArray();
+        $userCount = count($users);
+        $syncData = [];
+
+        foreach ($cdcItems as $item) {
+            $cdcId = $item['cdc_id'] ?? $item['id'] ?? null;
+            if (!$cdcId) continue;
+
+            $totalMonto = (float) $item['monto'];
+            $cdcRecord = \App\Models\Cdc::find($cdcId);
+            if (!$cdcRecord) continue;
+
+            // Optional deduction
+            if ($deductBudget && $course->id_presupuesto && !$course->costo_cero && $totalMonto > 0 && $cdcRecord->id_departamento) {
+                $presupuesto = \App\Models\Presupuesto::where('id_departamento', $cdcRecord->id_departamento)
+                    ->where('id_grupo', $course->id_presupuesto)
+                    ->first();
+                $presupuesto?->deduct($totalMonto);
+            }
+
+            if ($userCount === 0) {
+                // If nobody is enrolled, keep the full amount under no user
+                $syncData[] = [
+                    'curso_id' => $course->id,
+                    'cdc_id' => $cdcId,
+                    'user_id' => null,
+                    'id_departamento' => $cdcRecord->id_departamento,
+                    'monto' => $totalMonto,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            } else {
+                // Divide equally
+                $fraction = $totalMonto / $userCount;
+                foreach ($users as $uId) {
+                    $syncData[] = [
+                        'curso_id' => $course->id,
+                        'cdc_id' => $cdcId,
+                        'user_id' => $uId,
+                        'id_departamento' => $cdcRecord->id_departamento,
+                        'monto' => $fraction,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+        }
+
+        \Illuminate\Support\Facades\DB::table('cdc_curso')->where('curso_id', $course->id)->delete();
+        if (!empty($syncData)) {
+            \Illuminate\Support\Facades\DB::table('cdc_curso')->insert($syncData);
+        }
+    }
+
+    private function recalculateExistingCdcFractions(Curso $course): void
+    {
+        $totals = \Illuminate\Support\Facades\DB::table('cdc_curso')
+            ->where('curso_id', $course->id)
+            ->selectRaw('cdc_id, SUM(monto) as total')
+            ->groupBy('cdc_id')
+            ->get();
+
+        $cdcItems = $totals->map(fn($t) => ['cdc_id' => $t->cdc_id, 'monto' => $t->total])->toArray();
+        if (!empty($cdcItems)) {
+            $this->distributeCdcFractions($course, $cdcItems, false);
+        }
+    }
 }
+

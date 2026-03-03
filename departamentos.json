@@ -1,0 +1,824 @@
+[
+    {
+        "id": 73,
+        "nombre": "Validaciones",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:34.583000Z",
+        "updated_at": "2026-03-02T17:09:46.283000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 74,
+        "nombre": "Contorl de Calidad",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:12:34.777000Z",
+        "updated_at": "2026-03-02T17:02:21.603000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 75,
+        "nombre": "Desarrollo",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:34.927000Z",
+        "updated_at": "2026-03-02T17:09:46.780000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 76,
+        "nombre": "Comercial - Lacteos",
+        "descripcion": null,
+        "id_area": "269",
+        "created_at": "2026-02-26T22:12:35.033000Z",
+        "updated_at": "2026-03-02T17:09:26.823000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 269,
+            "nombre": "Gerencia Alimentos",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.397000Z",
+            "updated_at": "2026-03-02T17:03:17.397000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 77,
+        "nombre": "Estructura Administrativa Lacteos",
+        "descripcion": null,
+        "id_area": "269",
+        "created_at": "2026-02-26T22:12:35.243000Z",
+        "updated_at": "2026-03-02T17:09:13.550000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 269,
+            "nombre": "Gerencia Alimentos",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.397000Z",
+            "updated_at": "2026-03-02T17:03:17.397000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 78,
+        "nombre": "Alimentos",
+        "descripcion": null,
+        "id_area": "269",
+        "created_at": "2026-02-26T22:12:35.393000Z",
+        "updated_at": "2026-03-02T17:09:45.160000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 269,
+            "nombre": "Gerencia Alimentos",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.397000Z",
+            "updated_at": "2026-03-02T17:03:17.397000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 79,
+        "nombre": "Enfermedades Huerfanas",
+        "descripcion": null,
+        "id_area": "270",
+        "created_at": "2026-02-26T22:12:35.550000Z",
+        "updated_at": "2026-03-02T17:09:46.070000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 270,
+            "nombre": "Gerencia Comercial",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.820000Z",
+            "updated_at": "2026-03-02T17:03:17.820000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 80,
+        "nombre": "Neurolog\u00eda, Nefrolog\u00eda y Autoinmunes",
+        "descripcion": null,
+        "id_area": "270",
+        "created_at": "2026-02-26T22:12:35.770000Z",
+        "updated_at": "2026-03-02T17:09:30.663000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 270,
+            "nombre": "Gerencia Comercial",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.820000Z",
+            "updated_at": "2026-03-02T17:03:17.820000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 81,
+        "nombre": "Estructura de Planta",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:12:35.880000Z",
+        "updated_at": "2026-03-02T17:02:21.603000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 82,
+        "nombre": "Oncolog\u00eda y Hematolog\u00eda",
+        "descripcion": null,
+        "id_area": "270",
+        "created_at": "2026-02-26T22:12:36.133000Z",
+        "updated_at": "2026-03-02T17:09:42.900000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 270,
+            "nombre": "Gerencia Comercial",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.820000Z",
+            "updated_at": "2026-03-02T17:03:17.820000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 83,
+        "nombre": "Acceso y Ventas",
+        "descripcion": null,
+        "id_area": "270",
+        "created_at": "2026-02-26T22:12:36.310000Z",
+        "updated_at": "2026-03-02T17:09:45.680000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 270,
+            "nombre": "Gerencia Comercial",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.820000Z",
+            "updated_at": "2026-03-02T17:03:17.820000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 84,
+        "nombre": "Estructura Comercial",
+        "descripcion": null,
+        "id_area": "270",
+        "created_at": "2026-02-26T22:12:36.820000Z",
+        "updated_at": "2026-03-02T17:09:34.873000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 270,
+            "nombre": "Gerencia Comercial",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.820000Z",
+            "updated_at": "2026-03-02T17:03:17.820000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 85,
+        "nombre": "Acondi Secundario 2",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:37.027000Z",
+        "updated_at": "2026-03-02T17:09:42.650000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 86,
+        "nombre": "Direccion Medica",
+        "descripcion": null,
+        "id_area": "270",
+        "created_at": "2026-02-26T22:12:37.190000Z",
+        "updated_at": "2026-03-02T17:09:46.547000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 270,
+            "nombre": "Gerencia Comercial",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.820000Z",
+            "updated_at": "2026-03-02T17:03:17.820000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 87,
+        "nombre": "Control de Calidad",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:37.307000Z",
+        "updated_at": "2026-03-02T17:09:46.900000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 88,
+        "nombre": "Abastecimiento",
+        "descripcion": null,
+        "id_area": "271",
+        "created_at": "2026-02-26T22:12:37.527000Z",
+        "updated_at": "2026-03-02T17:09:43.630000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 271,
+            "nombre": "Gerencia de Abastecimiento",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:19.727000Z",
+            "updated_at": "2026-03-02T17:03:19.727000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 89,
+        "nombre": "Producci\u00f3n",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:37.697000Z",
+        "updated_at": "2026-03-02T17:09:46.230000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 90,
+        "nombre": "Business Development",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:37.800000Z",
+        "updated_at": "2026-03-02T17:09:39.423000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 91,
+        "nombre": "Presidencia",
+        "descripcion": null,
+        "id_area": "272",
+        "created_at": "2026-02-26T22:12:37.923000Z",
+        "updated_at": "2026-03-02T17:09:24.637000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 272,
+            "nombre": "Presidencia",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:20.037000Z",
+            "updated_at": "2026-03-02T17:03:20.037000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 92,
+        "nombre": "IT",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:12:38.073000Z",
+        "updated_at": "2026-03-02T17:32:26.057000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 93,
+        "nombre": "Asuntos Regulatorios",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:38.457000Z",
+        "updated_at": "2026-03-02T17:09:46.697000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 94,
+        "nombre": "I.T.",
+        "descripcion": null,
+        "id_area": "273",
+        "created_at": "2026-02-26T22:12:38.550000Z",
+        "updated_at": "2026-03-02T17:09:42.337000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 273,
+            "nombre": "Gerencia Administrativo",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:20.660000Z",
+            "updated_at": "2026-03-02T17:03:20.660000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 95,
+        "nombre": "Estructura Administrativa",
+        "descripcion": null,
+        "id_area": "273",
+        "created_at": "2026-02-26T22:12:38.830000Z",
+        "updated_at": "2026-03-02T17:09:45.120000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 273,
+            "nombre": "Gerencia Administrativo",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:20.660000Z",
+            "updated_at": "2026-03-02T17:03:20.660000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 96,
+        "nombre": "Departamento T\u00e9cnico de Calidad",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:39.130000Z",
+        "updated_at": "2026-03-02T17:09:46.960000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 97,
+        "nombre": "Estructura Administrativa Financiero",
+        "descripcion": null,
+        "id_area": "274",
+        "created_at": "2026-02-26T22:12:39.437000Z",
+        "updated_at": "2026-03-02T17:09:31.153000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 274,
+            "nombre": "Gerencia Financiero",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:21.687000Z",
+            "updated_at": "2026-03-02T17:03:21.687000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 98,
+        "nombre": "Compras",
+        "descripcion": null,
+        "id_area": "273",
+        "created_at": "2026-02-26T22:12:39.647000Z",
+        "updated_at": "2026-03-02T17:09:46.143000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 273,
+            "nombre": "Gerencia Administrativo",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:20.660000Z",
+            "updated_at": "2026-03-02T17:03:20.660000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 99,
+        "nombre": "Estructura Planta",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:39.917000Z",
+        "updated_at": "2026-03-02T17:09:46.860000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 100,
+        "nombre": "Capital Humano",
+        "descripcion": null,
+        "id_area": "273",
+        "created_at": "2026-02-26T22:12:40.463000Z",
+        "updated_at": "2026-03-02T17:09:45.260000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 273,
+            "nombre": "Gerencia Administrativo",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:20.660000Z",
+            "updated_at": "2026-03-02T17:03:20.660000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 101,
+        "nombre": "API Supply Chain",
+        "descripcion": null,
+        "id_area": "273",
+        "created_at": "2026-02-26T22:12:40.563000Z",
+        "updated_at": "2026-03-02T17:09:43.090000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 273,
+            "nombre": "Gerencia Administrativo",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:20.660000Z",
+            "updated_at": "2026-03-02T17:03:20.660000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 102,
+        "nombre": "Quality Assurance",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:41.027000Z",
+        "updated_at": "2026-03-02T17:09:46.023000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 103,
+        "nombre": "Operaciones",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:41.377000Z",
+        "updated_at": "2026-03-02T17:09:31.333000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 104,
+        "nombre": "Mantenimiento",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:12:49.883000Z",
+        "updated_at": "2026-03-02T17:02:21.603000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 105,
+        "nombre": "Produccion",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:12:50.257000Z",
+        "updated_at": "2026-03-02T17:02:21.603000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 106,
+        "nombre": "Departamento Tecnico de Calidad",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:51.493000Z",
+        "updated_at": "2026-03-02T17:09:37.603000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 107,
+        "nombre": "Acondi Secundario 1",
+        "descripcion": null,
+        "id_area": "268",
+        "created_at": "2026-02-26T22:12:52.900000Z",
+        "updated_at": "2026-03-02T17:09:28.713000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 268,
+            "nombre": "Gerencia de Operaciones",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.150000Z",
+            "updated_at": "2026-03-02T17:03:17.150000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 108,
+        "nombre": "Recursos Humanos",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:12:58.163000Z",
+        "updated_at": "2026-03-02T17:02:21.603000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 109,
+        "nombre": "Direcci\u00f3n T\u00e9cnica",
+        "descripcion": null,
+        "id_area": "281",
+        "created_at": "2026-02-26T22:13:00.090000Z",
+        "updated_at": "2026-03-02T17:09:33.627000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 281,
+            "nombre": "Direcci\u00f3n T\u00e9cnica",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:46.353000Z",
+            "updated_at": "2026-03-02T17:03:46.353000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 110,
+        "nombre": "Departamento Comercial",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:13:00.360000Z",
+        "updated_at": "2026-03-02T17:36:16.360000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 111,
+        "nombre": "Direcci\u00f3n Regional",
+        "descripcion": null,
+        "id_area": "283",
+        "created_at": "2026-02-26T22:13:00.587000Z",
+        "updated_at": "2026-03-02T17:09:33.837000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 283,
+            "nombre": "Direcci\u00f3n Regional",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:46.670000Z",
+            "updated_at": "2026-03-02T17:03:46.670000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 112,
+        "nombre": "Gerencia de Log\u00edstica",
+        "descripcion": null,
+        "id_area": "284",
+        "created_at": "2026-02-26T22:13:00.760000Z",
+        "updated_at": "2026-03-02T17:09:46.390000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 284,
+            "nombre": "Gerencia de Log\u00edstica",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:46.803000Z",
+            "updated_at": "2026-03-02T17:03:46.803000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 113,
+        "nombre": "Vicepresidencia",
+        "descripcion": null,
+        "id_area": "285",
+        "created_at": "2026-02-26T22:13:01.977000Z",
+        "updated_at": "2026-03-02T17:09:34.583000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 285,
+            "nombre": "Vicepresidencia",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:47.947000Z",
+            "updated_at": "2026-03-02T17:03:47.947000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 114,
+        "nombre": "Direcci\u00f3n de Capital Humano",
+        "descripcion": null,
+        "id_area": "297",
+        "created_at": "2026-02-26T22:13:02.193000Z",
+        "updated_at": "2026-03-02T17:09:43.857000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 297,
+            "nombre": "Gerencia de Capital Humano",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:04:01.817000Z",
+            "updated_at": "2026-03-02T17:04:01.817000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 115,
+        "nombre": "Oncologia y Hematologia",
+        "descripcion": null,
+        "id_area": "270",
+        "created_at": "2026-02-26T22:13:03.367000Z",
+        "updated_at": "2026-03-02T17:09:44.470000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 270,
+            "nombre": "Gerencia Comercial",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:17.820000Z",
+            "updated_at": "2026-03-02T17:03:17.820000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 116,
+        "nombre": "Direcci\u00f3n de Administraci\u00f3n y Finanzas",
+        "descripcion": null,
+        "id_area": "287",
+        "created_at": "2026-02-26T22:13:03.507000Z",
+        "updated_at": "2026-03-02T17:09:43.300000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 287,
+            "nombre": "Direcci\u00f3n de Administraci\u00f3n y Finanzas",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:49.537000Z",
+            "updated_at": "2026-03-02T17:03:49.537000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 117,
+        "nombre": "Administrativo",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:13:03.790000Z",
+        "updated_at": "2026-03-02T17:36:16.497000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 118,
+        "nombre": "Comercial",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:13:04.040000Z",
+        "updated_at": "2026-03-02T17:36:16.693000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 119,
+        "nombre": "c",
+        "descripcion": null,
+        "id_area": "292",
+        "created_at": "2026-02-26T22:13:07.063000Z",
+        "updated_at": "2026-03-02T17:09:37.933000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 292,
+            "nombre": "Gerencia LATAM",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:52.730000Z",
+            "updated_at": "2026-03-02T17:03:52.730000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 120,
+        "nombre": "Gerencia LATAM",
+        "descripcion": null,
+        "id_area": "292",
+        "created_at": "2026-02-26T22:13:10.357000Z",
+        "updated_at": "2026-03-02T17:09:44.117000Z",
+        "deleted_at": null,
+        "area": {
+            "id": 292,
+            "nombre": "Gerencia LATAM",
+            "descripcion": null,
+            "id_empresa": null,
+            "created_at": "2026-03-02T17:03:52.730000Z",
+            "updated_at": "2026-03-02T17:03:52.730000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 121,
+        "nombre": "Administraci\u00f3n y Finanzas",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:13:22.220000Z",
+        "updated_at": "2026-03-02T17:36:17.287000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 122,
+        "nombre": "Administraci\u00f3n",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-26T22:13:23.727000Z",
+        "updated_at": "2026-03-02T17:36:15.900000Z",
+        "deleted_at": null,
+        "area": null
+    },
+    {
+        "id": 123,
+        "nombre": "I.T.",
+        "descripcion": null,
+        "id_area": null,
+        "created_at": "2026-02-27T01:48:12.320000Z",
+        "updated_at": "2026-03-02T17:02:21.603000Z",
+        "deleted_at": null,
+        "area": null
+    }
+]

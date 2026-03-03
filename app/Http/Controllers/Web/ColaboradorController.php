@@ -17,7 +17,7 @@ class ColaboradorController extends Controller
 
         // 1. Calculate Stats
         $stats = [
-            'available' => Curso::count(),
+            'available' => Curso::where('publicado', 1)->count(),
             'solicitado' => $user->cursos()->wherePivotIn('curso_estado', EstadoCurso::where('estado', 'solicitado')->pluck('id'))->count(),
             'matriculado' => $user->cursos()->wherePivotIn('curso_estado', EstadoCurso::where('estado', 'matriculado')->pluck('id'))->count(),
             'terminado' => $user->cursos()->wherePivotIn('curso_estado', EstadoCurso::where('estado', 'terminado')->pluck('id'))->count(),

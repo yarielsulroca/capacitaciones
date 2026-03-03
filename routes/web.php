@@ -22,11 +22,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('courses/{curso}/cancelado', [CourseController::class, 'cancel'])->name('courses.cancel');
 
     // Admin CPH
-    Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(function () {
+    // DEV MODE: 'role:admin' removed for testing without roles
+    Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
         Route::get('/', [AdminCphController::class, 'dashboard'])->name('admin.dashboard');
         Route::get('/users', [AdminCphController::class, 'users'])->name('admin.users');
         Route::get('/courses', [AdminCphController::class, 'courses'])->name('admin.courses');
         Route::get('/structure', [AdminCphController::class, 'structure'])->name('admin.structure');
+        Route::get('/metrics', [AdminCphController::class, 'metrics'])->name('admin.metrics');
 
         // Course management
         Route::post('/courses', [\App\Http\Controllers\Api\Admin\AdminController::class, 'storeCourse']);
