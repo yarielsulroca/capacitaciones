@@ -57,7 +57,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                     map.set(u.id, {
                         id: u.id,
                         name: u.name,
-                        id_departamento: u.id_departamento,
+                        id_departamento: u.departamento?.id ?? u.id_departamento,
                         deptNombre: u.departamento?.nombre || 'Sin depto',
                     });
                 }
@@ -272,8 +272,11 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
 
             totalCursos++;
             const horas = Number(c.cant_horas || 0);
+            const numUsers = (c.users || []).length || 1;
 
-            // Look at which departments paid for this course via CDCs
+            // Step 1: Group CDCs by department and sum their montos for this course
+            const courseDeptMontos: Record<number, { id: number; nombre: string; isOwn: boolean; totalMonto: number }> = {};
+
             (c.cdcs || []).forEach(cdc => {
                 const montoCdc = Number((cdc as any).pivot?.monto || 0);
                 if (montoCdc <= 0 || !cdc.departamento) return;
@@ -281,30 +284,41 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                 const dId = cdc.departamento.id;
                 const isOwn = dId === userDeptId;
 
-                if (!byDept[dId]) {
-                    byDept[dId] = {
-                        id: dId,
-                        nombre: cdc.departamento.nombre,
-                        isOwn,
-                        monto: 0,
-                        horas: 0,
-                        cursos: 0,
-                    };
+                if (!courseDeptMontos[dId]) {
+                    courseDeptMontos[dId] = { id: dId, nombre: cdc.departamento.nombre, isOwn, totalMonto: 0 };
                 }
-                byDept[dId].monto += montoCdc;
-                byDept[dId].horas += horas;
-                byDept[dId].cursos++;
-                totalMonto += montoCdc;
-                totalHoras += horas;
+                courseDeptMontos[dId].totalMonto += montoCdc;
+            });
 
-                if (isOwn) {
-                    ownMonto += montoCdc;
-                    ownHoras += horas;
+            // Step 2: Divide by number of users to get per-user share, accumulate
+            let courseHasOwnDept = false;
+
+            Object.values(courseDeptMontos).forEach(d => {
+                const perUserMonto = d.totalMonto / numUsers;
+
+                if (!byDept[d.id]) {
+                    byDept[d.id] = { id: d.id, nombre: d.nombre, isOwn: d.isOwn, monto: 0, horas: 0, cursos: 0 };
+                }
+                byDept[d.id].monto += perUserMonto;
+                byDept[d.id].cursos++;
+                byDept[d.id].horas += horas;
+                totalMonto += perUserMonto;
+
+                if (d.isOwn) {
+                    ownMonto += perUserMonto;
+                    courseHasOwnDept = true;
                 } else {
-                    otherMonto += montoCdc;
-                    otherHoras += horas;
+                    otherMonto += perUserMonto;
                 }
             });
+
+            // Step 3: Hours counted once per course (own if own dept paid, otherwise other)
+            totalHoras += horas;
+            if (courseHasOwnDept) {
+                ownHoras += horas;
+            } else {
+                otherHoras += horas;
+            }
         });
 
         return {
@@ -332,7 +346,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
             subtitle: `Distribución en ${deptBudgets.length} departamentos`,
         },
         {
-            label: 'Inscriptos',
+            label: 'Matriculados',
             value: stats.totalInscritos.toLocaleString(),
             icon: Users,
             gradient: 'from-emerald-600 to-teal-500',
@@ -362,7 +376,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-black text-slate-800 tracking-tight">Métricas de Capacitación</h1>
+                        <h1 className="text-2xl font-semibold text-slate-800 tracking-tight">Métricas de Capacitación</h1>
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Dashboard analítico · Vista general de inversión y alcance</p>
                     </div>
                     <button
@@ -385,8 +399,8 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                         <ArrowUpRight className="w-4 h-4" />
                                     </div>
                                 </div>
-                                <div className="text-2xl font-black leading-none mb-1">{card.value}</div>
-                                <div className="text-[10px] font-black uppercase tracking-widest opacity-80">{card.label}</div>
+                                <div className="text-2xl font-semibold leading-none mb-1">{card.value}</div>
+                                <div className="text-[10px] font-semibold uppercase tracking-widest opacity-80">{card.label}</div>
                                 <div className="text-[9px] opacity-60 mt-1 font-bold">{card.subtitle}</div>
                             </div>
                         </div>
@@ -398,10 +412,10 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                             <PieChart className="w-5 h-5 text-slate-400" />
-                            <span className="text-xs font-black uppercase text-slate-400 tracking-wider">Presupuesto General</span>
+                            <span className="text-xs font-semibold uppercase text-slate-400 tracking-wider">Presupuesto General</span>
                         </div>
                         <div className="text-right">
-                            <div className="text-sm font-black text-slate-700">
+                            <div className="text-sm font-semibold text-slate-700">
                                 ${stats.totalGastado.toLocaleString()} <span className="text-slate-400 font-normal">de</span> ${stats.totalPresupuesto.toLocaleString()}
                             </div>
                         </div>
@@ -411,21 +425,21 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                         strokeColor={pctGastado > 80 ? '#ef4444' : pctGastado > 50 ? '#f59e0b' : '#10b981'}
                         trailColor="#f1f5f9"
                         strokeWidth={14}
-                        className="[&_.ant-progress-text]:font-black [&_.ant-progress-text]:text-sm"
+                        className="[&_.ant-progress-text]:font-semibold [&_.ant-progress-text]:text-sm"
                         format={pct => `${pct}%`}
                     />
                     <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
                         <div>
-                            <div className="text-[9px] font-black uppercase text-slate-400">Asignado</div>
-                            <div className="text-sm font-black text-slate-700">${stats.totalPresupuesto.toLocaleString()}</div>
+                            <div className="text-[9px] font-semibold uppercase text-slate-400">Asignado</div>
+                            <div className="text-sm font-semibold text-slate-700">${stats.totalPresupuesto.toLocaleString()}</div>
                         </div>
                         <div>
-                            <div className="text-[9px] font-black uppercase text-slate-400">Gastado</div>
-                            <div className="text-sm font-black text-red-600">${stats.totalGastado.toLocaleString()}</div>
+                            <div className="text-[9px] font-semibold uppercase text-slate-400">Gastado</div>
+                            <div className="text-sm font-semibold text-red-600">${stats.totalGastado.toLocaleString()}</div>
                         </div>
                         <div>
-                            <div className="text-[9px] font-black uppercase text-slate-400">Disponible</div>
-                            <div className="text-sm font-black text-emerald-600">${presupuestoDisponible.toLocaleString()}</div>
+                            <div className="text-[9px] font-semibold uppercase text-slate-400">Disponible</div>
+                            <div className="text-sm font-semibold text-emerald-600">${presupuestoDisponible.toLocaleString()}</div>
                         </div>
                     </div>
                 </Card>
@@ -435,7 +449,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                             <Filter className="w-5 h-5 text-slate-400" />
-                            <span className="text-xs font-black uppercase text-slate-400 tracking-wider">Filtros de Análisis</span>
+                            <span className="text-xs font-semibold uppercase text-slate-400 tracking-wider">Filtros de Análisis</span>
                         </div>
                         {(filterPresupuesto || filterArea || filterDept || filterMonth || filterYear || filterUser) && (
                             <button
@@ -449,7 +463,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                     </div>
                     <div className="flex flex-wrap items-end gap-4">
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Presupuesto</label>
+                            <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400">Presupuesto</label>
                             <Select
                                 showSearch allowClear placeholder="Todos"
                                 className="w-56 [&_.ant-select-selector]:rounded-lg [&_.ant-select-selector]:border-slate-200 [&_.ant-select-selection-item]:text-xs [&_.ant-select-selection-item]:font-bold"
@@ -459,7 +473,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Área</label>
+                            <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400">Área</label>
                             <Select
                                 showSearch allowClear placeholder="Toda la compañía"
                                 className="w-48 [&_.ant-select-selector]:rounded-lg [&_.ant-select-selector]:border-slate-200 [&_.ant-select-selection-item]:text-xs [&_.ant-select-selection-item]:font-bold"
@@ -469,7 +483,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Departamento</label>
+                            <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400">Departamento</label>
                             <Select
                                 showSearch allowClear placeholder="Todos"
                                 className="w-56 [&_.ant-select-selector]:rounded-lg [&_.ant-select-selector]:border-slate-200 [&_.ant-select-selection-item]:text-xs [&_.ant-select-selection-item]:font-bold"
@@ -480,7 +494,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Mes</label>
+                            <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400">Mes</label>
                             <Select
                                 allowClear placeholder="Todos"
                                 className="w-36 [&_.ant-select-selector]:rounded-lg [&_.ant-select-selector]:border-slate-200 [&_.ant-select-selection-item]:text-xs [&_.ant-select-selection-item]:font-bold"
@@ -490,7 +504,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Año</label>
+                            <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400">Año</label>
                             <Select
                                 allowClear placeholder="Todos"
                                 className="w-28 [&_.ant-select-selector]:rounded-lg [&_.ant-select-selector]:border-slate-200 [&_.ant-select-selection-item]:text-xs [&_.ant-select-selection-item]:font-bold"
@@ -500,7 +514,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1"><UserSearch className="w-3 h-3" /> Colaborador</label>
+                            <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 flex items-center gap-1"><UserSearch className="w-3 h-3" /> Colaborador</label>
                             <Select
                                 showSearch allowClear placeholder="Buscar colaborador"
                                 className="w-64 [&_.ant-select-selector]:rounded-lg [&_.ant-select-selector]:border-slate-200 [&_.ant-select-selection-item]:text-xs [&_.ant-select-selection-item]:font-bold"
@@ -520,10 +534,10 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                         <div className="relative overflow-hidden rounded-t-2xl">
                             <div className="bg-gradient-to-br from-indigo-600 to-violet-600 p-6 text-white flex justify-between items-center">
                                 <div>
-                                    <div className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1 flex items-center gap-2">
+                                    <div className="text-[10px] font-semibold uppercase tracking-widest opacity-80 mb-1 flex items-center gap-2">
                                         <UserSearch className="w-3.5 h-3.5" /> Análisis de Consumo Individual
                                     </div>
-                                    <div className="text-2xl font-black">{userAnalysis.userName}</div>
+                                    <div className="text-2xl font-semibold">{userAnalysis.userName}</div>
                                     <div className="text-xs opacity-80 font-bold mt-1">Departamento: {userAnalysis.userDept} · {userAnalysis.totalCursos} cursos</div>
                                 </div>
                                 <button onClick={() => setFilterUser(null)} className="flex items-center gap-2 text-xs font-bold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors">
@@ -532,36 +546,39 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             </div>
                         </div>
 
-                        {/* KPI Summary Row */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 border-b border-slate-100">
+                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-0 border-b border-slate-100">
                             <div className="p-5 text-center border-r border-slate-100">
-                                <div className="text-[9px] font-black uppercase text-slate-400 mb-1">Gasto Propio Depto</div>
-                                <div className="text-xl font-black text-emerald-600">${userAnalysis.ownMonto.toLocaleString()}</div>
+                                <div className="text-[9px] font-semibold uppercase text-slate-400 mb-1">Cursos Matriculados</div>
+                                <div className="text-xl font-semibold text-indigo-600">{userAnalysis.totalCursos}</div>
                             </div>
                             <div className="p-5 text-center border-r border-slate-100">
-                                <div className="text-[9px] font-black uppercase text-slate-400 mb-1">Gasto Otros Deptos</div>
-                                <div className="text-xl font-black text-orange-600">${userAnalysis.otherMonto.toLocaleString()}</div>
+                                <div className="text-[9px] font-semibold uppercase text-slate-400 mb-1">Gasto Propio Depto</div>
+                                <div className="text-xl font-semibold text-emerald-600">${userAnalysis.ownMonto.toLocaleString()}</div>
                             </div>
                             <div className="p-5 text-center border-r border-slate-100">
-                                <div className="text-[9px] font-black uppercase text-slate-400 mb-1">Horas Depto Propio</div>
-                                <div className="text-xl font-black text-blue-600">{userAnalysis.ownHoras}h</div>
+                                <div className="text-[9px] font-semibold uppercase text-slate-400 mb-1">Gasto Otros Deptos</div>
+                                <div className="text-xl font-semibold text-orange-600">${userAnalysis.otherMonto.toLocaleString()}</div>
+                            </div>
+                            <div className="p-5 text-center border-r border-slate-100">
+                                <div className="text-[9px] font-semibold uppercase text-slate-400 mb-1">Horas Depto Propio</div>
+                                <div className="text-xl font-semibold text-blue-600">{userAnalysis.ownHoras}h</div>
                             </div>
                             <div className="p-5 text-center">
-                                <div className="text-[9px] font-black uppercase text-slate-400 mb-1">Horas Otros Deptos</div>
-                                <div className="text-xl font-black text-violet-600">{userAnalysis.otherHoras}h</div>
+                                <div className="text-[9px] font-semibold uppercase text-slate-400 mb-1">Horas Otros Deptos</div>
+                                <div className="text-xl font-semibold text-violet-600">{userAnalysis.otherHoras}h</div>
                             </div>
                         </div>
 
                         {/* Cost + Hours Comparison Bars */}
                         <div className="px-6 py-4 border-b border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <div className="text-[9px] font-black uppercase text-slate-400 mb-2">Distribución de Gasto</div>
+                                <div className="text-[9px] font-semibold uppercase text-slate-400 mb-2">Distribución de Gasto</div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden flex">
                                         <div className="h-full bg-emerald-500 transition-all" style={{ width: `${userAnalysis.totalMonto > 0 ? (userAnalysis.ownMonto / userAnalysis.totalMonto) * 100 : 0}%` }} />
                                         <div className="h-full bg-orange-400 transition-all" style={{ width: `${userAnalysis.totalMonto > 0 ? (userAnalysis.otherMonto / userAnalysis.totalMonto) * 100 : 0}%` }} />
                                     </div>
-                                    <span className="text-xs font-black text-slate-700">${userAnalysis.totalMonto.toLocaleString()}</span>
+                                    <span className="text-xs font-semibold text-slate-700">${userAnalysis.totalMonto.toLocaleString()}</span>
                                 </div>
                                 <div className="flex gap-4 mt-2">
                                     <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm" /><span className="text-[9px] font-bold text-slate-500">Propio ({userAnalysis.totalMonto > 0 ? Math.round((userAnalysis.ownMonto / userAnalysis.totalMonto) * 100) : 0}%)</span></div>
@@ -569,13 +586,13 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                 </div>
                             </div>
                             <div>
-                                <div className="text-[9px] font-black uppercase text-slate-400 mb-2">Distribución de Horas</div>
+                                <div className="text-[9px] font-semibold uppercase text-slate-400 mb-2">Distribución de Horas</div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden flex">
                                         <div className="h-full bg-blue-500 transition-all" style={{ width: `${userAnalysis.totalHoras > 0 ? (userAnalysis.ownHoras / userAnalysis.totalHoras) * 100 : 0}%` }} />
                                         <div className="h-full bg-violet-400 transition-all" style={{ width: `${userAnalysis.totalHoras > 0 ? (userAnalysis.otherHoras / userAnalysis.totalHoras) * 100 : 0}%` }} />
                                     </div>
-                                    <span className="text-xs font-black text-slate-700">{userAnalysis.totalHoras}h</span>
+                                    <span className="text-xs font-semibold text-slate-700">{userAnalysis.totalHoras}h</span>
                                 </div>
                                 <div className="flex gap-4 mt-2">
                                     <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-blue-500 rounded-sm" /><span className="text-[9px] font-bold text-slate-500">Propio ({userAnalysis.totalHoras > 0 ? Math.round((userAnalysis.ownHoras / userAnalysis.totalHoras) * 100) : 0}%)</span></div>
@@ -588,13 +605,13 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                         <div className="divide-y divide-slate-100">
                             <div className="px-6 py-3 bg-slate-50 flex items-center gap-2">
                                 <Building2 className="w-4 h-4 text-slate-400" />
-                                <span className="text-xs font-black uppercase text-slate-400 tracking-wider">Desglose por Departamento Pagador</span>
+                                <span className="text-xs font-semibold uppercase text-slate-400 tracking-wider">Desglose por Departamento Pagador</span>
                             </div>
                             {userAnalysis.departments.map((dept, i) => {
                                 const pct = userAnalysis.totalMonto > 0 ? Math.round((dept.monto / userAnalysis.totalMonto) * 100) : 0;
                                 return (
                                     <div key={i} className="px-6 py-3 flex items-center gap-4 hover:bg-slate-50/50 transition-colors">
-                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 ${
+                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0 ${
                                             dept.isOwn ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
                                         }`}>
                                             {dept.isOwn ? '✓' : i + 1}
@@ -617,7 +634,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                             </div>
                                         </div>
                                         <div className="text-right flex-shrink-0">
-                                            <div className="text-xs font-black text-slate-700">${dept.monto.toLocaleString()}</div>
+                                            <div className="text-xs font-semibold text-slate-700">${dept.monto.toLocaleString()}</div>
                                             <div className="text-[9px] text-slate-400 font-bold">{dept.horas}h · {dept.cursos} cursos</div>
                                         </div>
                                     </div>
@@ -638,11 +655,11 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             <Card
                                 title={
                                     <div className="flex items-center justify-between w-full">
-                                        <div className="flex items-center gap-2 text-sm font-black uppercase text-slate-500 tracking-wide">
+                                        <div className="flex items-center gap-2 text-sm font-semibold uppercase text-slate-500 tracking-wide">
                                             <BarChart3 className="w-4 h-4 text-red-500" />
                                             Consumo de CDCs por Departamento
                                         </div>
-                                        <Tag color="red" className="font-black text-xs m-0">${totalAccumulatedGastado.toLocaleString()}</Tag>
+                                        <Tag color="red" className="font-semibold text-xs m-0">${totalAccumulatedGastado.toLocaleString()}</Tag>
                                     </div>
                                 }
                                 className="border-none shadow-md rounded-2xl"
@@ -653,7 +670,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                         const pct = dept.inicial > 0 ? Math.round((dept.gastado / dept.inicial) * 100) : 0;
                                         return (
                                             <div key={i} className="px-5 py-3 flex items-center gap-4 hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => setFilterDept(dept.id)}>
-                                                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-600 flex-shrink-0">
+                                                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-600 flex-shrink-0">
                                                     {i + 1}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -671,7 +688,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                                     </div>
                                                 </div>
                                                 <div className="text-right flex-shrink-0">
-                                                    <div className="text-xs font-black text-slate-700">${dept.gastado.toLocaleString()}</div>
+                                                    <div className="text-xs font-semibold text-slate-700">${dept.gastado.toLocaleString()}</div>
                                                     <div className="text-[9px] text-slate-400 font-bold">de ${dept.inicial.toLocaleString()}</div>
                                                 </div>
                                             </div>
@@ -686,7 +703,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             {/* Bar Chart – Distribución de Consumo x Depto */}
                             <Card
                                 title={
-                                    <div className="flex items-center gap-2 text-sm font-black uppercase text-slate-500 tracking-wide">
+                                    <div className="flex items-center gap-2 text-sm font-semibold uppercase text-slate-500 tracking-wide">
                                         <BarChart3 className="w-4 h-4 text-blue-500" />
                                         Distribución Visual de Consumo
                                     </div>
@@ -713,15 +730,11 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                                 };
                                                 return (
                                                     <div key={i} className="flex-1 max-w-[50px] h-full flex flex-col items-center justify-end relative group cursor-pointer" onClick={() => setFilterDept(dept.id)}>
-                                                        <div className="absolute -top-10 bg-slate-800 text-white text-[10px] font-bold px-3 py-1.5 flex flex-col items-center gap-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-30 pointer-events-none shadow-xl border border-slate-600">
+                                                        {/* Tooltip - positioned at center of chart, not clipped */}
+                                                        <div className="absolute left-1/2 -translate-x-1/2 top-0 bg-slate-800 text-white text-[10px] font-bold px-3 py-2 flex flex-col items-center gap-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-40 pointer-events-none shadow-xl border border-slate-600">
+                                                            <span className="font-semibold text-white text-[11px]">{dept.nombre}</span>
                                                             <span className="text-slate-300">Asignado: ${dept.inicial.toLocaleString()}</span>
                                                             <span className="text-red-400">Consumido: ${dept.gastado.toLocaleString()}</span>
-                                                        </div>
-                                                        <div className="absolute bottom-0 w-full flex justify-center mb-1 z-20 pointer-events-none" style={{ bottom: `${highestPct}%`, paddingBottom: '4px' }}>
-                                                            <div className="flex flex-col items-center">
-                                                                <span className="text-[9px] font-black text-slate-400 leading-[10px]">${formatNum(dept.inicial)}</span>
-                                                                <span className="text-[10px] font-black text-red-600 leading-[10px]">${formatNum(dept.gastado)}</span>
-                                                            </div>
                                                         </div>
                                                         <div className="w-full max-w-[40px] bg-slate-200 absolute bottom-0 z-0 rounded-t-sm" style={{ height: `${hPctInicial}%` }} />
                                                         <div className="w-full max-w-[40px] bg-gradient-to-t from-red-600 to-red-400 absolute bottom-0 z-10 transition-all duration-500 hover:brightness-110 shadow-[0_-2px_5px_rgba(220,38,38,0.25)] rounded-t-sm" style={{ height: `${hPctGastado}%` }} />
@@ -751,7 +764,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                         {/* Monthly Breakdown Matrix Table */}
                         <Card
                             title={
-                                <div className="flex items-center gap-2 text-sm font-black uppercase text-slate-500 tracking-wide">
+                                <div className="flex items-center gap-2 text-sm font-semibold uppercase text-slate-500 tracking-wide">
                                     <Calendar className="w-4 h-4 text-emerald-500" />
                                     Gasto Aperturado por Mes
                                 </div>
@@ -765,7 +778,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                 pagination={false}
                                 dataSource={monthlyMatrix}
                                 rowKey="id"
-                                className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-black [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-2.5"
+                                className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-2.5"
                                 columns={[
                                     {
                                         title: 'Departamento', dataIndex: 'nombre', key: 'nombre', fixed: 'left', width: 250,
@@ -794,7 +807,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                     <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-1 flex items-center gap-2">
                                         <ChevronLeft className="w-3 h-3" /> Análisis Detallado
                                     </div>
-                                    <h2 className="text-3xl font-black">{selectedDeptName}</h2>
+                                    <h2 className="text-3xl font-semibold">{selectedDeptName}</h2>
                                     <p className="text-[9px] text-slate-400 font-bold mt-1">Desglose de inversión, participantes y cronograma del departamento</p>
                                 </div>
                                 <button onClick={() => setFilterDept(null)} className="flex items-center gap-2 text-xs font-bold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors">
@@ -808,7 +821,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             <div className="flex flex-wrap gap-4 items-center">
                                 <div className="flex items-center gap-2">
                                     <GraduationCap className="w-4 h-4 text-slate-400" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sub-Filtros</span>
+                                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Sub-Filtros</span>
                                 </div>
                                 <Select
                                     allowClear placeholder="Todas las categorías"
@@ -831,7 +844,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             {/* Monthly Bar Chart */}
                             <Card
                                 title={
-                                    <div className="flex items-center gap-2 text-sm font-black uppercase text-slate-500 tracking-wide">
+                                    <div className="flex items-center gap-2 text-sm font-semibold uppercase text-slate-500 tracking-wide">
                                         <BarChart3 className="w-4 h-4 text-red-500" />
                                         Métrica Mensual del Departamento
                                     </div>
@@ -860,7 +873,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             {/* Skills x Month Table */}
                             <Card
                                 title={
-                                    <div className="flex items-center gap-2 text-sm font-black uppercase text-slate-500 tracking-wide">
+                                    <div className="flex items-center gap-2 text-sm font-semibold uppercase text-slate-500 tracking-wide">
                                         <PieChart className="w-4 h-4 text-violet-500" />
                                         Desglose por Habilidad — {filterYear || 'Todos'}
                                     </div>
@@ -873,7 +886,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                     pagination={false}
                                     dataSource={drillHabilidades}
                                     rowKey="mes"
-                                    className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-black [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-2.5"
+                                    className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-2.5"
                                     columns={[
                                         { title: 'Período', dataIndex: 'mes', key: 'mes', render: t => <span className="text-[10px] font-bold uppercase tracking-wide text-white bg-slate-800 px-2 py-0.5 rounded shadow-sm">{t}</span>, width: 100 },
                                         ...habilidades.map(h => ({
@@ -889,7 +902,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                             <Table.Summary.Cell index={0}><span className="text-[10px] font-bold uppercase tracking-widest text-white pl-2">Acumulados</span></Table.Summary.Cell>
                                             {habilidades.map((h, i) => (
                                                 <Table.Summary.Cell key={i} index={i+1} align="right">
-                                                    <span className="text-[11px] font-black text-white px-2">{drillHabilidadesTotales[`h_${h.id}`].toLocaleString()}</span>
+                                                    <span className="text-[11px] font-semibold text-white px-2">{drillHabilidadesTotales[`h_${h.id}`].toLocaleString()}</span>
                                                 </Table.Summary.Cell>
                                             ))}
                                         </Table.Summary.Row>
@@ -902,7 +915,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                         <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
                             <Card
                                 title={
-                                    <div className="flex items-center gap-2 text-sm font-black uppercase text-slate-500 tracking-wide">
+                                    <div className="flex items-center gap-2 text-sm font-semibold uppercase text-slate-500 tracking-wide">
                                         <Users className="w-4 h-4 text-emerald-500" />
                                         Participantes del Departamento
                                     </div>
@@ -915,7 +928,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                     pagination={{ pageSize: 20 }}
                                     dataSource={drillUsers}
                                     rowKey={(r) => r.user.id}
-                                    className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-black [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-3"
+                                    className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-3"
                                     columns={[
                                         { title: 'Nombre y Apellido', dataIndex: ['user', 'name'], key: 'name', render: t => <span className="text-xs font-bold text-slate-800 uppercase block">{t}</span> },
                                         { title: 'Horas totales', dataIndex: 'horasTotales', key: 'ht', align: 'center', render: v => <span className="text-xs font-bold text-slate-600">{v}</span> },
@@ -928,14 +941,14 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             <div className="space-y-4">
                                 <div className="relative overflow-hidden rounded-2xl shadow-lg">
                                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-8 text-white text-center">
-                                        <div className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-2">Total Horas</div>
-                                        <div className="text-5xl font-black">{totalDrillHours}</div>
+                                        <div className="text-[9px] font-semibold uppercase tracking-widest opacity-60 mb-2">Total Horas</div>
+                                        <div className="text-5xl font-semibold">{totalDrillHours}</div>
                                     </div>
                                 </div>
                                 <div className="relative overflow-hidden rounded-2xl shadow-lg">
                                     <div className="bg-gradient-to-br from-red-600 to-rose-500 p-8 text-white text-center">
-                                        <div className="text-[9px] font-black uppercase tracking-widest opacity-80 mb-2">% Participación Depto</div>
-                                        <div className="text-4xl font-black">
+                                        <div className="text-[9px] font-semibold uppercase tracking-widest opacity-80 mb-2">% Participación Depto</div>
+                                        <div className="text-4xl font-semibold">
                                             {users > 0 ? Math.round((drillUsers.length / users) * 100) : 0}%
                                         </div>
                                         <div className="text-[10px] text-white/70 font-bold mt-2 uppercase">{drillUsers.length} inscriptos globales del área</div>
