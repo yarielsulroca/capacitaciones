@@ -226,6 +226,8 @@ class AdminCphController extends Controller
             'presupuestoGrupos' => $presupuestoGrupos,
             'areas'        => Area::all(),
             'departamentos' => Departamento::with('area')->get(),
+            'habilidades'  => \App\Models\Habilidad::all(),
+            'categorias'   => \App\Models\Categoria::all(),
             'users'        => User::with('departamento.area')->whereNotNull('id_departamento')->count(),
             'stats' => [
                 'totalCursos'     => $cursos->count(),
