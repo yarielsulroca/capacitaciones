@@ -41,7 +41,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
     const [filterDept, setFilterDept] = useState<number | null>(null);
     const [filterMonth, setFilterMonth] = useState<string | null>(null);
     const [filterYear, setFilterYear] = useState<string | null>(null);
-    const [filterPresupuesto, setFilterPresupuesto] = useState<number | null>(null);
+    const [filterPresupuesto, setFilterPresupuesto] = useState<number[]>([]);
     const [filterUser, setFilterUser] = useState<number | null>(null);
 
     // Drilldown specific filters
@@ -84,16 +84,17 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
 
     // ---- DATA FILTERING ----
     const { filteredCursos, filteredPresupuestos } = useMemo(() => {
+        const hasPFilter = filterPresupuesto.length > 0;
         return {
             filteredCursos: cursos.filter(c => {
                 if (filterMonth && c.mes_pago !== filterMonth) return false;
                 if (filterYear && c.anio_formacion?.toString() !== filterYear) return false;
-                if (filterPresupuesto && c.id_presupuesto !== filterPresupuesto) return false;
+                if (hasPFilter && !filterPresupuesto.includes(Number(c.id_presupuesto))) return false;
                 return true;
             }),
             filteredPresupuestos: presupuestoGrupos.filter(g => {
-                if (filterPresupuesto && g.id !== filterPresupuesto) return false;
-                if (!filterPresupuesto && filterYear) {
+                if (hasPFilter && !filterPresupuesto.includes(g.id)) return false;
+                if (!hasPFilter && filterYear) {
                     const match = g.descripcion.match(/\b(20\d{2})\b/);
                     if (match && match[1] !== filterYear) return false;
                 }
@@ -346,7 +347,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
             subtitle: `Distribución en ${deptBudgets.length} departamentos`,
         },
         {
-            label: 'Matriculados',
+            label: 'Inscriptos',
             value: stats.totalInscritos.toLocaleString(),
             icon: Users,
             gradient: 'from-emerald-600 to-teal-500',
@@ -451,9 +452,9 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             <Filter className="w-5 h-5 text-slate-400" />
                             <span className="text-xs font-semibold uppercase text-slate-400 tracking-wider">Filtros de Análisis</span>
                         </div>
-                        {(filterPresupuesto || filterArea || filterDept || filterMonth || filterYear || filterUser) && (
+                        {(filterPresupuesto.length > 0 || filterArea || filterDept || filterMonth || filterYear || filterUser) && (
                             <button
-                                onClick={() => { setFilterPresupuesto(null); setFilterArea(null); setFilterDept(null); setFilterMonth(null); setFilterYear(null); setFilterUser(null); }}
+                                onClick={() => { setFilterPresupuesto([]); setFilterArea(null); setFilterDept(null); setFilterMonth(null); setFilterYear(null); setFilterUser(null); }}
                                 className="flex items-center gap-1.5 text-[10px] font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg transition-all uppercase tracking-wider"
                             >
                                 <X className="w-3 h-3" />
@@ -465,10 +466,10 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400">Presupuesto</label>
                             <Select
-                                showSearch allowClear placeholder="Todos"
-                                className="w-56 [&_.ant-select-selector]:rounded-lg [&_.ant-select-selector]:border-slate-200 [&_.ant-select-selection-item]:text-xs [&_.ant-select-selection-item]:font-bold"
+                                showSearch allowClear placeholder="Todos" mode="multiple" maxTagCount="responsive"
+                                className="w-64 [&_.ant-select-selector]:rounded-lg [&_.ant-select-selector]:border-slate-200 [&_.ant-select-selection-item]:text-xs [&_.ant-select-selection-item]:font-bold"
                                 value={filterPresupuesto}
-                                onChange={v => { setFilterPresupuesto(v); setFilterYear(null); }}
+                                onChange={(v: number[]) => { setFilterPresupuesto(v); setFilterYear(null); }}
                                 options={presupuestoGrupos.map(g => ({ value: g.id, label: g.descripcion }))}
                             />
                         </div>

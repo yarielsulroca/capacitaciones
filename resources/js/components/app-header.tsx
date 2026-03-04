@@ -126,10 +126,10 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                     key={index}
                                     href={item.href}
                                     className={cn(
-                                        'relative flex items-center h-9 cursor-pointer px-4 rounded-md text-sm font-semibold transition-colors',
+                                        'relative flex items-center h-9 cursor-pointer px-4 rounded-md text-sm font-semibold transition-colors !no-underline',
                                         isActive
-                                            ? 'bg-white/15 text-white'
-                                            : 'bg-transparent text-white hover:bg-white/10',
+                                            ? 'bg-white/15 !text-white'
+                                            : 'bg-transparent !text-white/80 hover:bg-white/10 hover:!text-white',
                                     )}
                                 >
                                     {item.icon && (
@@ -175,8 +175,8 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                             </div>
                         </div>
                         <Dropdown popupRender={() => <UserMenuContent user={auth.user} />} trigger={['click']} placement="bottomRight">
-                            <Button type="text" className="h-10 w-10 p-1 flex justify-center items-center hover:bg-white/10 rounded-full">
-                                <Avatar src={auth.user.avatar} className="bg-white text-tuteur-red flex justify-center items-center font-bold h-8 w-8 text-sm">
+                            <Button type="text" className="h-10 w-10 p-0 flex justify-center items-center hover:bg-white/10 rounded-full border-0">
+                                <Avatar src={auth.user.avatar} className="bg-white/20 !text-white flex justify-center items-center font-bold text-sm" style={{ width: 34, height: 34, lineHeight: '34px' }}>
                                     {getInitials(auth.user.name)}
                                 </Avatar>
                             </Button>
