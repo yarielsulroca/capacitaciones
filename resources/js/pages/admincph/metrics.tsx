@@ -4,10 +4,13 @@ import { Card, Table, Tag, Select, Progress, Empty } from 'antd';
 import {
     BarChart3, TrendingUp, DollarSign, Users, BookOpen,
     ArrowUpRight, PieChart, ChevronLeft, Filter, Calendar,
-    Building2, Briefcase, GraduationCap, X, UserSearch
+    Building2, Briefcase, GraduationCap, X, UserSearch, Crown, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Curso, User, PresupuestoGrupo, Area, Departamento, Habilidad, Categoria } from '@/types/capacitaciones';
+
+interface JefeOption { id: number; name: string; }
+interface UserHierarchy { id: number; name: string; id_departamento?: number; id_jefe?: number; deptNombre: string; }
 
 interface Props {
     cursos: Curso[];
@@ -17,6 +20,8 @@ interface Props {
     habilidades: Habilidad[];
     categorias: Categoria[];
     users: number;
+    allUsersData: UserHierarchy[];
+    jefes: JefeOption[];
     stats: {
         totalCursos: number;
         totalInscritos: number;
@@ -35,7 +40,7 @@ const MONTHS = [
     { value: 'Noviembre', label: 'Noviembre' }, { value: 'Diciembre', label: 'Diciembre' }
 ];
 
-export default function Metrics({ cursos, presupuestoGrupos, areas, departamentos, habilidades, categorias, users, stats }: Props) {
+export default function Metrics({ cursos, presupuestoGrupos, areas, departamentos, habilidades, categorias, users, allUsersData, jefes, stats }: Props) {
     // ---- STATE: Filters ----
     const [filterArea, setFilterArea] = useState<number | null>(null);
     const [filterDept, setFilterDept] = useState<number | null>(null);
@@ -43,6 +48,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
     const [filterYear, setFilterYear] = useState<string | null>(null);
     const [filterPresupuesto, setFilterPresupuesto] = useState<number[]>([]);
     const [filterUser, setFilterUser] = useState<number | null>(null);
+    const [filterJefe, setFilterJefe] = useState<number | null>(null);
 
     // Drilldown specific filters
     const [drillCategoria, setDrillCategoria] = useState<number | null>(null);
@@ -190,14 +196,14 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
 
         filteredCursos.forEach(c => {
             const mes = c.mes_pago || 'Enero';
-            const habId = (c as any).id_habilidad;
+            const habId = (c as any).habilidad_id;
             if (!habId) return;
-            if (drillCategoria && (c as any).id_categoria !== drillCategoria) return;
+            if (drillCategoria && (c as any).categoria_id !== drillCategoria) return;
             if (drillCurso && c.id !== drillCurso) return;
 
             let targetMonto = 0;
             if (c.cdcs) {
-                const matchingCdc = c.cdcs.find(cdc => cdc.id_departamento === filterDept);
+                const matchingCdc = c.cdcs.find(cdc => cdc.departamento?.id === filterDept);
                 if (matchingCdc) targetMonto = Number((matchingCdc as any).pivot?.monto || 0);
             }
             if (targetMonto > 0) {
@@ -229,18 +235,19 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
 
     const drillUsers = useMemo(() => {
         if (!isDrilldownActive) return [];
-        const map: Record<number, { user: any, horasTotales: number, horasPorHabilidad: number }> = {};
+        const map: Record<number, { user: any, horasTotales: number, horasPorHabilidad: number, cursosCount: number }> = {};
 
         filteredCursos.forEach(c => {
-            if (drillCategoria && (c as any).id_categoria !== drillCategoria) return;
+            if (drillCategoria && (c as any).categoria_id !== drillCategoria) return;
             if (drillCurso && c.id !== drillCurso) return;
             const horas = Number(c.cant_horas || 0);
 
             (c.users || []).forEach(u => {
-                if (u.id_departamento !== filterDept) return;
-                if (!map[u.id]) map[u.id] = { user: u, horasTotales: 0, horasPorHabilidad: 0 };
+                if ((u.departamento?.id ?? u.id_departamento) !== filterDept) return;
+                if (!map[u.id]) map[u.id] = { user: u, horasTotales: 0, horasPorHabilidad: 0, cursosCount: 0 };
                 map[u.id].horasTotales += horas;
                 map[u.id].horasPorHabilidad += horas;
+                map[u.id].cursosCount++;
             });
         });
 
@@ -248,6 +255,31 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
     }, [isDrilldownActive, filteredCursos, filterDept, drillCategoria, drillCurso]);
 
     const totalDrillHours = drillUsers.reduce((sum, u) => sum + u.horasTotales, 0);
+    const deptTotalUsers = departamentos.find(d => d.id === filterDept)?.users_count ?? 0;
+
+    // ---- DRILL-DOWN BUDGET KPIs ----
+    const drillBudget = useMemo(() => {
+        if (!isDrilldownActive) return { asignado: 0, utilizado: 0, disponible: 0, pctUtilizado: 0 };
+        let asignado = 0;
+        let utilizado = 0;
+
+        // Budget assigned to this department from filtered presupuestos
+        filteredPresupuestos.forEach(g => {
+            (g.presupuestos || []).forEach(p => {
+                if (p.departamento?.id === filterDept) {
+                    asignado += Number(p.inicial || 0);
+                    utilizado += Number(p.inicial || 0) - Number(p.actual || 0);
+                }
+            });
+        });
+
+        return {
+            asignado,
+            utilizado,
+            disponible: asignado - utilizado,
+            pctUtilizado: asignado > 0 ? Math.round((utilizado / asignado) * 100) : 0,
+        };
+    }, [isDrilldownActive, filterDept, filteredPresupuestos]);
 
     // ---- USER CONSUMPTION ANALYSIS ----
     const selectedUser = allUsers.find(u => u.id === filterUser);
@@ -337,7 +369,90 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
         };
     }, [filterUser, filteredCursos, allUsers]);
 
-    // ---- KPI stat cards config (reference style) ----
+    // ---- BOSS HIERARCHY ANALYSIS ----
+    const getSubordinates = useMemo(() => {
+        // Build a map of jefe -> direct reports
+        const childrenMap: Record<number, number[]> = {};
+        allUsersData.forEach(u => {
+            if (u.id_jefe) {
+                if (!childrenMap[u.id_jefe]) childrenMap[u.id_jefe] = [];
+                childrenMap[u.id_jefe].push(u.id);
+            }
+        });
+
+        // Recursive function to get all subordinates
+        const resolve = (jefeId: number): number[] => {
+            const direct = childrenMap[jefeId] || [];
+            const all: number[] = [...direct];
+            direct.forEach(id => {
+                all.push(...resolve(id));
+            });
+            return all;
+        };
+        return resolve;
+    }, [allUsersData]);
+
+    const jefeAnalysis = useMemo(() => {
+        if (!filterJefe) return [];
+
+        const subordinateIds = getSubordinates(filterJefe);
+        const userMap = new Map(allUsersData.map(u => [u.id, u]));
+
+        return subordinateIds.map(uid => {
+            const userData = userMap.get(uid);
+            if (!userData) return null;
+
+            let totalHoras = 0;
+            let totalInversion = 0;
+            let cursosCount = 0;
+            const cursosList: { nombre: string; horas: number; inversion: number; habilidad: string; tipo: string }[] = [];
+
+            filteredCursos.forEach(c => {
+                const enrolled = (c.users || []).some(u => u.id === uid);
+                if (!enrolled) return;
+
+                cursosCount++;
+                const horas = Number(c.cant_horas || 0);
+                totalHoras += horas;
+
+                const numUsers = (c.users || []).length || 1;
+                let userInversion = 0;
+                (c.cdcs || []).forEach(cdc => {
+                    const monto = Number((cdc as any).pivot?.monto || 0);
+                    if (monto > 0) userInversion += monto / numUsers;
+                });
+                totalInversion += userInversion;
+
+                cursosList.push({
+                    nombre: c.nombre,
+                    horas,
+                    inversion: userInversion,
+                    habilidad: (c as any).habilidad?.habilidad || '—',
+                    tipo: (c as any).tipo?.tipo || '—',
+                });
+            });
+
+            // Check if this user is also a boss (has subordinates)
+            const isSubBoss = (getSubordinates(uid)).length > 0;
+
+            return {
+                key: uid,
+                id: uid,
+                name: userData.name,
+                deptNombre: userData.deptNombre,
+                totalHoras,
+                totalInversion,
+                cursosCount,
+                cursosList,
+                isSubBoss,
+            };
+        }).filter(Boolean) as any[];
+    }, [filterJefe, getSubordinates, filteredCursos, allUsersData]);
+
+    const selectedJefeName = jefes.find(j => j.id === filterJefe)?.name || '';
+    const jefeTotalHoras = jefeAnalysis.reduce((s: number, u: any) => s + u.totalHoras, 0);
+    const jefeTotalInversion = jefeAnalysis.reduce((s: number, u: any) => s + u.totalInversion, 0);
+    const jefeTotalCursos = jefeAnalysis.reduce((s: number, u: any) => s + u.cursosCount, 0);
     const statCards = [
         {
             label: 'Total Cursos',
@@ -452,9 +567,9 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             <Filter className="w-5 h-5 text-slate-400" />
                             <span className="text-xs font-semibold uppercase text-slate-400 tracking-wider">Filtros de Análisis</span>
                         </div>
-                        {(filterPresupuesto.length > 0 || filterArea || filterDept || filterMonth || filterYear || filterUser) && (
+                        {(filterPresupuesto.length > 0 || filterArea || filterDept || filterMonth || filterYear || filterUser || filterJefe) && (
                             <button
-                                onClick={() => { setFilterPresupuesto([]); setFilterArea(null); setFilterDept(null); setFilterMonth(null); setFilterYear(null); setFilterUser(null); }}
+                                onClick={() => { setFilterPresupuesto([]); setFilterArea(null); setFilterDept(null); setFilterMonth(null); setFilterYear(null); setFilterUser(null); setFilterJefe(null); }}
                                 className="flex items-center gap-1.5 text-[10px] font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg transition-all uppercase tracking-wider"
                             >
                                 <X className="w-3 h-3" />
@@ -523,6 +638,17 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                 onChange={v => setFilterUser(v)}
                                 filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
                                 options={allUsers.map(u => ({ value: u.id, label: `${u.name} — ${u.deptNombre}` }))}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 flex items-center gap-1"><Crown className="w-3 h-3" /> Responsable</label>
+                            <Select
+                                showSearch allowClear placeholder="Filtrar por jefe"
+                                className="w-64 [&_.ant-select-selector]:rounded-lg [&_.ant-select-selector]:border-slate-200 [&_.ant-select-selection-item]:text-xs [&_.ant-select-selection-item]:font-bold"
+                                value={filterJefe}
+                                onChange={v => setFilterJefe(v)}
+                                filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                                options={jefes.map(j => ({ value: j.id, label: j.name }))}
                             />
                         </div>
                     </div>
@@ -645,6 +771,129 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                 <div className="p-6 text-center text-slate-400 text-sm italic">Este colaborador no tiene consumos registrados con los filtros actuales</div>
                             )}
                         </div>
+                    </Card>
+                )}
+
+                {/* BOSS HIERARCHY ANALYSIS VIEW */}
+                {filterJefe && jefeAnalysis.length > 0 && (
+                    <Card className="border-none shadow-md rounded-2xl" bodyStyle={{ padding: '0' }}>
+                        {/* Boss Header */}
+                        <div className="relative overflow-hidden rounded-t-2xl">
+                            <div className="bg-gradient-to-br from-amber-600 to-orange-600 p-6 text-white flex justify-between items-center">
+                                <div>
+                                    <div className="text-[10px] font-bold tracking-widest text-amber-200 uppercase mb-1 flex items-center gap-2">
+                                        <Crown className="w-3 h-3" /> Análisis por Responsable
+                                    </div>
+                                    <h2 className="text-2xl font-semibold">{selectedJefeName}</h2>
+                                    <p className="text-[10px] text-amber-200 font-bold mt-1">
+                                        {jefeAnalysis.length} colaboradores en la cadena jerárquica
+                                    </p>
+                                </div>
+                                <button onClick={() => setFilterJefe(null)} className="flex items-center gap-2 text-xs font-bold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors">
+                                    <X className="w-4 h-4" /> Quitar
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* KPI Summary Row */}
+                        <div className="grid grid-cols-4 border-b border-slate-100">
+                            <div className="p-4 text-center border-r border-slate-100">
+                                <div className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Subordinados</div>
+                                <div className="text-2xl font-semibold text-slate-800">{jefeAnalysis.length}</div>
+                            </div>
+                            <div className="p-4 text-center border-r border-slate-100">
+                                <div className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Cursos Totales</div>
+                                <div className="text-2xl font-semibold text-indigo-600">{jefeTotalCursos}</div>
+                            </div>
+                            <div className="p-4 text-center border-r border-slate-100">
+                                <div className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Horas Totales</div>
+                                <div className="text-2xl font-semibold text-emerald-600">{jefeTotalHoras}h</div>
+                            </div>
+                            <div className="p-4 text-center">
+                                <div className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Inversión Total</div>
+                                <div className="text-2xl font-semibold text-red-600">${Math.round(jefeTotalInversion).toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        {/* Expandable Table */}
+                        <Table
+                            size="small"
+                            pagination={{ pageSize: 50 }}
+                            dataSource={jefeAnalysis}
+                            rowKey="id"
+                            className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-3"
+                            expandable={{
+                                expandedRowRender: (record: any) => (
+                                    <div className="bg-slate-50 rounded-xl p-4">
+                                        <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider mb-3">Detalle de Cursos</div>
+                                        {record.cursosList.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {record.cursosList.map((c: any, i: number) => (
+                                                    <div key={i} className="flex items-center justify-between bg-white rounded-lg px-4 py-2 shadow-sm border border-slate-100">
+                                                        <div className="flex-1">
+                                                            <div className="text-xs font-bold text-slate-700">{c.nombre}</div>
+                                                            <div className="text-[10px] text-slate-400 mt-0.5">
+                                                                <Tag color="blue" className="text-[9px] font-bold m-0 mr-1">{c.habilidad}</Tag>
+                                                                <Tag color="geekblue" className="text-[9px] font-bold m-0">{c.tipo}</Tag>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="text-xs font-bold text-slate-700">{c.horas}h</div>
+                                                            <div className="text-[10px] font-bold text-red-600">${Math.round(c.inversion).toLocaleString()}</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-xs text-slate-400 italic">Sin cursos registrados en el período filtrado</div>
+                                        )}
+                                    </div>
+                                ),
+                                rowExpandable: (record: any) => record.cursosList.length > 0,
+                            }}
+                            columns={[
+                                {
+                                    title: 'Colaborador', dataIndex: 'name', key: 'name',
+                                    sorter: (a: any, b: any) => a.name.localeCompare(b.name),
+                                    render: (t: string, r: any) => (
+                                        <div>
+                                            <button
+                                                className="text-xs font-bold text-blue-700 hover:text-blue-900 uppercase text-left hover:underline transition-colors cursor-pointer bg-transparent border-0 p-0"
+                                                onClick={() => { setFilterUser(r.id); setFilterJefe(null); }}
+                                            >{t}</button>
+                                            {r.isSubBoss && <Tag color="gold" className="text-[8px] font-bold ml-2 m-0">JEFE</Tag>}
+                                        </div>
+                                    )
+                                },
+                                {
+                                    title: 'Departamento', dataIndex: 'deptNombre', key: 'dept',
+                                    sorter: (a: any, b: any) => a.deptNombre.localeCompare(b.deptNombre),
+                                    render: (t: string) => <span className="text-[10px] font-bold text-slate-500 uppercase">{t}</span>
+                                },
+                                {
+                                    title: 'Cursos', dataIndex: 'cursosCount', key: 'cursos', align: 'center',
+                                    sorter: (a: any, b: any) => a.cursosCount - b.cursosCount,
+                                    render: (v: number) => <span className="text-xs font-bold text-indigo-600">{v}</span>
+                                },
+                                {
+                                    title: 'Horas', dataIndex: 'totalHoras', key: 'horas', align: 'center',
+                                    sorter: (a: any, b: any) => a.totalHoras - b.totalHoras,
+                                    render: (v: number) => <span className="text-xs font-bold text-emerald-600">{v}h</span>
+                                },
+                                {
+                                    title: 'Inversión', dataIndex: 'totalInversion', key: 'inv', align: 'right',
+                                    sorter: (a: any, b: any) => a.totalInversion - b.totalInversion,
+                                    render: (v: number) => <span className="text-xs font-bold text-red-600">${Math.round(v).toLocaleString()}</span>
+                                },
+                                {
+                                    title: '% Inversión', key: 'pct', align: 'center',
+                                    render: (_: any, r: any) => {
+                                        const pct = jefeTotalInversion > 0 ? Math.round((r.totalInversion / jefeTotalInversion) * 100) : 0;
+                                        return <Tag color={pct > 30 ? 'red' : pct > 15 ? 'orange' : 'blue'} className="text-[10px] font-bold">{pct}%</Tag>;
+                                    }
+                                },
+                            ]}
+                        />
                     </Card>
                 )}
 
@@ -817,6 +1066,34 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             </div>
                         </div>
 
+                        {/* Budget KPIs for Department */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="relative overflow-hidden rounded-2xl shadow-lg">
+                                <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-5 text-white">
+                                    <div className="text-[9px] font-semibold uppercase tracking-widest opacity-80 mb-1">Ppto Asignado</div>
+                                    <div className="text-2xl font-semibold">${drillBudget.asignado.toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div className="relative overflow-hidden rounded-2xl shadow-lg">
+                                <div className="bg-gradient-to-br from-red-600 to-rose-500 p-5 text-white">
+                                    <div className="text-[9px] font-semibold uppercase tracking-widest opacity-80 mb-1">Ppto Utilizado</div>
+                                    <div className="text-2xl font-semibold">${drillBudget.utilizado.toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div className="relative overflow-hidden rounded-2xl shadow-lg">
+                                <div className={`bg-gradient-to-br ${drillBudget.pctUtilizado > 80 ? 'from-red-600 to-orange-500' : drillBudget.pctUtilizado > 50 ? 'from-amber-500 to-yellow-400' : 'from-emerald-600 to-teal-500'} p-5 text-white`}>
+                                    <div className="text-[9px] font-semibold uppercase tracking-widest opacity-80 mb-1">% Utilizado</div>
+                                    <div className="text-2xl font-semibold">{drillBudget.pctUtilizado}%</div>
+                                </div>
+                            </div>
+                            <div className="relative overflow-hidden rounded-2xl shadow-lg">
+                                <div className="bg-gradient-to-br from-emerald-600 to-teal-500 p-5 text-white">
+                                    <div className="text-[9px] font-semibold uppercase tracking-widest opacity-80 mb-1">Ppto Disponible</div>
+                                    <div className="text-2xl font-semibold">${drillBudget.disponible.toLocaleString()}</div>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Drill Sub-Filters */}
                         <Card className="border-none shadow-md rounded-2xl" bodyStyle={{ padding: '12px 20px' }}>
                             <div className="flex flex-wrap gap-4 items-center">
@@ -931,9 +1208,34 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                     rowKey={(r) => r.user.id}
                                     className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-3"
                                     columns={[
-                                        { title: 'Nombre y Apellido', dataIndex: ['user', 'name'], key: 'name', render: t => <span className="text-xs font-bold text-slate-800 uppercase block">{t}</span> },
-                                        { title: 'Horas totales', dataIndex: 'horasTotales', key: 'ht', align: 'center', render: v => <span className="text-xs font-bold text-slate-600">{v}</span> },
-                                        { title: 'Horas según habilidad', dataIndex: 'horasPorHabilidad', key: 'hh', align: 'center', render: v => <span className="text-xs font-bold text-red-600">{v}</span> }
+                                        {
+                                            title: 'Nombre y Apellido', dataIndex: ['user', 'name'], key: 'name',
+                                            sorter: (a: any, b: any) => a.user.name.localeCompare(b.user.name),
+                                            render: (t: string, r: any) => (
+                                                <button
+                                                    className="text-xs font-bold text-blue-700 hover:text-blue-900 uppercase block text-left hover:underline transition-colors cursor-pointer bg-transparent border-0 p-0"
+                                                    onClick={() => { setFilterUser(r.user.id); setFilterDept(null); }}
+                                                >{t}</button>
+                                            )
+                                        },
+                                        {
+                                            title: 'Cursos Matriculados', dataIndex: 'cursosCount', key: 'cc', align: 'center',
+                                            sorter: (a: any, b: any) => a.cursosCount - b.cursosCount,
+                                            render: (v: number) => <span className="text-xs font-bold text-indigo-600">{v}</span>
+                                        },
+                                        {
+                                            title: 'Horas Totales', dataIndex: 'horasTotales', key: 'ht', align: 'center',
+                                            sorter: (a: any, b: any) => a.horasTotales - b.horasTotales,
+                                            render: (v: number) => <span className="text-xs font-bold text-slate-600">{v}h</span>
+                                        },
+                                        {
+                                            title: '% Horas', key: 'pctH', align: 'center',
+                                            sorter: (a: any, b: any) => a.horasTotales - b.horasTotales,
+                                            render: (_: any, r: any) => {
+                                                const pct = totalDrillHours > 0 ? Math.round((r.horasTotales / totalDrillHours) * 100) : 0;
+                                                return <Tag color={pct > 30 ? 'red' : pct > 15 ? 'orange' : 'blue'} className="text-[10px] font-bold">{pct}%</Tag>;
+                                            }
+                                        },
                                     ]}
                                 />
                             </Card>
@@ -950,9 +1252,9 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                     <div className="bg-gradient-to-br from-red-600 to-rose-500 p-8 text-white text-center">
                                         <div className="text-[9px] font-semibold uppercase tracking-widest opacity-80 mb-2">% Participación Depto</div>
                                         <div className="text-4xl font-semibold">
-                                            {users > 0 ? Math.round((drillUsers.length / users) * 100) : 0}%
+                                            {deptTotalUsers > 0 ? Math.round((drillUsers.length / deptTotalUsers) * 100) : 0}%
                                         </div>
-                                        <div className="text-[10px] text-white/70 font-bold mt-2 uppercase">{drillUsers.length} inscriptos globales del área</div>
+                                        <div className="text-[10px] text-white/70 font-bold mt-2 uppercase">{drillUsers.length} de {deptTotalUsers} colaboradores del depto</div>
                                     </div>
                                 </div>
                             </div>

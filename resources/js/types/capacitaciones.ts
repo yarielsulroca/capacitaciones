@@ -18,6 +18,7 @@ export interface Departamento {
     descripcion?: string;
     id_area: number;
     area?: Area;
+    users_count?: number;
 }
 
 export type UserRole = 'user' | 'jefe_area' | 'jefe_general' | 'admin';

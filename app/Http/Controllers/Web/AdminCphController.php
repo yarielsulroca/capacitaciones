@@ -221,14 +221,37 @@ class AdminCphController extends Controller
             ->orderBy('fecha', 'desc')
             ->get();
 
+        // All users with hierarchy data for the boss filter
+        $allUsersData = User::with('departamento:id,nombre')
+            ->select('id', 'name', 'id_departamento', 'id_jefe')
+            ->whereNotNull('id_departamento')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'id_departamento' => $u->id_departamento,
+                'id_jefe' => $u->id_jefe,
+                'deptNombre' => $u->departamento?->nombre ?? 'Sin depto',
+            ]);
+
+        // Users who are bosses of at least 1 person
+        $jefeIds = User::whereNotNull('id_jefe')->distinct()->pluck('id_jefe');
+        $jefes = User::select('id', 'name')
+            ->whereIn('id', $jefeIds)
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('admincph/metrics', [
             'cursos'       => $cursos,
             'presupuestoGrupos' => $presupuestoGrupos,
             'areas'        => Area::all(),
-            'departamentos' => Departamento::with('area')->get(),
+            'departamentos' => Departamento::with('area')->withCount('users')->get(),
             'habilidades'  => \App\Models\Habilidad::all(),
             'categorias'   => \App\Models\Categoria::all(),
             'users'        => User::with('departamento.area')->whereNotNull('id_departamento')->count(),
+            'allUsersData' => $allUsersData,
+            'jefes'        => $jefes,
             'stats' => [
                 'totalCursos'     => $cursos->count(),
                 'totalInscritos'  => $cursos->sum('users_count'),
