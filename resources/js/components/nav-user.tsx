@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { ChevronsUpDown } from 'lucide-react';
+import { CircleUserRound } from 'lucide-react';
 import { Dropdown } from 'antd';
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
@@ -17,7 +17,7 @@ export function NavUser() {
                     data-test="sidebar-menu-button"
                 >
                     <UserInfo user={auth.user} />
-                    {sidebarOpen && <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />}
+                    {sidebarOpen && <CircleUserRound className="ml-auto size-4 text-muted-foreground" />}
                 </div>
             </Dropdown>
         </div>

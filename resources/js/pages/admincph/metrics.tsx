@@ -1,13 +1,15 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
-import { Card, Table, Tag, Select, Progress, Empty } from 'antd';
+import { Button, Card, Table, Tag, Select, Progress, Empty } from 'antd';
 import {
     BarChart3, TrendingUp, DollarSign, Users, BookOpen,
-    ArrowUpRight, PieChart, ChevronLeft, Filter, Calendar,
-    Building2, Briefcase, GraduationCap, X, UserSearch, Crown, ChevronDown, ChevronRight
+    ArrowUpRight, PieChart, ChevronLeft, Filter, Calendar, Clock,
+    Building2, Briefcase, GraduationCap, X, UserSearch, Crown, ChevronDown, ChevronRight, FileText
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Curso, User, PresupuestoGrupo, Area, Departamento, Habilidad, Categoria } from '@/types/capacitaciones';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface JefeOption { id: number; name: string; }
 interface UserHierarchy { id: number; name: string; id_departamento?: number; id_jefe?: number; deptNombre: string; }
@@ -26,6 +28,8 @@ interface Props {
         totalCursos: number;
         totalInscritos: number;
         totalCosto: number;
+        totalHoras: number;
+        totalHorasColaboradores: number;
         totalPresupuesto: number;
         totalGastado: number;
     };
@@ -146,6 +150,46 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
 
     const totalAccumulatedGastado = deptBudgets.reduce((sum, d) => sum + d.gastado, 0);
     const maxBudget = deptBudgets.length > 0 ? Math.max(...deptBudgets.map(d => Math.max(d.inicial, d.gastado))) : 1;
+
+    // ---- Hours by Department ----
+    const deptHours = useMemo(() => {
+        const map: Record<number, { id: number; nombre: string; horas: number; personaHoras: number; cursos: number; usuarios: number }> = {};
+
+        filteredCursos.forEach(c => {
+            const horas = Number(c.cant_horas || 0);
+            const enrolledUsers = c.users || [];
+
+            enrolledUsers.forEach(u => {
+                const dId = u.departamento?.id ?? u.id_departamento;
+                if (!dId) return;
+                if (filterArea && u.departamento?.area?.id !== filterArea) return;
+                if (filterDept && dId !== filterDept) return;
+
+                const dNombre = u.departamento?.nombre || 'Sin depto';
+                if (!map[dId]) map[dId] = { id: dId, nombre: dNombre, horas: 0, personaHoras: 0, cursos: 0, usuarios: 0 };
+                map[dId].personaHoras += horas;
+            });
+
+            // Count unique courses and unique users per department
+            const deptCourseTracker = new Set<number>();
+            enrolledUsers.forEach(u => {
+                const dId = u.departamento?.id ?? u.id_departamento;
+                if (!dId || !map[dId]) return;
+                if (!deptCourseTracker.has(dId)) {
+                    map[dId].cursos++;
+                    map[dId].horas += horas;
+                    deptCourseTracker.add(dId);
+                }
+                map[dId].usuarios++;
+            });
+        });
+
+        // Deduplicate usuario count: personaHoras is already correct (sum of horas per enrollment)
+        return Object.values(map).sort((a, b) => b.personaHoras - a.personaHoras);
+    }, [filteredCursos, filterArea, filterDept]);
+
+    const totalHorasPersona = deptHours.reduce((s, d) => s + d.personaHoras, 0);
+    const maxDeptHoursVal = deptHours.length > 0 ? Math.max(...deptHours.map(d => d.personaHoras)) : 1;
 
     // ---- Monthly Breakdown Matrix ----
     const monthlyMatrix = useMemo(() => {
@@ -476,6 +520,20 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
             subtitle: `$${(stats.totalInscritos > 0 ? Math.round(stats.totalCosto / stats.totalInscritos) : 0).toLocaleString()} promedio/persona`,
         },
         {
+            label: 'Hs Totales Colaboradores',
+            value: `${stats.totalHorasColaboradores.toLocaleString()}h`,
+            icon: BarChart3,
+            gradient: 'from-purple-600 to-violet-500',
+            subtitle: `${stats.totalHoras}h en cursos · ${stats.totalInscritos} inscripciones`,
+        },
+        {
+            label: 'Hs / Colaborador',
+            value: `${users > 0 ? (stats.totalHorasColaboradores / users).toFixed(1) : 0}h`,
+            icon: GraduationCap,
+            gradient: 'from-amber-500 to-orange-500',
+            subtitle: `${users} colaboradores en sistema`,
+        },
+        {
             label: 'Presupuesto Disponible',
             value: `$${presupuestoDisponible.toLocaleString()}`,
             icon: TrendingUp,
@@ -483,6 +541,184 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
             subtitle: `${pctGastado}% utilizado del total`,
         },
     ];
+
+    // ─── PDF Export ─────────────────────────────────────────
+    const exportMetricsToPDF = useCallback(() => {
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const pageW = doc.internal.pageSize.getWidth();
+        let y = 12;
+
+        // ── Header ──
+        doc.setFillColor(185, 28, 28);  // Tuteur red
+        doc.rect(0, 0, pageW, 28, 'F');
+        doc.setFontSize(22);
+        doc.setTextColor(255, 255, 255);
+        doc.text('TUTEUR', 14, 14);
+        doc.setFontSize(10);
+        doc.text('Informe de Métricas de Capacitación', 14, 21);
+        doc.setFontSize(8);
+        doc.text(`Generado: ${new Date().toLocaleString()}`, pageW - 14, 14, { align: 'right' });
+        doc.text(`Filtros activos: ${[filterArea ? `Área #${filterArea}` : null, filterDept ? `Depto #${filterDept}` : null, filterMonth, filterYear].filter(Boolean).join(', ') || 'Ninguno'}`, pageW - 14, 20, { align: 'right' });
+        y = 36;
+
+        // ── KPI Summary ──
+        doc.setFontSize(12);
+        doc.setTextColor(30, 41, 59);
+        doc.text('Resumen General', 14, y);
+        y += 2;
+
+        autoTable(doc, {
+            startY: y,
+            head: [['Indicador', 'Valor']],
+            body: [
+                ['Total Cursos', stats.totalCursos.toLocaleString()],
+                ['Total Inscriptos', stats.totalInscritos.toLocaleString()],
+                ['Colaboradores en Sistema', users.toString()],
+                ['Inversión Total', `$${stats.totalCosto.toLocaleString()}`],
+                ['Promedio Inversión/Persona', `$${(stats.totalInscritos > 0 ? Math.round(stats.totalCosto / stats.totalInscritos) : 0).toLocaleString()}`],
+                ['Horas Totales (cursos)', `${stats.totalHoras}h`],
+                ['Persona-Horas Totales', `${stats.totalHorasColaboradores.toLocaleString()}h`],
+                ['Hs / Colaborador', `${users > 0 ? (stats.totalHorasColaboradores / users).toFixed(1) : 0}h`],
+                ['Presupuesto Asignado', `$${stats.totalPresupuesto.toLocaleString()}`],
+                ['Presupuesto Gastado', `$${stats.totalGastado.toLocaleString()}`],
+                ['Presupuesto Disponible', `$${presupuestoDisponible.toLocaleString()}`],
+                ['% Utilizado', `${pctGastado}%`],
+            ],
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 70 }, 1: { halign: 'right', cellWidth: 50 } },
+            margin: { left: 14, right: pageW / 2 + 10 },
+            tableWidth: pageW / 2 - 20,
+        });
+
+        // ── Budget by Department ──
+        y = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(12);
+        doc.setTextColor(30, 41, 59);
+        doc.text('Análisis de Presupuesto por Departamento', 14, y);
+        y += 2;
+
+        if (deptBudgets.length > 0) {
+            autoTable(doc, {
+                startY: y,
+                head: [['#', 'Departamento', 'Asignado', 'Consumido CDC', '% Utilización']],
+                body: deptBudgets.map((d, i) => [
+                    (i + 1).toString(),
+                    d.nombre,
+                    `$${d.inicial.toLocaleString()}`,
+                    `$${d.gastado.toLocaleString()}`,
+                    `${d.inicial > 0 ? Math.round((d.gastado / d.inicial) * 100) : 0}%`,
+                ]),
+                foot: [[
+                    '', 'TOTAL',
+                    `$${deptBudgets.reduce((s, d) => s + d.inicial, 0).toLocaleString()}`,
+                    `$${totalAccumulatedGastado.toLocaleString()}`,
+                    '',
+                ]],
+                styles: { fontSize: 7, cellPadding: 2 },
+                headStyles: { fillColor: [220, 38, 38], textColor: 255, fontStyle: 'bold', fontSize: 7 },
+                footStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'center' } },
+                margin: { left: 14, right: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 10;
+        } else {
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184);
+            doc.text('Sin datos de presupuesto para los filtros seleccionados', 14, y + 5);
+            y += 15;
+        }
+
+        // ── Hours by Department (new page if needed) ──
+        if (y > doc.internal.pageSize.getHeight() - 40) {
+            doc.addPage();
+            y = 14;
+        }
+        doc.setFontSize(12);
+        doc.setTextColor(30, 41, 59);
+        doc.text('Análisis de Horas por Departamento', 14, y);
+        y += 2;
+
+        if (deptHours.length > 0) {
+            autoTable(doc, {
+                startY: y,
+                head: [['#', 'Departamento', 'Persona-Horas', 'Cursos', 'Inscripciones', '% del Total']],
+                body: deptHours.map((d, i) => [
+                    (i + 1).toString(),
+                    d.nombre,
+                    `${d.personaHoras.toLocaleString()}h`,
+                    d.cursos.toString(),
+                    d.usuarios.toString(),
+                    `${totalHorasPersona > 0 ? Math.round((d.personaHoras / totalHorasPersona) * 100) : 0}%`,
+                ]),
+                foot: [[
+                    '', 'TOTAL',
+                    `${totalHorasPersona.toLocaleString()}h`,
+                    deptHours.reduce((s, d) => s + d.cursos, 0).toString(),
+                    deptHours.reduce((s, d) => s + d.usuarios, 0).toString(),
+                    '100%',
+                ]],
+                styles: { fontSize: 7, cellPadding: 2 },
+                headStyles: { fillColor: [139, 92, 246], textColor: 255, fontStyle: 'bold', fontSize: 7 },
+                footStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                columnStyles: { 2: { halign: 'right' }, 3: { halign: 'center' }, 4: { halign: 'center' }, 5: { halign: 'center' } },
+                margin: { left: 14, right: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 10;
+        } else {
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184);
+            doc.text('Sin datos de horas para los filtros seleccionados', 14, y + 5);
+            y += 15;
+        }
+
+        // ── Monthly Breakdown Matrix ──
+        if (monthlyMatrix.length > 0) {
+            if (y > doc.internal.pageSize.getHeight() - 40) {
+                doc.addPage();
+                y = 14;
+            }
+            doc.setFontSize(12);
+            doc.setTextColor(30, 41, 59);
+            doc.text('Gasto Aperturado por Mes', 14, y);
+            y += 2;
+
+            const monthHeaders = ['Departamento', ...MONTHS.map(m => m.label.substring(0, 3)), 'Total'];
+            autoTable(doc, {
+                startY: y,
+                head: [monthHeaders],
+                body: monthlyMatrix.map(r => [
+                    r.nombre,
+                    ...MONTHS.map(m => {
+                        const val = r.months[m.value];
+                        return val > 0 ? `$${val.toLocaleString()}` : '—';
+                    }),
+                    `$${r.total.toLocaleString()}`
+                ]),
+                styles: { fontSize: 6, cellPadding: 1.5, overflow: 'linebreak' },
+                headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold', fontSize: 6 },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } },
+                margin: { left: 10, right: 10 },
+            });
+        }
+
+        // ── Footer on all pages ──
+        const totalPages = doc.getNumberOfPages();
+        for (let p = 1; p <= totalPages; p++) {
+            doc.setPage(p);
+            doc.setFontSize(7);
+            doc.setTextColor(148, 163, 184);
+            const pageH = doc.internal.pageSize.getHeight();
+            doc.text(`Tuteur — Informe de Métricas — Página ${p} de ${totalPages}`, 14, pageH - 6);
+            doc.text(new Date().toLocaleDateString(), pageW - 14, pageH - 6, { align: 'right' });
+        }
+
+        doc.save(`informe_metricas_tuteur_${new Date().toISOString().slice(0, 10)}.pdf`);
+    }, [stats, users, pctGastado, presupuestoDisponible, deptBudgets, totalAccumulatedGastado, deptHours, totalHorasPersona, monthlyMatrix, filterArea, filterDept, filterMonth, filterYear]);
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Administración', href: '/admin' }, { title: 'Métricas', href: '/admin/metrics' }]}>
@@ -495,17 +731,26 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                         <h1 className="text-2xl font-semibold text-slate-800 tracking-tight">Métricas de Capacitación</h1>
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Dashboard analítico · Vista general de inversión y alcance</p>
                     </div>
-                    <button
-                        onClick={() => router.visit('/admin/courses')}
-                        className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-700 font-bold uppercase transition-colors"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                        Volver a Cursos
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            icon={<FileText className="w-3.5 h-3.5" />}
+                            onClick={exportMetricsToPDF}
+                            className="flex items-center gap-1 text-[10px] font-semibold uppercase text-red-700 border-red-200 hover:border-red-400! hover:text-red-800!"
+                        >
+                            Descargar PDF
+                        </Button>
+                        <button
+                            onClick={() => router.visit('/admin/courses')}
+                            className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-700 font-bold uppercase transition-colors"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Volver a Cursos
+                        </button>
+                    </div>
                 </div>
 
                 {/* KPI Cards (Reference Gradient Style) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                     {statCards.map((card, i) => (
                         <div key={i} className="relative overflow-hidden rounded-2xl shadow-lg">
                             <div className={`bg-gradient-to-br ${card.gradient} p-5 text-white`}>
@@ -821,7 +1066,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             pagination={{ pageSize: 50 }}
                             dataSource={jefeAnalysis}
                             rowKey="id"
-                            className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-3"
+                            className="tuteur-table"
                             expandable={{
                                 expandedRowRender: (record: any) => (
                                     <div className="bg-slate-50 rounded-xl p-4">
@@ -1011,6 +1256,106 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                             </Card>
                         </div>
 
+                        {/* Hours Analysis: Two-Column Ranking + Bar Chart */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                            {/* Hours Ranking by Department */}
+                            <Card
+                                title={
+                                    <div className="flex items-center justify-between w-full">
+                                        <div className="flex items-center gap-2 text-sm font-semibold uppercase text-slate-500 tracking-wide">
+                                            <Clock className="w-4 h-4 text-purple-500" />
+                                            Horas por Departamento
+                                        </div>
+                                        <Tag color="purple" className="font-semibold text-xs m-0">{totalHorasPersona.toLocaleString()}h persona</Tag>
+                                    </div>
+                                }
+                                className="border-none shadow-md rounded-2xl"
+                                bodyStyle={{ padding: '0' }}
+                            >
+                                <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+                                    {deptHours.map((dept, i) => {
+                                        const pct = totalHorasPersona > 0 ? Math.round((dept.personaHoras / totalHorasPersona) * 100) : 0;
+                                        return (
+                                            <div key={i} className="px-5 py-3 flex items-center gap-4 hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => setFilterDept(dept.id)}>
+                                                <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-[10px] font-semibold text-purple-600 shrink-0">
+                                                    {i + 1}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-xs font-bold text-slate-700 truncate">{dept.nombre}</div>
+                                                    <div className="flex items-center gap-3 mt-1">
+                                                        <Progress
+                                                            percent={pct}
+                                                            size="small"
+                                                            showInfo={false}
+                                                            strokeColor="#8b5cf6"
+                                                            strokeWidth={5}
+                                                            className="flex-1 m-0"
+                                                        />
+                                                        <span className="text-[10px] font-bold text-slate-400 w-10 text-right">{pct}%</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <div className="text-xs font-semibold text-purple-600">{dept.personaHoras.toLocaleString()}h</div>
+                                                    <div className="text-[9px] text-slate-400 font-bold">{dept.cursos} cursos · {dept.usuarios} inscr.</div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {deptHours.length === 0 && (
+                                        <div className="p-6 text-center text-slate-400 text-sm italic">Sin datos de horas para los filtros seleccionados</div>
+                                    )}
+                                </div>
+                            </Card>
+
+                            {/* Bar Chart – Hours Distribution by Department */}
+                            <Card
+                                title={
+                                    <div className="flex items-center gap-2 text-sm font-semibold uppercase text-slate-500 tracking-wide">
+                                        <BarChart3 className="w-4 h-4 text-purple-500" />
+                                        Distribución Visual de Horas
+                                    </div>
+                                }
+                                className="border-none shadow-md rounded-2xl"
+                                bodyStyle={{ padding: '0' }}
+                            >
+                                <div className="px-4 pt-3 pb-0 flex justify-end gap-4">
+                                    <div className="flex items-center gap-1"><div className="w-3 h-3 bg-gradient-to-t from-purple-600 to-violet-400 rounded-sm"></div><span className="text-[10px] font-bold text-slate-500 uppercase">Persona-horas</span></div>
+                                </div>
+                                <div className="p-6 overflow-x-auto pt-2">
+                                    <div className="flex flex-col h-[340px] min-w-[400px]">
+                                        <div className="flex-1 flex items-end justify-start gap-[3px] border-b-2 border-slate-800 pb-1">
+                                            {deptHours.slice(0, 15).map((dept, i) => {
+                                                const hPct = maxDeptHoursVal > 0 ? Math.max((dept.personaHoras / maxDeptHoursVal) * 100, 2) : 2;
+                                                return (
+                                                    <div key={i} className="flex-1 max-w-[50px] h-full flex flex-col items-center justify-end relative group cursor-pointer" onClick={() => setFilterDept(dept.id)}>
+                                                        <div className="absolute left-1/2 -translate-x-1/2 top-0 bg-slate-800 text-white text-[10px] font-bold px-3 py-2 flex flex-col items-center gap-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-40 pointer-events-none shadow-xl border border-slate-600">
+                                                            <span className="font-semibold text-white text-[11px]">{dept.nombre}</span>
+                                                            <span className="text-purple-300">Persona-horas: {dept.personaHoras.toLocaleString()}h</span>
+                                                            <span className="text-slate-300">{dept.cursos} cursos · {dept.usuarios} inscripciones</span>
+                                                        </div>
+                                                        <div className="w-full max-w-[40px] bg-gradient-to-t from-purple-600 to-violet-400 absolute bottom-0 z-10 transition-all duration-500 hover:brightness-110 shadow-[0_-2px_5px_rgba(139,92,246,0.25)] rounded-t-sm" style={{ height: `${hPct}%` }} />
+                                                    </div>
+                                                );
+                                            })}
+                                            {deptHours.length === 0 && (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <Empty description={<span className="font-bold text-slate-400">Sin datos de horas</span>} />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex items-start justify-start gap-[3px] mt-2">
+                                            {deptHours.slice(0, 15).map((dept, i) => (
+                                                <div key={i} className="flex-1 max-w-[50px] flex justify-center">
+                                                    <span className="text-[8px] font-bold text-slate-600 uppercase text-center leading-tight line-clamp-3 block w-full px-0.5" title={dept.nombre}>
+                                                        {dept.nombre}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
                         {/* Monthly Breakdown Matrix Table */}
                         <Card
                             title={
@@ -1028,7 +1373,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                 pagination={false}
                                 dataSource={monthlyMatrix}
                                 rowKey="id"
-                                className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-2.5"
+                                className="tuteur-table"
                                 columns={[
                                     {
                                         title: 'Departamento', dataIndex: 'nombre', key: 'nombre', fixed: 'left', width: 250,
@@ -1164,7 +1509,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                     pagination={false}
                                     dataSource={drillHabilidades}
                                     rowKey="mes"
-                                    className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-2.5"
+                                    className="tuteur-table"
                                     columns={[
                                         { title: 'Período', dataIndex: 'mes', key: 'mes', render: t => <span className="text-[10px] font-bold uppercase tracking-wide text-white bg-slate-800 px-2 py-0.5 rounded shadow-sm">{t}</span>, width: 100 },
                                         ...habilidades.map(h => ({
@@ -1206,7 +1551,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                     pagination={{ pageSize: 20 }}
                                     dataSource={drillUsers}
                                     rowKey={(r) => r.user.id}
-                                    className="[&_.ant-table-thead_th]:bg-slate-50 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-cell]:p-3"
+                                    className="tuteur-table"
                                     columns={[
                                         {
                                             title: 'Nombre y Apellido', dataIndex: ['user', 'name'], key: 'name',

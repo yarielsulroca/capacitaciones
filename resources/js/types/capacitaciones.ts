@@ -106,6 +106,7 @@ export interface Curso {
     mes_formacion?: string;
     instructores?: string;
     rating?: number;
+    proveedor?: string;
     users_count?: number;
     cdcs?: Cdc[];
     users?: User[];

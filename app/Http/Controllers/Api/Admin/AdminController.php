@@ -156,7 +156,7 @@ class AdminController extends Controller
             'id_habilidad'        => 'required',
             'id_categoria'        => 'required',
             'id_modalidad'        => 'nullable|exists:modalidads,id',
-            'id_tipo'             => 'nullable|exists:cursos_tipos,id',
+            'id_tipo'             => 'required|exists:cursos_tipos,id',
             'id_proveedor'        => 'nullable|exists:proveedors,id',
             'id_programa_asociado' => 'nullable|exists:programas_asociados,id',
             'id_presupuesto'      => 'nullable|exists:presupuesto_grupos,id',

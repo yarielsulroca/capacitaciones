@@ -321,7 +321,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                 <div>
                     <div className="flex justify-between items-center mr-8">
                         <div className="flex items-center gap-3">
-                            <div className="text-2xl font-bold uppercase">{isEditing ? 'Editar Curso' : 'Alta de Curso'}</div>
+                            <div className="text-2xl font-semibold uppercase">{isEditing ? 'Editar Curso' : 'Alta de Curso'}</div>
                         </div>
                         <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border">
                             <span className={`text-[10px] font-bold uppercase transition-colors ${formData.publicado ? 'text-emerald-600' : 'text-slate-400'}`}>
@@ -342,7 +342,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
             }
             footer={[
                 <Button key="back" onClick={onClose} size="large">Cancelar</Button>,
-                <Button key="submit" type="primary" danger onClick={handleSubmit} size="large" className="font-bold uppercase px-8 border-none bg-tuteur-red hover:bg-tuteur-red/90">
+                <Button key="submit" type="primary" danger onClick={handleSubmit} size="large" className="font-semibold uppercase px-8 border-none bg-tuteur-red hover:bg-tuteur-red/90">
                     {isEditing ? 'Actualizar Curso' : 'Dar de Alta e Inscribir'}
                 </Button>
             ]}
@@ -353,8 +353,8 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                     onChange={setSelectedTab}
                     className="mt-4"
                     items={[
-                        { key: 'abierto', label: <span className="font-bold uppercase">Abierto</span> },
-                        { key: 'a pedido', label: <span className="font-bold uppercase">A Pedido</span> }
+                        { key: 'abierto', label: <span className="font-semibold uppercase">Abierto</span> },
+                        { key: 'a pedido', label: <span className="font-semibold uppercase">A Pedido</span> }
                     ]}
                 />
 
@@ -488,17 +488,17 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
 
                 {/* === MULTI-CDC SECTION === */}
                 <div className="mt-8 border-2 border-slate-100 rounded-xl overflow-hidden">
-                    <div className="bg-tuteur-red p-4 flex justify-between items-center">
+                    <div className="bg-slate-700 p-4 flex justify-between items-center rounded-t-xl">
                         <div className="flex items-center gap-4 flex-1">
                             <div className="flex items-center gap-2">
                                 <DollarSign className="w-4 h-4 text-white" />
-                                <span className="text-sm font-bold uppercase tracking-wider text-white">Asignación de Centros de Costo (CDC)</span>
+                                <span className="text-sm font-semibold uppercase tracking-wider text-white">Asignación de Centros de Costo (CDC)</span>
                             </div>
 
                             {/* Prominent Budget Group Selector */}
                             <div className="flex flex-col gap-2 relative">
                                 <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1 border border-white/20 min-w-[300px]">
-                                    <span className="text-[9px] font-black uppercase whitespace-nowrap text-white opacity-80">Año/Grupo de Presupuesto:</span>
+                                    <span className="text-[9px] font-semibold uppercase whitespace-nowrap text-white opacity-80">Año/Grupo de Presupuesto:</span>
                                     <Select
                                         size="small"
                                         className="flex-1 budget-group-select"
@@ -521,14 +521,14 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                     const totActual = group.presupuestos?.reduce((sum: number, p: any) => sum + (parseFloat(p.actual || 0)), 0) || 0;
                                     return (
                                         <div className="absolute top-10 right-0 bg-white shadow-xl border border-slate-200 rounded-lg p-3 w-64 z-10 flex flex-col gap-1">
-                                            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest border-b pb-1 mb-1">Resumen del Grupo</div>
+                                            <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest border-b pb-1 mb-1">Resumen del Grupo</div>
                                             <div className="flex justify-between items-center text-xs">
                                                 <span className="font-semibold text-slate-600">Inicial:</span>
-                                                <span className="font-bold">${totInicial.toLocaleString()}</span>
+                                                <span className="font-semibold">${totInicial.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-xs">
                                                 <span className="font-semibold text-slate-600">Actual:</span>
-                                                <span className="font-bold text-emerald-600">${totActual.toLocaleString()}</span>
+                                                <span className="font-semibold text-emerald-600">${totActual.toLocaleString()}</span>
                                             </div>
                                         </div>
                                     );
@@ -537,11 +537,9 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                         </div>
 
                         <Button
-                            type="primary"
-                            ghost
                             onClick={addCdcItem}
                             icon={<Plus className="w-3 h-3" />}
-                            className="flex items-center gap-1 border-white/40 text-white hover:text-white hover:border-white"
+                            className="flex items-center gap-1 bg-white text-slate-700 border-white/60 font-semibold hover:bg-slate-50!"
                         >
                             Añadir CDC
                         </Button>
@@ -554,9 +552,9 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                     ) : (
                         <div className="p-4 space-y-3">
                                 <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border mb-2">
-                                    <span className="text-xs font-bold text-slate-500 uppercase">Costo total del curso: <span className="text-slate-900">${costoNum.toLocaleString()}</span></span>
+                                    <span className="text-xs font-semibold text-slate-500 uppercase">Costo total del curso: <span className="text-slate-900">${costoNum.toLocaleString()}</span></span>
                                     <div className="flex flex-col items-end">
-                                        <span className={`text-xs font-bold uppercase ${totalCdcMonto === costoNum ? 'text-emerald-600' : totalCdcMonto > costoNum ? 'text-red-600' : 'text-amber-600'}`}>
+                                        <span className={`text-xs font-semibold uppercase ${totalCdcMonto === costoNum ? 'text-emerald-600' : totalCdcMonto > costoNum ? 'text-red-600' : 'text-amber-600'}`}>
                                             Asignado: ${totalCdcMonto.toLocaleString()} {totalCdcMonto === costoNum ? '✓ Cuadrado' : totalCdcMonto > costoNum ? '⚠ Excede' : `Pendiente: $${(costoNum - totalCdcMonto).toLocaleString()}`}
                                         </span>
                                     </div>
@@ -579,7 +577,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
 
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1">1. Seleccionar Área</label>
+                                                <label className="text-[10px] font-semibold uppercase text-slate-400 ml-1">1. Seleccionar Área</label>
                                                 <Select
                                                     size="large"
                                                     className="w-full cdc-select"
@@ -613,7 +611,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                                 </Select>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1">2. Departamento</label>
+                                                <label className="text-[10px] font-semibold uppercase text-slate-400 ml-1">2. Departamento</label>
                                                 <Select
                                                     size="large"
                                                     className="w-full cdc-select"
@@ -641,7 +639,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                                 </Select>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1">3. Centro de Costo (CDC)</label>
+                                                <label className="text-[10px] font-semibold uppercase text-slate-400 ml-1">3. Centro de Costo (CDC)</label>
                                                 <Select
                                                     size="large"
                                                     className="w-full cdc-select"
@@ -657,7 +655,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end mt-4">
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Monto Total A Descontar ($)</label>
+                                                <label className="text-[10px] font-semibold uppercase text-slate-400 ml-1">Monto Total A Descontar ($)</label>
                                                 <InputNumber
                                                     size="large"
                                                     className="w-full"
@@ -679,7 +677,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                                     {(budgetInfo as any).error ? (
                                                         <div className="flex items-center gap-2 py-1">
                                                             <AlertCircle className="w-4 h-4 text-amber-600" />
-                                                            <span className="text-[11px] font-black text-amber-700 uppercase tracking-wide">{(budgetInfo as any).error}</span>
+                                                            <span className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">{(budgetInfo as any).error}</span>
                                                         </div>
                                                     ) : (
                                                         <div className="space-y-3">
@@ -691,14 +689,14 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                                                         <AlertCircle className="w-5 h-5 text-red-500" />
                                                                     )}
                                                                     <div className="leading-tight">
-                                                                        <div className={`text-[11px] font-black uppercase ${(budgetInfo as any).sufficient ? 'text-emerald-700' : 'text-red-700'}`}>
+                                                                        <div className={`text-[11px] font-semibold uppercase ${(budgetInfo as any).sufficient ? 'text-emerald-700' : 'text-red-700'}`}>
                                                                             Análisis de Presupuesto — {(budgetInfo as any).departamento}
                                                                         </div>
                                                                         <div className="text-[9px] text-slate-400 uppercase font-bold">Saldo actual en el grupo seleccionado</div>
                                                                     </div>
                                                                 </div>
                                                                 <div className="text-right">
-                                                                    <div className={`text-sm font-black ${(budgetInfo as any).sufficient ? 'text-emerald-700' : 'text-red-700'}`}>
+                                                                    <div className={`text-sm font-semibold ${(budgetInfo as any).sufficient ? 'text-emerald-700' : 'text-red-700'}`}>
                                                                         ${(budgetInfo as any).remaining.toLocaleString()}
                                                                     </div>
                                                                     <div className="text-[8px] font-bold text-slate-400 uppercase">Quedaría</div>
@@ -750,21 +748,21 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                 {/* === ENROLLED USERS LIST (edit mode) === */}
                 {isEditing && editCourse && (editCourse.users || []).length > 0 && (
                     <div className="mt-8 border rounded-lg overflow-hidden">
-                        <div className="bg-tuteur-grey-light p-3 border-b flex justify-between items-center">
-                            <h3 className="font-bold text-sm uppercase text-tuteur-grey">Colaboradores Inscriptos</h3>
-                            <Tag color="red" className="font-bold">{editCourse.users!.length} inscriptos</Tag>
+                        <div className="bg-slate-50 p-3 border-b flex justify-between items-center">
+                            <h3 className="font-semibold text-sm uppercase text-slate-600">Colaboradores Inscriptos</h3>
+                            <Tag color="red" className="font-semibold">{editCourse.users!.length} inscriptos</Tag>
                         </div>
                         <div className="divide-y max-h-48 overflow-y-auto">
                             {editCourse.users!.map((u: any) => (
                                 <div key={u.id} className="flex items-center justify-between p-3 hover:bg-slate-50 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div>
-                                            <div className="font-bold text-sm text-tuteur-grey">{u.name}</div>
+                                            <div className="font-semibold text-sm text-slate-700">{u.name}</div>
                                             <div className="text-[10px] text-tuteur-grey-mid">{u.departamento?.nombre || 'Sin depto'} · {u.departamento?.area?.nombre || ''}</div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <Tag color="green" className="font-bold text-[9px] uppercase m-0">
+                                        <Tag color="green" className="font-semibold text-[9px] uppercase m-0">
                                             {u.pivot?.status_label || 'inscripto'}
                                         </Tag>
                                         <Button
@@ -790,8 +788,8 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
 
                 {/* === ADD NEW USERS SECTION === */}
                 <div className="mt-8 border rounded-lg overflow-hidden">
-                    <div className="bg-tuteur-grey-light p-3 border-b flex justify-between items-center">
-                        <h3 className="font-bold text-sm uppercase text-tuteur-grey">
+                    <div className="bg-slate-50 p-3 border-b flex justify-between items-center">
+                        <h3 className="font-semibold text-sm uppercase text-slate-600">
                             {isEditing ? 'Inscribir Nuevos Colaboradores' : 'Inscripción Directa'}
                         </h3>
                         {selectedUsers.length > 0 && (
@@ -801,7 +799,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                     <Button
                                         type="primary"
                                         size="small"
-                                        className="bg-tuteur-red border-none font-bold uppercase text-[10px]"
+                                        className="bg-tuteur-red border-none font-semibold uppercase text-[10px]"
                                         onClick={() => {
                                             selectedUsers.forEach(userId => {
                                                 router.post(`/admin/courses/${editCourse!.id}/enroll-manual`, {
@@ -836,7 +834,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                 .map(u => (
                                 <div key={u.id} className="flex items-center justify-between p-2 hover:bg-slate-50 transition-colors">
                                     <div className="text-xs">
-                                        <div className="font-bold text-sm">{u.name}</div>
+                                        <div className="font-semibold text-sm">{u.name}</div>
                                         <div className="text-tuteur-grey-mid">{u.departamento?.nombre} - {u.departamento?.area?.nombre}</div>
                                     </div>
                                     <Checkbox

@@ -130,10 +130,32 @@ class AdminCphController extends Controller
             ->latest()
             ->paginate(20);
 
+        // Enrollment stats by state
+        $estadoMap = \App\Models\EstadoCurso::pluck('id', 'estado')->toArray();
+        $allEnrollments = \App\Models\CursoUser::selectRaw('curso_estado, COUNT(*) as total')
+            ->whereHas('curso') // exclude orphan records from deleted courses
+            ->groupBy('curso_estado')
+            ->pluck('total', 'curso_estado')
+            ->toArray();
+
+        $enrollmentStats = [
+            'inscriptos'    => $allEnrollments[$estadoMap['matriculado'] ?? 0] ?? 0,
+            'solicitados'   => $allEnrollments[$estadoMap['solicitado'] ?? 0] ?? 0,
+            'procesando'    => $allEnrollments[$estadoMap['procesando'] ?? 0] ?? 0,
+            'cancelados'    => $allEnrollments[$estadoMap['cancelado'] ?? 0] ?? 0,
+            'terminados'    => $allEnrollments[$estadoMap['terminado'] ?? 0] ?? 0,
+            'incompletos'   => $allEnrollments[$estadoMap['incompleto'] ?? 0] ?? 0,
+            'certificados'  => $allEnrollments[$estadoMap['certificado'] ?? 0] ?? 0,
+            'totalEnrollments' => array_sum($allEnrollments),
+            'totalHoras'    => $cursos->sum('cant_horas'),
+            'totalHorasColaboradores' => $cursos->sum(fn ($c) => ($c->cant_horas ?? 0) * ($c->users_count ?? 0)),
+        ];
+
         return Inertia::render('admincph/courses', [
             'cursos'       => $cursos,
             'enrollments'  => $enrollments,
             'presupuestos' => $presupuestos,
+            'enrollmentStats' => $enrollmentStats,
             'metadata' => [
                 'habilidades'  => Habilidad::all(),
                 'categorias'   => Categoria::all(),
@@ -256,6 +278,8 @@ class AdminCphController extends Controller
                 'totalCursos'     => $cursos->count(),
                 'totalInscritos'  => $cursos->sum('users_count'),
                 'totalCosto'      => $cursos->sum('costo'),
+                'totalHoras'      => $cursos->sum('cant_horas'),
+                'totalHorasColaboradores' => $cursos->sum(fn ($c) => ($c->cant_horas ?? 0) * ($c->users_count ?? 0)),
                 'totalPresupuesto' => $presupuestoGrupos->flatMap->presupuestos->sum('inicial'),
                 'totalGastado'    => $presupuestoGrupos->flatMap->presupuestos->sum('inicial') - $presupuestoGrupos->flatMap->presupuestos->sum('actual'),
             ],

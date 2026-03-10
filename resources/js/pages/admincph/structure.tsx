@@ -468,7 +468,7 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
                                         + Nuevo
                                     </Button>
                                 }
-                                className="shadow-sm mt-2"
+                                className="tuteur-card mt-2"
                             >
                                 {section.id === 'presupuestos' && (
                                     <div className="mb-3 flex flex-wrap items-center gap-3 pb-3 border-b border-gray-100">
@@ -608,6 +608,7 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
                                                                                 rowKey="id"
                                                                                 pagination={false}
                                                                                 size="small"
+                                                                                className="tuteur-table"
                                                                             />
                                                                         ),
                                                                     }))}
@@ -639,7 +640,7 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
                                         rowKey="id"
                                         pagination={{ pageSize: 15 }}
                                         size="small"
-                                        className="overflow-x-auto"
+                                        className="tuteur-table"
                                     />
                                 )}
                             </Card>

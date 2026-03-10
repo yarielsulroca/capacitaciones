@@ -58,7 +58,7 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
             dataIndex: 'id',
             key: 'id',
             width: 70,
-            render: (id: number) => <span className="font-mono text-xs text-tuteur-grey-mid font-bold">#{id}</span>
+            render: (id: number) => <span className="font-mono text-xs text-tuteur-grey-mid font-semibold">#{id}</span>
         },
         {
             title: 'Usuario',
@@ -69,7 +69,7 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
                 <div className="flex items-center gap-2">
                     <Avatar className="bg-tuteur-red" size="small">{record.name.charAt(0)}</Avatar>
                     <div className="flex flex-col">
-                        <span className="font-bold text-tuteur-grey text-sm leading-tight">{record.name}</span>
+                        <span className="font-semibold text-tuteur-grey text-sm leading-tight">{record.name}</span>
                         <span className="text-xs text-tuteur-grey-mid">{record.email}</span>
                     </div>
                 </div>
@@ -80,7 +80,7 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
             key: 'cargo',
             render: (_: any, record: User) => (
                 <div className="flex flex-col">
-                    <span className="font-bold text-tuteur-grey text-sm">{record.cargo || '—'}</span>
+                    <span className="font-semibold text-tuteur-grey text-sm">{record.cargo || '—'}</span>
                     <span className="text-xs text-tuteur-grey-mid font-semibold">{record.departamento?.nombre || '—'}</span>
                 </div>
             )
@@ -95,7 +95,7 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
             key: 'empresa',
             render: (_: any, record: User) => (
                 <div className="flex flex-col">
-                    <span className="font-bold text-tuteur-grey text-sm">{record.empresa?.nombre || '—'}</span>
+                    <span className="font-semibold text-tuteur-grey text-sm">{record.empresa?.nombre || '—'}</span>
                     <span className="text-xs text-tuteur-grey-mid">
                         {[record.oficina, record.ciudad, record.pais].filter(Boolean).join(', ') || '—'}
                     </span>
@@ -114,7 +114,7 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
             align: 'center' as const,
             render: (_: any, record: User) => (
                 <Tag color={record.role === 'admin' ? 'red' : record.role === 'jefe_area' ? 'default' : record.role === 'jefe_general' ? 'red' : 'default'}
-                     className="font-black uppercase text-[10px] border-none m-0">
+                     className="font-semibold uppercase text-[10px] border-none m-0">
                     {record.role}
                 </Tag>
             ),
@@ -236,7 +236,7 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
                 )}
 
                 {/* Filters bar */}
-                <Card size="small" className="shadow-sm" bodyStyle={{ padding: '12px 16px' }}>
+                <Card size="small" className="tuteur-card" bodyStyle={{ padding: '12px 16px' }}>
                     <div className="flex flex-wrap items-center gap-3">
                         <div className="flex items-center gap-2 text-tuteur-grey-mid">
                             <Filter className="h-4 w-4" />
@@ -312,7 +312,7 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
                             )}
                         </div>
                     }
-                    className="shadow-sm"
+                    className="tuteur-card"
                     extra={
                         <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
                             <Input
@@ -341,7 +341,7 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
                         rowKey="id"
                         size="small"
                         pagination={{ pageSize: 50, showSizeChanger: true, pageSizeOptions: ['25', '50', '100'], showTotal: (total: number) => `${total} colaboradores` }}
-                        className="overflow-x-auto"
+                        className="tuteur-table"
                     />
                 </Card>
             </div>
