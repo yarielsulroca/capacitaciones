@@ -8,11 +8,43 @@ use App\Models\Curso;
 use App\Models\EstadoCurso;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class CourseService
 {
+    /**
+     * Build the base query for courses with common filters and relationships.
+     */
+    public function getFilteredCoursesQuery(Request $request, bool $isAdmin = false): Builder
+    {
+        $query = Curso::query()->with(['habilidad', 'categoria', 'programa', 'proveedor', 'cdc']);
+
+        // Visibility filter: non-admins only see published courses
+        if (!$isAdmin) {
+            $query->where('publicado', 1);
+        }
+
+        if ($request->filled('search')) {
+            $query->where('nombre', 'like', '%'.$request->search.'%');
+        }
+
+        if ($request->filled('habilidad_id') && $request->habilidad_id !== 'null') {
+            $query->where('habilidad_id', $request->habilidad_id);
+        }
+
+        if ($request->filled('categoria_id') && $request->categoria_id !== 'null') {
+            $query->where('categoria_id', $request->categoria_id);
+        }
+
+        if ($request->filled('cdc_id') && $request->cdc_id !== 'null') {
+            $query->where('id_cdc', $request->cdc_id);
+        }
+
+        return $query;
+    }
     /**
      * Automatically mark finished courses as "Terminado"
      */

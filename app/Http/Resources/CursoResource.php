@@ -41,6 +41,7 @@ class CursoResource extends JsonResource
             'certificado'          => $this->certificado,
             'anio_formacion'       => $this->anio_formacion,
             'mes_formacion'        => $this->mes_formacion,
+            'instructores'         => $this->instructores,
             'status'               => $this->status ?? null,
             'created_at'           => $this->created_at,
         ];

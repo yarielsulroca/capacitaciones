@@ -1,12 +1,14 @@
-import { Modal, Button, Input, Select, Tabs, Checkbox, InputNumber, Tag, Tooltip, Progress } from 'antd';
+import { Modal, Button, Input, Select, Tabs, Checkbox, InputNumber, Tag, Tooltip, Progress, Switch, Cascader } from 'antd';
 import { useState, useMemo, useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
-import { Cdc, Habilidad, Presupuesto, Categoria, Proveedor, Modalidad, CursoTipo, User, PresupuestoGrupo, Curso } from '@/types/capacitaciones';
+import { Cdc, Habilidad, Presupuesto, Categoria, Proveedor, Modalidad, CursoTipo, User, PresupuestoGrupo, Curso, Area, Departamento } from '@/types/capacitaciones';
 import { SelectableInput } from './SelectableInput';
 import { Plus, Trash2, AlertCircle, CheckCircle2, DollarSign } from 'lucide-react';
 
 interface CdcItem {
-    [key: string]: string | number;
+    [key: string]: any;
+    area_id: string;
+    dept_id: string;
     cdc_id: string;
     monto: number;
 }
@@ -18,6 +20,8 @@ interface AltaCursoModalProps {
     metadata: {
         habilidades: Habilidad[];
         categorias: Categoria[];
+        areas: Area[];
+        departamentos: Departamento[];
         cdcs: Cdc[];
         proveedores: Proveedor[];
         modalidades: Modalidad[];
@@ -40,6 +44,8 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
     const [cdcItems, setCdcItems] = useState<CdcItem[]>([]);
     const isEditing = !!editCourse;
 
+    if (!metadata || !metadata.cdcs) return null;
+
     const emptyForm = {
         nombre: '',
         descripcion: '',
@@ -57,6 +63,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
         mes_formacion: '',
         id_presupuesto: '',
         costo_cero: false,
+        publicado: true,
         inicio: '',
         fin: '',
         capacidad: '30'
@@ -64,61 +71,83 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
 
     const [formData, setFormData] = useState(emptyForm);
 
+    const resetForm = () => setFormData(emptyForm);
+
     // Populate form when editing
     useEffect(() => {
-        if (editCourse && isOpen) {
-            const formatDate = (d: any) => {
-                if (!d) return '';
-                const date = new Date(d);
-                return date.toISOString().split('T')[0];
-            };
+        if (isOpen) {
+            if (editCourse) {
+                const formatDate = (d: any) => {
+                    if (!d) return '';
+                    const date = new Date(d);
+                    return date.toISOString().split('T')[0];
+                };
 
-            // Resolve tipo tab
-            const tipoObj = editCourse.tipo;
-            const tipoStr = typeof tipoObj === 'object' && tipoObj ? (tipoObj as CursoTipo).tipo : '';
-            if (tipoStr) setSelectedTab(tipoStr.toLowerCase());
+                // Resolve tipo tab
+                const tipoObj = editCourse.tipo;
+                const tipoStr = typeof tipoObj === 'object' && tipoObj ? (tipoObj as CursoTipo).tipo : '';
+                if (tipoStr) setSelectedTab(tipoStr.toLowerCase());
 
-            setFormData({
-                nombre: editCourse.nombre || '',
-                descripcion: editCourse.descripcion || '',
-                id_proveedor: (editCourse as any).id_proveedor?.toString() || '',
-                costo: editCourse.costo?.toString() || '',
-                id_habilidad: (editCourse as any).habilidad_id?.toString() || (editCourse as any).id_habilidad?.toString() || '',
-                id_categoria: (editCourse as any).categoria_id?.toString() || (editCourse as any).id_categoria?.toString() || '',
-                jornadas: editCourse.jornadas || '',
-                cant_horas: editCourse.cant_horas?.toString() || '',
-                id_modalidad: editCourse.id_modalidad?.toString() || '',
-                mes_pago: editCourse.mes_pago || '',
-                twiins: editCourse.twiins || false,
-                certificado: editCourse.certificado || false,
-                anio_formacion: editCourse.anio_formacion?.toString() || new Date().getFullYear().toString(),
-                mes_formacion: editCourse.mes_formacion || '',
-                inicio: formatDate(editCourse.inicio),
-                fin: formatDate(editCourse.fin),
-                capacidad: editCourse.capacidad?.toString() || '30',
-                id_presupuesto: editCourse.id_presupuesto?.toString() || '',
-                costo_cero: !!editCourse.costo_cero,
-            });
+                setFormData({
+                    nombre: editCourse.nombre || '',
+                    descripcion: editCourse.descripcion || '',
+                    id_proveedor: (editCourse as any).id_proveedor?.toString() || '',
+                    costo: editCourse.costo?.toString() || '',
+                    id_habilidad: (editCourse as any).habilidad_id?.toString() || (editCourse as any).id_habilidad?.toString() || '',
+                    id_categoria: (editCourse as any).categoria_id?.toString() || (editCourse as any).id_categoria?.toString() || '',
+                    jornadas: editCourse.jornadas || '',
+                    cant_horas: editCourse.cant_horas?.toString() || '',
+                    id_modalidad: editCourse.id_modalidad?.toString() || '',
+                    mes_pago: editCourse.mes_pago || '',
+                    twiins: editCourse.twiins || false,
+                    certificado: editCourse.certificado || false,
+                    anio_formacion: editCourse.anio_formacion?.toString() || new Date().getFullYear().toString(),
+                    mes_formacion: editCourse.mes_formacion || '',
+                    inicio: formatDate(editCourse.inicio),
+                    fin: formatDate(editCourse.fin),
+                    capacidad: editCourse.capacidad?.toString() || '30',
+                    id_presupuesto: editCourse.id_presupuesto?.toString() || '',
+                    costo_cero: !!editCourse.costo_cero,
+                    publicado: editCourse.publicado !== undefined ? !!editCourse.publicado : true,
+                });
 
-            // Populate CDC items from pivot
-            if (editCourse.cdcs && editCourse.cdcs.length > 0) {
-                setCdcItems(editCourse.cdcs.map(c => ({
-                    cdc_id: c.id.toString(),
-                    monto: c.pivot?.monto || 0,
-                })));
+                // Populate CDC items from pivot
+                if (editCourse.cdcs && editCourse.cdcs.length > 0) {
+                    setCdcItems(editCourse.cdcs.map(c => {
+                        const deptId = c.id_departamento?.toString() || '';
+                        const dept = metadata.departamentos.find(d => String(d.id) === deptId);
+                        const areaId = dept?.id_area?.toString() || '';
+
+                        return {
+                            area_id: areaId,
+                            dept_id: deptId,
+                            cdc_id: c.id.toString(),
+                            monto: c.pivot?.monto || 0,
+                        };
+                    }));
+                } else {
+                    setCdcItems([]);
+                }
+
+                setSelectedUsers([]);
             } else {
-                setCdcItems([]);
-            }
+                // Auto-select unique budget group or default to current year one
+                const currentYear = new Date().getFullYear().toString();
+                const defaultGroup = metadata.presupuestos?.length === 1
+                    ? metadata.presupuestos[0].id.toString()
+                    : (metadata.presupuestos || []).find(g => String(g.fecha) === currentYear)?.id.toString() || '';
 
-            setSelectedUsers([]);
-        } else if (!isOpen) {
+                resetForm();
+                if (defaultGroup) setFormData(prev => ({ ...prev, id_presupuesto: defaultGroup }));
+            }
+        } else {
             // Reset when modal closes
             setFormData(emptyForm);
             setCdcItems([]);
             setSelectedUsers([]);
             setSelectedTab('abierto');
         }
-    }, [editCourse, isOpen]);
+    }, [editCourse, isOpen, metadata.presupuestos]);
 
     const filteredUsers = useMemo(() => {
         return (metadata.users || []).filter(u =>
@@ -128,53 +157,48 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
     }, [metadata.users, searchTerm]);
 
     // Budget calculation helper
-    const getCdcBudgetInfo = (cdcId: string, monto: number) => {
-        const cdc = metadata.cdcs.find(c => c.id.toString() === cdcId);
-        if (!cdc) return null;
-
+    const getCdcBudgetInfo = (cdcId: string | null, monto: number, deptIdFromState?: string) => {
         const targetGroupId = formData.id_presupuesto
             ? parseInt(formData.id_presupuesto)
             : null;
 
         let presupuesto: Presupuesto | undefined;
+        let deptId = deptIdFromState;
 
-        if (targetGroupId) {
-            // Find the selected budget group
-            const selectedGroup = (metadata.presupuestos || []).find(g => g.id === targetGroupId);
-            if (selectedGroup && selectedGroup.presupuestos) {
-                // Within the group, find the department-specific budget
-                presupuesto = selectedGroup.presupuestos.find(p => p.id_departamento === cdc.id_departamento);
-            }
-        } else {
-            // If no specific group is selected, try to find a department budget that is not part of any group
-            // This assumes that metadata.presupuestos might contain groups, and we need to iterate through them
-            // to find a flat budget if it exists, or if there's a default way to get a budget.
-            // For now, if no group is selected, we assume no budget info can be derived from grouped budgets.
-            // If there are 'ungrouped' budgets, they would need to be in a separate metadata array or handled differently.
-            // Given the change to PresupuestoGrupo[], we'll only find budgets if a group is selected.
-            // If the intention is to allow budgets outside of groups, metadata.presupuestos would need to be a union type or two separate arrays.
-            // For this change, we'll assume budgets are always within a group if metadata.presupuestos is PresupuestoGrupo[].
-            return null;
+        // If cdcId is provided but no deptIdFromState, try to find deptId from cdc
+        if (cdcId && !deptId) {
+            const cdc = (metadata.cdcs || []).find(c => String(c.id) === String(cdcId));
+            if (cdc) deptId = cdc.id_departamento?.toString();
         }
 
-        if (!presupuesto) return null;
+        if (targetGroupId && deptId) {
+            const selectedGroup = (metadata.presupuestos || []).find(g => String(g.id) === String(targetGroupId));
+            if (selectedGroup && selectedGroup.presupuestos) {
+                presupuesto = selectedGroup.presupuestos.find(p => String(p.id_departamento) === String(deptId));
+            }
+        } else if (!targetGroupId) {
+            return { error: 'Seleccione un grupo de presupuesto.' };
+        }
 
-        const usersToEnroll = selectedUsers.length || 1;
-        const totalDeduction = monto * usersToEnroll;
-        const remaining = presupuesto.actual - totalDeduction;
-        const pctUsed = presupuesto.inicial > 0
-            ? ((presupuesto.inicial - remaining) / presupuesto.inicial) * 100
+        if (!presupuesto) return { error: 'Sin presupuesto en este grupo para este departamento.' };
+
+        const totalDeduction = formData.costo_cero ? 0 : monto;
+        const remaining = (presupuesto.actual || 0) - totalDeduction;
+        const pctUsed = (presupuesto.inicial || 0) > 0
+            ? (((presupuesto.inicial || 0) - remaining) / (presupuesto.inicial || 1)) * 100
             : 0;
 
+        const dept = (metadata.departamentos || []).find(d => String(d.id) === String(deptId));
+
         return {
-            departamento: cdc.departamento?.nombre || 'N/A',
-            area: cdc.departamento?.area?.nombre || '',
-            presupuestoInicial: presupuesto.inicial,
-            presupuestoActual: presupuesto.actual,
-            totalDeduction: formData.costo_cero ? 0 : totalDeduction,
-            remaining: formData.costo_cero ? presupuesto.actual : remaining,
-            pctUsed: formData.costo_cero ? 0 : Math.min(pctUsed, 100),
-            sufficient: formData.costo_cero ? true : remaining >= 0,
+            departamento: dept?.nombre || 'N/A',
+            area: dept?.area?.nombre || '',
+            presupuestoInicial: presupuesto.inicial || 0,
+            presupuestoActual: presupuesto.actual || 0,
+            totalDeduction,
+            remaining,
+            pctUsed,
+            sufficient: remaining >= 0
         };
     };
 
@@ -188,7 +212,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
     };
 
     const addCdcItem = () => {
-        setCdcItems(prev => [...prev, { cdc_id: '', monto: 0 }]);
+        setCdcItems(prev => [...prev, { area_id: '', dept_id: '', cdc_id: '', monto: 0 }]);
     };
 
     const removeCdcItem = (index: number) => {
@@ -196,22 +220,52 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
     };
 
     const updateCdcItem = (index: number, field: keyof CdcItem, value: any) => {
-        setCdcItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+        setCdcItems(prev => prev.map((item, i) => {
+            if (i !== index) return item;
+            const newItem = { ...item, [field]: value };
+            if (field === 'area_id') {
+                newItem.dept_id = '';
+                newItem.cdc_id = '';
+            } else if (field === 'dept_id') {
+                // Auto-select CDC for this department
+                const deptCdcs = (metadata.cdcs || []).filter(c => String(c.id_departamento) === String(value));
+                if (deptCdcs.length === 1) {
+                    // Only one CDC → auto-select it
+                    newItem.cdc_id = String(deptCdcs[0].id);
+                } else if (deptCdcs.length > 1) {
+                    // Multiple CDCs → select first one by default, user can change in dropdown
+                    newItem.cdc_id = String(deptCdcs[0].id);
+                } else {
+                    newItem.cdc_id = '';
+                }
+            }
+            return newItem;
+        }));
     };
 
     const handleSubmit = () => {
         const tipoId = metadata.cursos_tipos.find(t => t.tipo.toLowerCase() === selectedTab.toLowerCase())?.id;
+
+        // Ensure CDC items have proper numeric types and filter out incomplete ones
+        const validCdcItems = cdcItems
+            .filter(item => item.cdc_id && item.monto > 0)
+            .map(item => ({
+                cdc_id: parseInt(String(item.cdc_id), 10),
+                monto: parseFloat(String(item.monto)),
+            }));
+
         const payload = {
             ...formData,
             id_tipo: tipoId,
-            id_presupuesto: formData.id_presupuesto || null,
+            id_presupuesto: formData.id_presupuesto ? parseInt(String(formData.id_presupuesto), 10) : null,
             costo_cero: formData.costo_cero,
-            cdc_items: cdcItems.filter(item => item.cdc_id && item.monto > 0),
+            cdc_items: validCdcItems,
         };
 
         if (isEditing && editCourse) {
             router.patch(`/admin/courses/${editCourse.id}`, payload, {
                 onSuccess: () => onClose(),
+                onError: (errors) => console.error('[AltaCursoModal] PATCH errors:', errors),
                 preserveScroll: true,
             });
         } else {
@@ -220,6 +274,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                 selected_users: selectedUsers,
             }, {
                 onSuccess: () => onClose(),
+                onError: (errors) => console.error('[AltaCursoModal] POST errors:', errors),
             });
         }
     };
@@ -228,7 +283,33 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
         <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{errors[name]}</p>
     ) : null;
 
+    if (!isOpen) return null;
+
     return (
+        <>
+        <style dangerouslySetInnerHTML={{ __html: `
+            .budget-group-select .ant-select-selector {
+                background: rgba(255, 255, 255, 0.1) !important;
+                border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                color: white !important;
+            }
+            .budget-group-select .ant-select-selection-item,
+            .budget-group-select .ant-select-selection-placeholder {
+                color: white !important;
+                font-weight: bold;
+                text-transform: uppercase;
+                font-size: 11px;
+            }
+            .budget-group-select .ant-select-arrow {
+                color: white !important;
+            }
+            .budget-group-dropdown .ant-select-item-option-content {
+                font-weight: 500;
+            }
+            .cdc-select .ant-select-selection-item {
+                font-weight: 600;
+            }
+        `}} />
         <Modal
             open={isOpen}
             onCancel={onClose}
@@ -238,7 +319,22 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
             className="pb-10"
             title={
                 <div>
-                    <div className="text-2xl font-bold uppercase">{isEditing ? 'Editar Curso' : 'Alta de Curso'}</div>
+                    <div className="flex justify-between items-center mr-8">
+                        <div className="flex items-center gap-3">
+                            <div className="text-2xl font-semibold uppercase">{isEditing ? 'Editar Curso' : 'Alta de Curso'}</div>
+                        </div>
+                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border">
+                            <span className={`text-[10px] font-bold uppercase transition-colors ${formData.publicado ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                {formData.publicado ? 'Publicado' : 'Borrador'}
+                            </span>
+                            <Switch
+                                size="small"
+                                checked={formData.publicado}
+                                onChange={v => setFormData({ ...formData, publicado: v })}
+                                className={formData.publicado ? 'bg-emerald-500' : ''}
+                            />
+                        </div>
+                    </div>
                     <div className="font-normal text-sm text-slate-500 mt-1">
                         {isEditing ? 'Modifique los datos del curso y sus asignaciones de CDC.' : 'Complete los datos para crear una nueva capacitación e inscribir colaboradores.'}
                     </div>
@@ -246,7 +342,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
             }
             footer={[
                 <Button key="back" onClick={onClose} size="large">Cancelar</Button>,
-                <Button key="submit" type="primary" danger onClick={handleSubmit} size="large" className="font-bold uppercase px-8 border-none bg-tuteur-red hover:bg-tuteur-red/90">
+                <Button key="submit" type="primary" danger onClick={handleSubmit} size="large" className="font-semibold uppercase px-8 border-none bg-tuteur-red hover:bg-tuteur-red/90">
                     {isEditing ? 'Actualizar Curso' : 'Dar de Alta e Inscribir'}
                 </Button>
             ]}
@@ -257,8 +353,8 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                     onChange={setSelectedTab}
                     className="mt-4"
                     items={[
-                        { key: 'abierto', label: <span className="font-bold uppercase">Abierto</span> },
-                        { key: 'a pedido', label: <span className="font-bold uppercase">A Pedido</span> }
+                        { key: 'abierto', label: <span className="font-semibold uppercase">Abierto</span> },
+                        { key: 'a pedido', label: <span className="font-semibold uppercase">A Pedido</span> }
                     ]}
                 />
 
@@ -308,34 +404,15 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                 <ErrorMsg name="id_habilidad" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold">Presupuesto Específico <span className="text-[10px] text-slate-400">(Opcional)</span></label>
-                                <Select
-                                    className="w-full"
-                                    size="large"
-                                    placeholder="Autodetectar por CDC..."
-                                    value={formData.id_presupuesto || undefined}
-                                    onChange={v => setFormData({...formData, id_presupuesto: v})}
-                                    allowClear
-                                >
-                                    {(metadata.presupuestos || []).map((g: any) => (
-                                        <Select.Option key={g.id} value={g.id.toString()}>
-                                            [{g.fecha}] {g.descripcion}
-                                        </Select.Option>
-                                    ))}
-                                </Select>
-                                <ErrorMsg name="id_presupuesto" />
+                                <label className="text-sm font-semibold">Categoría</label>
+                                <SelectableInput
+                                    value={formData.id_categoria}
+                                    onChange={v => setFormData({...formData, id_categoria: v})}
+                                    options={metadata.categorias.map(c => ({ id: c.id, label: c.categoria }))}
+                                    placeholder="Seleccionar o escribir..."
+                                />
+                                <ErrorMsg name="id_categoria" />
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold">Categoría</label>
-                            <SelectableInput
-                                value={formData.id_categoria}
-                                onChange={v => setFormData({...formData, id_categoria: v})}
-                                options={metadata.categorias.map(c => ({ id: c.id, label: c.categoria }))}
-                                placeholder="Seleccionar o escribir..."
-                            />
-                            <ErrorMsg name="id_categoria" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -411,20 +488,58 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
 
                 {/* === MULTI-CDC SECTION === */}
                 <div className="mt-8 border-2 border-slate-100 rounded-xl overflow-hidden">
-                    <div className="bg-linear-to-r from-tuteur-red to-tuteur-red-dark p-4 flex justify-between items-center">
-                        <div>
-                            <h3 className="font-bold text-sm uppercase text-white flex items-center gap-2">
-                                <DollarSign className="w-4 h-4 text-emerald-400" />
-                                Asignación de Centros de Costo (CDC)
-                            </h3>
-                            <p className="text-[10px] text-slate-400 mt-1">Defina qué departamentos financian este curso y cuánto aporta cada uno.</p>
+                    <div className="bg-slate-700 p-4 flex justify-between items-center rounded-t-xl">
+                        <div className="flex items-center gap-4 flex-1">
+                            <div className="flex items-center gap-2">
+                                <DollarSign className="w-4 h-4 text-white" />
+                                <span className="text-sm font-semibold uppercase tracking-wider text-white">Asignación de Centros de Costo (CDC)</span>
+                            </div>
+
+                            {/* Prominent Budget Group Selector */}
+                            <div className="flex flex-col gap-2 relative">
+                                <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1 border border-white/20 min-w-[300px]">
+                                    <span className="text-[9px] font-semibold uppercase whitespace-nowrap text-white opacity-80">Año/Grupo de Presupuesto:</span>
+                                    <Select
+                                        size="small"
+                                        className="flex-1 budget-group-select"
+                                        popupClassName="budget-group-dropdown"
+                                        placeholder="Seleccionar Año/Grupo..."
+                                        value={formData.id_presupuesto || undefined}
+                                        onChange={v => setFormData({...formData, id_presupuesto: v})}
+                                    >
+                                        {(metadata.presupuestos || []).map((g: any) => (
+                                            <Select.Option key={g.id} value={g.id.toString()}>
+                                                [{g.fecha}] {g.descripcion}
+                                            </Select.Option>
+                                        ))}
+                                    </Select>
+                                </div>
+                                {formData.id_presupuesto && (() => {
+                                    const group = (metadata.presupuestos || []).find(g => g.id.toString() === formData.id_presupuesto);
+                                    if (!group) return null;
+                                    const totInicial = group.presupuestos?.reduce((sum: number, p: any) => sum + (parseFloat(p.inicial || 0)), 0) || 0;
+                                    const totActual = group.presupuestos?.reduce((sum: number, p: any) => sum + (parseFloat(p.actual || 0)), 0) || 0;
+                                    return (
+                                        <div className="absolute top-10 right-0 bg-white shadow-xl border border-slate-200 rounded-lg p-3 w-64 z-10 flex flex-col gap-1">
+                                            <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest border-b pb-1 mb-1">Resumen del Grupo</div>
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="font-semibold text-slate-600">Inicial:</span>
+                                                <span className="font-semibold">${totInicial.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="font-semibold text-slate-600">Actual:</span>
+                                                <span className="font-semibold text-emerald-600">${totActual.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
                         </div>
+
                         <Button
-                            type="primary"
-                            ghost
                             onClick={addCdcItem}
                             icon={<Plus className="w-3 h-3" />}
-                            className="flex items-center gap-1 border-emerald-500/40 text-emerald-400 hover:text-emerald-300 hover:border-emerald-400"
+                            className="flex items-center gap-1 bg-white text-slate-700 border-white/60 font-semibold hover:bg-slate-50!"
                         >
                             Añadir CDC
                         </Button>
@@ -436,107 +551,193 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                         </div>
                     ) : (
                         <div className="p-4 space-y-3">
-                            {/* Summary bar */}
-                            {costoNum > 0 && (
                                 <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border mb-2">
-                                    <span className="text-xs font-bold text-slate-500 uppercase">Costo total del curso: <span className="text-slate-900">${costoNum.toLocaleString()}</span></span>
-                                    <span className={`text-xs font-bold uppercase ${totalCdcMonto === costoNum ? 'text-emerald-600' : totalCdcMonto > costoNum ? 'text-red-600' : 'text-amber-600'}`}>
-                                        Asignado: ${totalCdcMonto.toLocaleString()} {totalCdcMonto === costoNum ? '✓ Cuadrado' : totalCdcMonto > costoNum ? '⚠ Excede' : `Pendiente: $${(costoNum - totalCdcMonto).toLocaleString()}`}
-                                    </span>
+                                    <span className="text-xs font-semibold text-slate-500 uppercase">Costo total del curso: <span className="text-slate-900">${costoNum.toLocaleString()}</span></span>
+                                    <div className="flex flex-col items-end">
+                                        <span className={`text-xs font-semibold uppercase ${totalCdcMonto === costoNum ? 'text-emerald-600' : totalCdcMonto > costoNum ? 'text-red-600' : 'text-amber-600'}`}>
+                                            Asignado: ${totalCdcMonto.toLocaleString()} {totalCdcMonto === costoNum ? '✓ Cuadrado' : totalCdcMonto > costoNum ? '⚠ Excede' : `Pendiente: $${(costoNum - totalCdcMonto).toLocaleString()}`}
+                                        </span>
+                                    </div>
                                 </div>
-                            )}
 
                             {cdcItems.map((item, index) => {
-                                const budgetInfo = item.cdc_id ? getCdcBudgetInfo(item.cdc_id, item.monto) : null;
+                                const budgetInfo = item.cdc_id ? getCdcBudgetInfo(item.cdc_id, item.monto, item.dept_id) : null;
+                                const filteredDepts = (metadata.departamentos || []).filter(d => String(d.id_area) === String(item.area_id));
+                                const filteredCdcs = (metadata.cdcs || []).filter(c => String(c.id_departamento) === String(item.dept_id));
 
                                 return (
-                                    <div key={index} className="border rounded-xl p-4 bg-white space-y-3 hover:shadow-sm transition-shadow">
-                                        <div className="flex items-start gap-3">
-                                            <div className="flex-1 grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Centro de Costo</label>
-                                                    <Select
-                                                        size="large"
-                                                        className="w-full"
-                                                        placeholder="Seleccionar CDC..."
-                                                        value={item.cdc_id || undefined}
-                                                        onChange={v => updateCdcItem(index, 'cdc_id', v)}
-                                                        showSearch
-                                                        optionFilterProp="children"
-                                                    >
-                                                        {metadata.cdcs.map(c => (
-                                                            <Select.Option key={c.id} value={c.id.toString()}>
-                                                                {c.cdc} {c.departamento ? `(${c.departamento.nombre})` : ''}
+                                    <div key={index} className="border-2 border-slate-50 rounded-2xl p-5 bg-white space-y-5 hover:border-slate-100 transition-all shadow-sm relative group">
+                                        <Button
+                                            danger
+                                            type="text"
+                                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            icon={<Trash2 className="w-4 h-4" />}
+                                            onClick={() => removeCdcItem(index)}
+                                        />
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-semibold uppercase text-slate-400 ml-1">1. Seleccionar Área</label>
+                                                <Select
+                                                    size="large"
+                                                    className="w-full cdc-select"
+                                                    placeholder="Área..."
+                                                    value={item.area_id || undefined}
+                                                    onChange={v => updateCdcItem(index, 'area_id', v)}
+                                                    showSearch
+                                                    optionFilterProp="label"
+                                                >
+                                                    {metadata.areas.map(a => {
+                                                        const currentGroup = (metadata.presupuestos || []).find(g => g.id.toString() === formData.id_presupuesto);
+                                                        const areaDepts = (metadata.departamentos || []).filter(d => String(d.id_area) === String(a.id)).map(d => String(d.id));
+                                                        const areaBudgetTotal = currentGroup?.presupuestos
+                                                            ?.filter(p => areaDepts.includes(String(p.id_departamento)))
+                                                            .reduce((sum, p) => sum + (parseFloat(p.actual?.toString() || '0')), 0) || 0;
+
+                                                        const hasBudget = areaBudgetTotal > 0;
+                                                        const balanceStr = ` ($${areaBudgetTotal.toLocaleString()})`;
+
+                                                        return (
+                                                            <Select.Option key={a.id} value={String(a.id)} label={a.nombre}>
+                                                                <div className="flex justify-between items-center w-full">
+                                                                    <span>{a.nombre}</span>
+                                                                    <span className={`text-[10px] font-bold ${hasBudget ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                                        {balanceStr}
+                                                                    </span>
+                                                                </div>
                                                             </Select.Option>
-                                                        ))}
-                                                    </Select>
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Monto a Descontar ($)</label>
-                                                    <InputNumber
-                                                        size="large"
-                                                        className="w-full"
-                                                        min={0}
-                                                        value={item.monto}
-                                                        onChange={v => updateCdcItem(index, 'monto', v || 0)}
-                                                        formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                                        parser={value => value?.replace(/\$\s?|(,*)/g, '') as any}
-                                                    />
-                                                </div>
+                                                        );
+                                                    })}
+                                                </Select>
                                             </div>
-                                            <Button
-                                                danger
-                                                type="text"
-                                                className="mt-5"
-                                                icon={<Trash2 className="w-4 h-4" />}
-                                                onClick={() => removeCdcItem(index)}
-                                            />
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-semibold uppercase text-slate-400 ml-1">2. Departamento</label>
+                                                <Select
+                                                    size="large"
+                                                    className="w-full cdc-select"
+                                                    placeholder="Departamento..."
+                                                    disabled={!item.area_id}
+                                                    value={item.dept_id || undefined}
+                                                    onChange={v => updateCdcItem(index, 'dept_id', v)}
+                                                    showSearch
+                                                    optionFilterProp="label"
+                                                >
+                                                    {filteredDepts.map(d => {
+                                                        const currentGroup = (metadata.presupuestos || []).find(g => g.id.toString() === formData.id_presupuesto);
+                                                        const budget = currentGroup?.presupuestos?.find((p: any) => String(p.id_departamento) === String(d.id));
+                                                        const balanceStr = budget ? ` ($${(budget.actual || 0).toLocaleString()})` : ' ($0)';
+
+                                                        return (
+                                                            <Select.Option key={d.id} value={String(d.id)} label={d.nombre}>
+                                                                <div className="flex justify-between items-center w-full">
+                                                                    <span>{d.nombre}</span>
+                                                                    <span className="text-[10px] font-bold text-slate-400">{balanceStr}</span>
+                                                                </div>
+                                                            </Select.Option>
+                                                        );
+                                                    })}
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-semibold uppercase text-slate-400 ml-1">3. Centro de Costo (CDC)</label>
+                                                <Select
+                                                    size="large"
+                                                    className="w-full cdc-select"
+                                                    placeholder="CDC..."
+                                                    disabled={!item.dept_id}
+                                                    value={item.cdc_id || undefined}
+                                                    onChange={v => updateCdcItem(index, 'cdc_id', v)}
+                                                    showSearch
+                                                    optionFilterProp="label"
+                                                    options={filteredCdcs.map(c => ({ value: String(c.id), label: c.cdc }))}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end mt-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-semibold uppercase text-slate-400 ml-1">Monto Total A Descontar ($)</label>
+                                                <InputNumber
+                                                    size="large"
+                                                    className="w-full"
+                                                    min={0}
+                                                    value={item.monto}
+                                                    onChange={v => updateCdcItem(index, 'monto', v || 0)}
+                                                    formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                                    parser={value => value?.replace(/\$\s?|(,*)/g, '') as any}
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* Budget forecast */}
-                                        {budgetInfo && (
-                                            <div className={`rounded-lg p-3 border ${budgetInfo.sufficient ? 'bg-emerald-50/50 border-emerald-100' : 'bg-red-50/50 border-red-100'}`}>
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    {budgetInfo.sufficient ? (
-                                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                        {(item.dept_id || item.cdc_id) && (() => {
+                                            const budgetInfo = getCdcBudgetInfo(item.cdc_id || null, item.monto, item.dept_id);
+                                            if (!budgetInfo) return null;
+                                            return (
+                                                <div className={`rounded-xl p-4 border shadow-sm ${(budgetInfo as any).error ? 'bg-amber-50 border-amber-200' : (budgetInfo as any).sufficient ? 'bg-emerald-50/30 border-emerald-100' : 'bg-red-50/30 border-red-100'}`}>
+                                                    {(budgetInfo as any).error ? (
+                                                        <div className="flex items-center gap-2 py-1">
+                                                            <AlertCircle className="w-4 h-4 text-amber-600" />
+                                                            <span className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">{(budgetInfo as any).error}</span>
+                                                        </div>
                                                     ) : (
-                                                        <AlertCircle className="w-4 h-4 text-red-600" />
+                                                        <div className="space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-2">
+                                                                    {(budgetInfo as any).sufficient ? (
+                                                                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                                                    ) : (
+                                                                        <AlertCircle className="w-5 h-5 text-red-500" />
+                                                                    )}
+                                                                    <div className="leading-tight">
+                                                                        <div className={`text-[11px] font-semibold uppercase ${(budgetInfo as any).sufficient ? 'text-emerald-700' : 'text-red-700'}`}>
+                                                                            Análisis de Presupuesto — {(budgetInfo as any).departamento}
+                                                                        </div>
+                                                                        <div className="text-[9px] text-slate-400 uppercase font-bold">Saldo actual en el grupo seleccionado</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <div className={`text-sm font-semibold ${(budgetInfo as any).sufficient ? 'text-emerald-700' : 'text-red-700'}`}>
+                                                                        ${(budgetInfo as any).remaining.toLocaleString()}
+                                                                    </div>
+                                                                    <div className="text-[8px] font-bold text-slate-400 uppercase">Quedaría</div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-3 gap-4 border-t border-slate-100 pt-3">
+                                                                <div>
+                                                                    <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Inicial</span>
+                                                                    <span className="text-xs font-bold text-slate-700">${(budgetInfo as any).presupuestoInicial.toLocaleString()}</span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Actual</span>
+                                                                    <span className="text-xs font-bold text-slate-700">${(budgetInfo as any).presupuestoActual.toLocaleString()}</span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Deducción</span>
+                                                                    <span className="text-xs font-bold text-red-600">-${(budgetInfo as any).totalDeduction.toLocaleString()}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="space-y-1">
+                                                                <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase">
+                                                                    <span>Uso del Presupuesto</span>
+                                                                    <span>{Math.round((budgetInfo as any).pctUsed)}%</span>
+                                                                </div>
+                                                                <Progress
+                                                                    percent={Math.round((budgetInfo as any).pctUsed)}
+                                                                    size="small"
+                                                                    showInfo={false}
+                                                                    status={(budgetInfo as any).sufficient ? 'normal' : 'exception'}
+                                                                    strokeColor={(budgetInfo as any).pctUsed > 90 ? '#ef4444' : (budgetInfo as any).pctUsed > 70 ? '#f59e0b' : '#10b981'}
+                                                                    strokeWidth={6}
+                                                                    className="m-0"
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     )}
-                                                    <span className={`text-[10px] font-black uppercase ${budgetInfo.sufficient ? 'text-emerald-700' : 'text-red-700'}`}>
-                                                        {budgetInfo.departamento} — {budgetInfo.area}
-                                                    </span>
                                                 </div>
-                                                <div className="grid grid-cols-3 gap-3 text-[11px]">
-                                                    <div>
-                                                        <span className="text-slate-400 block">Presupuesto Inicial</span>
-                                                        <span className="font-bold text-slate-700">${budgetInfo.presupuestoInicial.toLocaleString()}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-400 block">Actual (Antes)</span>
-                                                        <span className="font-bold text-slate-700">${budgetInfo.presupuestoActual.toLocaleString()}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-slate-400 block">Quedaría (Después)</span>
-                                                        <span className={`font-bold ${budgetInfo.sufficient ? 'text-emerald-700' : 'text-red-700'}`}>
-                                                            ${budgetInfo.remaining.toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-2">
-                                                    <Progress
-                                                        percent={Math.round(budgetInfo.pctUsed)}
-                                                        size="small"
-                                                        status={budgetInfo.sufficient ? 'normal' : 'exception'}
-                                                        strokeColor={budgetInfo.pctUsed > 90 ? '#ef4444' : budgetInfo.pctUsed > 70 ? '#f59e0b' : '#10b981'}
-                                                    />
-                                                </div>
-                                                {selectedUsers.length > 1 && (
-                                                    <div className="text-[10px] text-slate-400 mt-1">
-                                                        * Cálculo para {selectedUsers.length} colaboradores × ${item.monto.toLocaleString()} = ${budgetInfo.totalDeduction.toLocaleString()} deducción total.
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
+                                            );
+                                        })()}
                                     </div>
                                 );
                             })}
@@ -547,21 +748,21 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                 {/* === ENROLLED USERS LIST (edit mode) === */}
                 {isEditing && editCourse && (editCourse.users || []).length > 0 && (
                     <div className="mt-8 border rounded-lg overflow-hidden">
-                        <div className="bg-tuteur-grey-light p-3 border-b flex justify-between items-center">
-                            <h3 className="font-bold text-sm uppercase text-tuteur-grey">Colaboradores Inscriptos</h3>
-                            <Tag color="red" className="font-bold">{editCourse.users!.length} inscriptos</Tag>
+                        <div className="bg-slate-50 p-3 border-b flex justify-between items-center">
+                            <h3 className="font-semibold text-sm uppercase text-slate-600">Colaboradores Inscriptos</h3>
+                            <Tag color="red" className="font-semibold">{editCourse.users!.length} inscriptos</Tag>
                         </div>
                         <div className="divide-y max-h-48 overflow-y-auto">
                             {editCourse.users!.map((u: any) => (
                                 <div key={u.id} className="flex items-center justify-between p-3 hover:bg-slate-50 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div>
-                                            <div className="font-bold text-sm text-tuteur-grey">{u.name}</div>
+                                            <div className="font-semibold text-sm text-slate-700">{u.name}</div>
                                             <div className="text-[10px] text-tuteur-grey-mid">{u.departamento?.nombre || 'Sin depto'} · {u.departamento?.area?.nombre || ''}</div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <Tag color="green" className="font-bold text-[9px] uppercase m-0">
+                                        <Tag color="green" className="font-semibold text-[9px] uppercase m-0">
                                             {u.pivot?.status_label || 'inscripto'}
                                         </Tag>
                                         <Button
@@ -587,8 +788,8 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
 
                 {/* === ADD NEW USERS SECTION === */}
                 <div className="mt-8 border rounded-lg overflow-hidden">
-                    <div className="bg-tuteur-grey-light p-3 border-b flex justify-between items-center">
-                        <h3 className="font-bold text-sm uppercase text-tuteur-grey">
+                    <div className="bg-slate-50 p-3 border-b flex justify-between items-center">
+                        <h3 className="font-semibold text-sm uppercase text-slate-600">
                             {isEditing ? 'Inscribir Nuevos Colaboradores' : 'Inscripción Directa'}
                         </h3>
                         {selectedUsers.length > 0 && (
@@ -598,7 +799,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                     <Button
                                         type="primary"
                                         size="small"
-                                        className="bg-tuteur-red border-none font-bold uppercase text-[10px]"
+                                        className="bg-tuteur-red border-none font-semibold uppercase text-[10px]"
                                         onClick={() => {
                                             selectedUsers.forEach(userId => {
                                                 router.post(`/admin/courses/${editCourse!.id}/enroll-manual`, {
@@ -633,7 +834,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                 .map(u => (
                                 <div key={u.id} className="flex items-center justify-between p-2 hover:bg-slate-50 transition-colors">
                                     <div className="text-xs">
-                                        <div className="font-bold text-sm">{u.name}</div>
+                                        <div className="font-semibold text-sm">{u.name}</div>
                                         <div className="text-tuteur-grey-mid">{u.departamento?.nombre} - {u.departamento?.area?.nombre}</div>
                                     </div>
                                     <Checkbox
@@ -649,5 +850,6 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                 </div>
             </div>
         </Modal>
+        </>
     );
 }

@@ -81,7 +81,7 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
     const [formData, setFormData] = useState<any>({
         value: '', parentId: '', descripcion: '', activo: true, contacto: '', telefono: '', email: '',
         fecha: new Date().getFullYear(),
-        inicial: '', id_departamento: '', inversion: '',
+        inicial: '', id_departamento: '', inversion: '', id_grupo: '',
         nombre: '', inicio: '', fin: '', cant_horas: '', costo: '', capacidad: '',
         habilidad_id: '', categoria_id: '', id_cdc: '', id_modalidad: '', id_tipo: '',
         id_proveedor: '', id_programa_asociado: '', publicado: false, mes_pago: '',
@@ -140,6 +140,7 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
                 fecha: item.fecha || new Date().getFullYear(),
                 inicial: item.inicial || '',
                 id_departamento: item.id_departamento?.toString() || '',
+                id_grupo: item.id_grupo?.toString() || '',
                 inversion: item.inversion || '',
             });
         }
@@ -159,7 +160,23 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
         if (type === 'presupuestos') {
             setBudgetItems([]);
             setSelectedBudgetArea(undefined);
+            if (label && typeof label === 'number') { // If group ID passed via label
+                 setFormData(prev => ({ ...prev, id_grupo: label.toString() }));
+            }
         }
+        setIsDialogOpen(true);
+    };
+
+    const handleCreateInGroup = (groupId: number) => {
+        setEditingItem({ type: 'presupuestos', item: null, label: 'inicial', isNew: true });
+        setFormData({
+            ...formData,
+            id_grupo: groupId.toString(),
+            fecha: new Date().getFullYear(),
+            inicial: '', id_departamento: '', descripcion: '',
+        });
+        setBudgetItems([]);
+        setSelectedBudgetArea(undefined);
         setIsDialogOpen(true);
     };
 
@@ -230,6 +247,7 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
                     descripcion: formData.descripcion || null,
                     inicial: parseFloat(formData.inicial) || 0,
                     id_departamento: formData.id_departamento || null,
+                    id_grupo: formData.id_grupo || null,
                 };
             }
         } else if (editingItem.type === 'cdcs') {
@@ -450,7 +468,7 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
                                         + Nuevo
                                     </Button>
                                 }
-                                className="shadow-sm mt-2"
+                                className="tuteur-card mt-2"
                             >
                                 {section.id === 'presupuestos' && (
                                     <div className="mb-3 flex flex-wrap items-center gap-3 pb-3 border-b border-gray-100">
@@ -590,6 +608,7 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
                                                                                 rowKey="id"
                                                                                 pagination={false}
                                                                                 size="small"
+                                                                                className="tuteur-table"
                                                                             />
                                                                         ),
                                                                     }))}
@@ -621,7 +640,7 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
                                         rowKey="id"
                                         pagination={{ pageSize: 15 }}
                                         size="small"
-                                        className="overflow-x-auto"
+                                        className="tuteur-table"
                                     />
                                 )}
                             </Card>
@@ -854,6 +873,25 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
                             ) : (
                                 /* Edit single presupuesto */
                                 <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-sm font-semibold text-tuteur-grey-mid uppercase tracking-wide">Grupo de Presupuesto</label>
+                                            <Select
+                                                className="w-full"
+                                                size="large"
+                                                value={formData.id_grupo}
+                                                onChange={v => setFormData({...formData, id_grupo: v})}
+                                                placeholder="Sin grupo..."
+                                                allowClear
+                                            >
+                                                {presupuestos.map((g: any) => <Select.Option key={g.id} value={g.id.toString()}>{g.descripcion || `Grupo ${g.fecha}`} ({g.fecha})</Select.Option>)}
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-semibold text-tuteur-grey-mid uppercase tracking-wide">A\u00f1o</label>
+                                            <Input type="number" value={formData.fecha} onChange={e => setFormData({...formData, fecha: e.target.value})} size="large" />
+                                        </div>
+                                    </div>
                                     <div>
                                         <label className="text-sm font-semibold">Departamento</label>
                                         <Select className="w-full" size="large" value={formData.id_departamento} onChange={v => setFormData({...formData, id_departamento: v})} placeholder="Seleccionar...">

@@ -2,11 +2,12 @@ import { Head, Link, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
-import { BookOpen, Award, TrendingUp, ArrowRight, GraduationCap, ShieldCheck, Clock, Trash2 } from 'lucide-react';
+import { BookOpen, Award, TrendingUp, ArrowRight, GraduationCap, ShieldCheck, Clock, Trash2, Calendar, Laptop, Users, Tag, Building2, X, FileText } from 'lucide-react';
 import { CourseCard } from '@/components/course-card';
 import { Curso, EnrollmentStatus } from '@/types/capacitaciones';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Modal } from 'antd';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -31,6 +32,7 @@ interface DashboardProps {
 
 export default function Dashboard({ stats, featured, activeStatus }: DashboardProps) {
     const { auth, flash } = usePage().props as any;
+    const [selectedCurso, setSelectedCurso] = useState<(Curso & { status?: EnrollmentStatus }) | null>(null);
 
     useEffect(() => {
         if (flash?.success) {
@@ -232,6 +234,7 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                                 status={curso.status}
                                 onEnroll={handleEnroll}
                                 onCancel={handleCancel}
+                                onClick={(c) => setSelectedCurso(c as Curso & { status?: EnrollmentStatus })}
                             />
                         ))}
                         {(!Array.isArray(featured) || featured.length === 0) && (
@@ -251,6 +254,160 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                     </div>
                 </div>
             </div>
+
+                {/* Course Details Modal */}
+                <Modal
+                    open={!!selectedCurso}
+                    onCancel={() => setSelectedCurso(null)}
+                    footer={null}
+                    width={640}
+                    centered
+                    destroyOnClose
+                    closable={false}
+                    styles={{ body: { padding: 0 } }}
+                >
+                    {selectedCurso && (() => {
+                        const c = selectedCurso;
+                        const modalidad = typeof c.modalidad === 'object' ? (c.modalidad as any)?.modalidad : c.modalidad || 'Presencial';
+                        const tipo = typeof c.tipo === 'object' ? (c.tipo as any)?.tipo : c.tipo;
+                        const formatDate = (val: string | null | undefined) => {
+                            if (!val) return '—';
+                            try { return new Date(val).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' }); }
+                            catch { return val; }
+                        };
+                        const InfoRow = ({ icon: Icon, label, value }: { icon: any; label: string; value: React.ReactNode }) => {
+                            if (!value || value === '—') return null;
+                            return (
+                                <div className="flex items-start gap-3 py-2.5">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center shrink-0 mt-0.5">
+                                        <Icon className="w-4 h-4 text-slate-400" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">{label}</span>
+                                        <div className="text-sm font-medium text-slate-700 leading-snug mt-0.5">{value}</div>
+                                    </div>
+                                </div>
+                            );
+                        };
+                        return (
+                            <>
+                                {/* Dark Header */}
+                                <div className="bg-linear-to-br from-slate-800 to-slate-900 px-6 py-5 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/3 rounded-full -translate-y-12 translate-x-12" />
+                                    <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/2 rounded-full translate-y-8 -translate-x-6" />
+                                    <div className="flex justify-between items-start relative z-10">
+                                        <div className="flex-1">
+                                            <h2 className="text-xl font-semibold text-white leading-snug tracking-tight pr-8">
+                                                {c.nombre}
+                                            </h2>
+                                            <div className="flex items-center gap-2 mt-3 flex-wrap">
+                                                <span className="inline-flex items-center gap-1 bg-white/10 border border-white/20 text-white/80 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md">
+                                                    {modalidad}
+                                                </span>
+                                                {(c.cant_horas ?? 0) > 0 && (
+                                                    <span className="inline-flex items-center gap-1 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-semibold px-2 py-0.5 rounded-md">
+                                                        <Clock className="w-3 h-3" /> {c.cant_horas}h
+                                                    </span>
+                                                )}
+                                                {c.certificado && (
+                                                    <span className="inline-flex items-center gap-1 bg-violet-500/20 border border-violet-400/30 text-violet-300 text-[10px] font-semibold px-2 py-0.5 rounded-md">
+                                                        <Award className="w-3 h-3" /> Certificado
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <button onClick={() => setSelectedCurso(null)} className="text-white/50 hover:text-white transition-colors p-1">
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Body */}
+                                <div className="px-6 py-4 max-h-[60vh] overflow-y-auto">
+                                    {/* Description */}
+                                    {c.descripcion && (
+                                        <div className="mb-5">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <FileText className="w-4 h-4 text-slate-400" />
+                                                <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Descripción</span>
+                                            </div>
+                                            <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 rounded-xl p-4 border border-slate-100">
+                                                {c.descripcion}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Info Grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 divide-y sm:divide-y-0 divide-slate-100">
+                                        <div className="space-y-0 divide-y divide-slate-100">
+                                            <InfoRow icon={Calendar} label="Fecha de Inicio" value={formatDate(c.inicio)} />
+                                            <InfoRow icon={Calendar} label="Fecha de Fin" value={formatDate(c.fin)} />
+                                            <InfoRow icon={Clock} label="Duración" value={c.cant_horas ? `${c.cant_horas} horas` : null} />
+                                            <InfoRow icon={Laptop} label="Modalidad" value={modalidad} />
+                                            <InfoRow icon={Users} label="Capacidad" value={c.capacidad > 0 ? `${c.capacidad} participantes` : null} />
+                                        </div>
+                                        <div className="space-y-0 divide-y divide-slate-100">
+                                            <InfoRow icon={Building2} label="Proveedor" value={c.proveedor as string} />
+                                            <InfoRow icon={GraduationCap} label="Instructores" value={c.instructores as string} />
+                                            <InfoRow icon={Tag} label="Categoría" value={c.categoria as string} />
+                                            <InfoRow icon={TrendingUp} label="Habilidad" value={c.habilidad as string} />
+                                            <InfoRow icon={BookOpen} label="Tipo" value={tipo} />
+                                        </div>
+                                    </div>
+
+                                    {/* Horarios */}
+                                    {c.horarios && c.horarios.length > 0 && (
+                                        <div className="mt-5 pt-4 border-t border-slate-100">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <Clock className="w-4 h-4 text-slate-400" />
+                                                <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Horarios</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {c.horarios.map((h, i) => (
+                                                    <span key={i} className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-lg">
+                                                        <span className="font-semibold">{h.dia}</span>
+                                                        <span className="text-blue-400">·</span>
+                                                        {h.hora}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Extra info */}
+                                    {(c.jornadas || c.anio_formacion || c.mes_formacion || c.programa) && (
+                                        <div className="mt-5 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                            {c.jornadas && (
+                                                <div className="bg-slate-50 rounded-xl px-3 py-2.5 text-center border border-slate-100">
+                                                    <div className="text-[9px] font-semibold uppercase text-slate-400">Jornadas</div>
+                                                    <div className="text-sm font-semibold text-slate-700 mt-0.5">{c.jornadas}</div>
+                                                </div>
+                                            )}
+                                            {c.anio_formacion && (
+                                                <div className="bg-slate-50 rounded-xl px-3 py-2.5 text-center border border-slate-100">
+                                                    <div className="text-[9px] font-semibold uppercase text-slate-400">Año</div>
+                                                    <div className="text-sm font-semibold text-slate-700 mt-0.5">{c.anio_formacion}</div>
+                                                </div>
+                                            )}
+                                            {c.mes_formacion && (
+                                                <div className="bg-slate-50 rounded-xl px-3 py-2.5 text-center border border-slate-100">
+                                                    <div className="text-[9px] font-semibold uppercase text-slate-400">Mes</div>
+                                                    <div className="text-sm font-semibold text-slate-700 mt-0.5">{c.mes_formacion}</div>
+                                                </div>
+                                            )}
+                                            {c.programa && (
+                                                <div className="bg-slate-50 rounded-xl px-3 py-2.5 text-center border border-slate-100">
+                                                    <div className="text-[9px] font-semibold uppercase text-slate-400">Programa</div>
+                                                    <div className="text-sm font-semibold text-slate-700 mt-0.5">{c.programa}</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        );
+                    })()}
+                </Modal>
         </AppLayout>
     );
 }

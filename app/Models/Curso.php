@@ -102,7 +102,7 @@ class Curso extends Model
     public function cdcs(): BelongsToMany
     {
         return $this->belongsToMany(Cdc::class, 'cdc_curso', 'curso_id', 'cdc_id')
-            ->withPivot('monto')
+            ->withPivot('monto', 'user_id', 'id_departamento')
             ->withTimestamps();
     }
 

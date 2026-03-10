@@ -18,6 +18,7 @@ export interface Departamento {
     descripcion?: string;
     id_area: number;
     area?: Area;
+    users_count?: number;
 }
 
 export type UserRole = 'user' | 'jefe_area' | 'jefe_general' | 'admin';
@@ -65,6 +66,7 @@ export interface PresupuestoGrupo {
     descripcion: string;
     total_inicial?: number;
     total_actual?: number;
+    presupuestos?: Presupuesto[];
 }
 
 export interface Presupuesto {
@@ -104,12 +106,14 @@ export interface Curso {
     mes_formacion?: string;
     instructores?: string;
     rating?: number;
+    proveedor?: string;
     users_count?: number;
     cdcs?: Cdc[];
     users?: User[];
     id_presupuesto?: number;
     presupuesto?: PresupuestoGrupo;
     costo_cero?: boolean;
+    publicado?: boolean;
 }
 
 export type EnrollmentStatus = 'solicitado' | 'procesando' | 'aceptado' | 'matriculado' | 'cancelar' | 'terminado' | 'incompleto' | 'certificado';

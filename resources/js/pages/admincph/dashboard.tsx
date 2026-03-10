@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { Card } from 'antd';
-import { Users, BookOpen, Building2, Briefcase, Layers } from 'lucide-react';
+import { Users, BookOpen, Building2, Briefcase, Layers, BarChart3 } from 'lucide-react';
 
 interface DashboardStats {
     users: number;
@@ -54,6 +54,9 @@ export default function AdminDashboard({ stats }: { stats: DashboardStats }) {
                              </a>
                              <a href="/admin/structure" className="flex items-center p-3 rounded-lg hover:bg-red-50 border border-gray-100 transition-colors text-tuteur-grey font-semibold text-sm">
                                 <Building2 className="mr-3 h-4 w-4 text-tuteur-red" /> Estructura (Empresas/Áreas)
+                             </a>
+                             <a href="/admin/metrics" className="flex items-center p-3 rounded-lg hover:bg-blue-50 border border-blue-100 transition-colors text-tuteur-grey font-semibold text-sm">
+                                <BarChart3 className="mr-3 h-4 w-4 text-blue-600" /> Métricas de Capacitación
                              </a>
                         </div>
                     </Card>

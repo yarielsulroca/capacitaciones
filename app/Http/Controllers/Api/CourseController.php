@@ -22,11 +22,9 @@ class CourseController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Curso::query()->with(['habilidad', 'categoria']);
-
-        if ($request->has('habilidad_id')) {
-            $query->where('habilidad_id', $request->habilidad_id);
-        }
+        // Admin user can view drafted/unpublished ones as well via the service
+        $isAdmin = $request->user() && $request->user()->role === 'admin';
+        $query = $this->courseService->getFilteredCoursesQuery($request, $isAdmin);
 
         $courses = $query->latest()->paginate($request->get('limit', 15));
 

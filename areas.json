@@ -1,0 +1,146 @@
+[
+    {
+        "id": 268,
+        "nombre": "Gerencia de Operaciones",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:17.150000Z",
+        "updated_at": "2026-03-02T17:03:17.150000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 269,
+        "nombre": "Gerencia Alimentos",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:17.397000Z",
+        "updated_at": "2026-03-02T17:03:17.397000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 270,
+        "nombre": "Gerencia Comercial",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:17.820000Z",
+        "updated_at": "2026-03-02T17:03:17.820000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 271,
+        "nombre": "Gerencia de Abastecimiento",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:19.727000Z",
+        "updated_at": "2026-03-02T17:03:19.727000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 272,
+        "nombre": "Presidencia",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:20.037000Z",
+        "updated_at": "2026-03-02T17:03:20.037000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 273,
+        "nombre": "Gerencia Administrativo",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:20.660000Z",
+        "updated_at": "2026-03-02T17:03:20.660000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 274,
+        "nombre": "Gerencia Financiero",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:21.687000Z",
+        "updated_at": "2026-03-02T17:03:21.687000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 280,
+        "nombre": "Gerencia de Desarrollo de Negocios",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:46.273000Z",
+        "updated_at": "2026-03-02T17:03:46.273000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 281,
+        "nombre": "Direcci\u00f3n T\u00e9cnica",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:46.353000Z",
+        "updated_at": "2026-03-02T17:03:46.353000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 283,
+        "nombre": "Direcci\u00f3n Regional",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:46.670000Z",
+        "updated_at": "2026-03-02T17:03:46.670000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 284,
+        "nombre": "Gerencia de Log\u00edstica",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:46.803000Z",
+        "updated_at": "2026-03-02T17:03:46.803000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 285,
+        "nombre": "Vicepresidencia",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:47.947000Z",
+        "updated_at": "2026-03-02T17:03:47.947000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 286,
+        "nombre": "Direcci\u00f3n de Capital Humano",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:48.100000Z",
+        "updated_at": "2026-03-02T17:03:48.100000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 287,
+        "nombre": "Direcci\u00f3n de Administraci\u00f3n y Finanzas",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:49.537000Z",
+        "updated_at": "2026-03-02T17:03:49.537000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 292,
+        "nombre": "Gerencia LATAM",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:03:52.730000Z",
+        "updated_at": "2026-03-02T17:03:52.730000Z",
+        "deleted_at": null
+    },
+    {
+        "id": 297,
+        "nombre": "Gerencia de Capital Humano",
+        "descripcion": null,
+        "id_empresa": null,
+        "created_at": "2026-03-02T17:04:01.817000Z",
+        "updated_at": "2026-03-02T17:04:01.817000Z",
+        "deleted_at": null
+    }
+]

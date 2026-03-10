@@ -130,13 +130,37 @@ class AdminCphController extends Controller
             ->latest()
             ->paginate(20);
 
+        // Enrollment stats by state
+        $estadoMap = \App\Models\EstadoCurso::pluck('id', 'estado')->toArray();
+        $allEnrollments = \App\Models\CursoUser::selectRaw('curso_estado, COUNT(*) as total')
+            ->whereHas('curso') // exclude orphan records from deleted courses
+            ->groupBy('curso_estado')
+            ->pluck('total', 'curso_estado')
+            ->toArray();
+
+        $enrollmentStats = [
+            'inscriptos'    => $allEnrollments[$estadoMap['matriculado'] ?? 0] ?? 0,
+            'solicitados'   => $allEnrollments[$estadoMap['solicitado'] ?? 0] ?? 0,
+            'procesando'    => $allEnrollments[$estadoMap['procesando'] ?? 0] ?? 0,
+            'cancelados'    => $allEnrollments[$estadoMap['cancelado'] ?? 0] ?? 0,
+            'terminados'    => $allEnrollments[$estadoMap['terminado'] ?? 0] ?? 0,
+            'incompletos'   => $allEnrollments[$estadoMap['incompleto'] ?? 0] ?? 0,
+            'certificados'  => $allEnrollments[$estadoMap['certificado'] ?? 0] ?? 0,
+            'totalEnrollments' => array_sum($allEnrollments),
+            'totalHoras'    => $cursos->sum('cant_horas'),
+            'totalHorasColaboradores' => $cursos->sum(fn ($c) => ($c->cant_horas ?? 0) * ($c->users_count ?? 0)),
+        ];
+
         return Inertia::render('admincph/courses', [
             'cursos'       => $cursos,
             'enrollments'  => $enrollments,
             'presupuestos' => $presupuestos,
+            'enrollmentStats' => $enrollmentStats,
             'metadata' => [
                 'habilidades'  => Habilidad::all(),
                 'categorias'   => Categoria::all(),
+                'areas'        => \App\Models\Area::all(),
+                'departamentos' => \App\Models\Departamento::with('area')->get(),
                 'cdcs'         => Cdc::with('departamento.area')->get(),
                 'proveedores'  => \App\Models\Proveedor::all(),
                 'modalidades'  => \App\Models\Modalidad::all(),
@@ -197,6 +221,68 @@ class AdminCphController extends Controller
             ])->orderBy('inicio', 'desc')->get(),
             'cursos_tipos'        => \App\Models\CursoTipo::all(),
             'modalidades'         => \App\Models\Modalidad::all(),
+        ]);
+    }
+
+    public function metrics()
+    {
+        $cursos = \App\Models\Curso::with([
+            'cdcs.departamento.area',
+            'users.departamento.area',
+            'habilidad',
+            'categoria',
+            'tipo',
+            'modalidad',
+            'proveedor',
+        ])
+            ->withCount('users')
+            ->orderBy('inicio', 'desc')
+            ->get();
+
+        $presupuestoGrupos = \App\Models\PresupuestoGrupo::with('presupuestos.departamento.area')
+            ->orderBy('fecha', 'desc')
+            ->get();
+
+        // All users with hierarchy data for the boss filter
+        $allUsersData = User::with('departamento:id,nombre')
+            ->select('id', 'name', 'id_departamento', 'id_jefe')
+            ->whereNotNull('id_departamento')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'id_departamento' => $u->id_departamento,
+                'id_jefe' => $u->id_jefe,
+                'deptNombre' => $u->departamento?->nombre ?? 'Sin depto',
+            ]);
+
+        // Users who are bosses of at least 1 person
+        $jefeIds = User::whereNotNull('id_jefe')->distinct()->pluck('id_jefe');
+        $jefes = User::select('id', 'name')
+            ->whereIn('id', $jefeIds)
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('admincph/metrics', [
+            'cursos'       => $cursos,
+            'presupuestoGrupos' => $presupuestoGrupos,
+            'areas'        => Area::all(),
+            'departamentos' => Departamento::with('area')->withCount('users')->get(),
+            'habilidades'  => \App\Models\Habilidad::all(),
+            'categorias'   => \App\Models\Categoria::all(),
+            'users'        => User::with('departamento.area')->whereNotNull('id_departamento')->count(),
+            'allUsersData' => $allUsersData,
+            'jefes'        => $jefes,
+            'stats' => [
+                'totalCursos'     => $cursos->count(),
+                'totalInscritos'  => $cursos->sum('users_count'),
+                'totalCosto'      => $cursos->sum('costo'),
+                'totalHoras'      => $cursos->sum('cant_horas'),
+                'totalHorasColaboradores' => $cursos->sum(fn ($c) => ($c->cant_horas ?? 0) * ($c->users_count ?? 0)),
+                'totalPresupuesto' => $presupuestoGrupos->flatMap->presupuestos->sum('inicial'),
+                'totalGastado'    => $presupuestoGrupos->flatMap->presupuestos->sum('inicial') - $presupuestoGrupos->flatMap->presupuestos->sum('actual'),
+            ],
         ]);
     }
 }

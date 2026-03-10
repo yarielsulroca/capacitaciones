@@ -186,7 +186,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
         )},
         { title: 'Estado', key: 'estado', align: 'center' as const, render: (_: any, r: any) => (
             <span className={cn(
-                "px-2 py-1 text-[9px] font-black uppercase rounded-md border",
+                "px-2 py-1 text-[9px] font-semibold uppercase rounded-md border",
                 r.estado === 'solicitado' ? "bg-amber-100 text-amber-700 border-amber-200" :
                 r.estado === 'matriculado' ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
                 "bg-slate-100 text-slate-600 border-slate-200"
@@ -199,7 +199,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                 <Button
                     size="small"
                     type="primary"
-                    className="bg-primary text-white border-none font-black uppercase text-[10px] px-3 h-7 rounded-md"
+                    className="bg-primary text-white border-none font-semibold uppercase text-[10px] px-3 h-7 rounded-md"
                     onClick={() => {
                         router.post('/admin/enrollments/update-status', {
                             user_id: r.id,
@@ -244,8 +244,8 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                                 <BookOpen size={24} />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-black text-slate-900">{stats?.total_cursos || 0}</h3>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Cursos Totales</p>
+                                <h3 className="text-2xl font-semibold text-slate-900">{stats?.total_cursos || 0}</h3>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Cursos Totales</p>
                             </div>
                         </div>
                         <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-primary/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -258,8 +258,8 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                                 <Award size={24} />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-black text-slate-900">{stats?.total_habilidades || 0}</h3>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Habilidades</p>
+                                <h3 className="text-2xl font-semibold text-slate-900">{stats?.total_habilidades || 0}</h3>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Habilidades</p>
                             </div>
                         </div>
                         <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-amber-500/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -272,8 +272,8 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                                 <Layers size={24} />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-black text-slate-900">{stats?.total_categorias || 0}</h3>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Categorías</p>
+                                <h3 className="text-2xl font-semibold text-slate-900">{stats?.total_categorias || 0}</h3>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Categorías</p>
                             </div>
                         </div>
                         <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-indigo-500/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -361,11 +361,11 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
             </div>
 
             <Modal open={isEditing} onCancel={() => setIsEditing(false)} footer={null} width={700} className="p-0" centered closable={false}>
-                <div className="bg-slate-900 py-6 px-8 border-b border-slate-800 rounded-t-xl relative">
-                    <h2 className="text-2xl font-black text-white tracking-tight uppercase">
+                <div className="bg-slate-700 py-6 px-8 border-b border-slate-600 rounded-t-xl relative">
+                    <h2 className="text-2xl font-semibold text-white tracking-tight uppercase">
                         Configuración del Curso
                     </h2>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+                    <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                         Administración de Capacitación Tuteur
                     </p>
@@ -374,7 +374,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                 <form onSubmit={handleUpdate} className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-3">
-                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider flex justify-between">
+                            <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider flex justify-between">
                                 Nombre del Curso
                                 {errors.nombre && <span className="text-red-500 lowercase">{errors.nombre}</span>}
                             </label>
@@ -385,7 +385,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                             />
                         </div>
                         <div className="space-y-3">
-                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Cupos Disponibles</label>
+                            <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Cupos Disponibles</label>
                             <Input
                                 type="number"
                                 value={data.capacidad}
@@ -396,7 +396,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                     </div>
 
                     <div className="space-y-3">
-                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Descripción del Programa</label>
+                        <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Descripción del Programa</label>
                         <TextArea
                             className="rounded-xl border-2 border-slate-100 bg-background px-4 py-3 text-sm font-medium hover:border-primary focus:border-primary transition-all"
                             value={data.descripcion}
@@ -408,7 +408,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-3">
-                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Fecha de Inicio</label>
+                            <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Fecha de Inicio</label>
                             <Input
                                 type="date"
                                 value={data.inicio}
@@ -417,7 +417,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                             />
                         </div>
                         <div className="space-y-3">
-                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Fecha de Cierre</label>
+                            <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Fecha de Cierre</label>
                             <Input
                                 type="date"
                                 value={data.fin}
@@ -429,7 +429,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-3">
-                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Habilidad</label>
+                            <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Habilidad</label>
                             <Select
                                 value={data.id_habilidad || undefined}
                                 onChange={val => setData('id_habilidad', val)}
@@ -442,7 +442,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                             </Select>
                         </div>
                         <div className="space-y-3">
-                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Categoría</label>
+                            <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Categoría</label>
                             <Select
                                 value={data.id_categoria || undefined}
                                 onChange={val => setData('id_categoria', val)}
@@ -458,7 +458,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-3">
-                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Centro de Costo</label>
+                            <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Centro de Costo</label>
                             <Select
                                 value={data.id_cdc || undefined}
                                 onChange={val => setData('id_cdc', val)}
@@ -471,7 +471,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                             </Select>
                         </div>
                         <div className="space-y-3">
-                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-wider">Programa Asociado</label>
+                            <label className="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Programa Asociado</label>
                             <Select
                                 value={data.id_programa_asociado === 'null' ? undefined : data.id_programa_asociado}
                                 onChange={val => setData('id_programa_asociado', val)}
@@ -491,16 +491,16 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                             checked={data.publicado}
                             onChange={c => setData('publicado', c)}
                         />
-                        <label className="text-sm font-black uppercase text-slate-600 tracking-wide cursor-pointer">
+                        <label className="text-sm font-semibold uppercase text-slate-600 tracking-wide cursor-pointer">
                             Publicar curso en el Dashboard y Catálogo
                         </label>
                     </div>
 
                     <div className="flex flex-col md:flex-row justify-end gap-4 pt-8 mt-4 border-t-2 border-slate-50">
-                        <Button onClick={() => setIsEditing(false)} className="h-12 px-8 font-black uppercase text-[11px] tracking-widest border-2 rounded-xl hover:bg-slate-50">
+                        <Button onClick={() => setIsEditing(false)} className="h-12 px-8 font-semibold uppercase text-[11px] tracking-widest border-2 rounded-xl hover:bg-slate-50">
                             Cancelar y Salir
                         </Button>
-                        <Button type="primary" htmlType="submit" loading={processing} className="h-12 px-12 font-black uppercase text-[11px] tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 rounded-xl transition-all border-none">
+                        <Button type="primary" htmlType="submit" loading={processing} className="h-12 px-12 font-semibold uppercase text-[11px] tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 rounded-xl transition-all border-none">
                             Actualizar Capacitación
                         </Button>
                     </div>
@@ -509,11 +509,11 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
 
             {/* Modal: Añadir Colaboradores */}
             <Modal open={isManagingUsers} onCancel={() => { setIsManagingUsers(false); setSelectedCourse(null); }} footer={null} width={600} className="p-0" centered closable={false}>
-                <div className="bg-slate-900 py-6 px-8 border-b border-slate-800 rounded-t-xl">
-                    <h2 className="text-xl font-black text-white uppercase tracking-tight">
+                <div className="bg-slate-700 py-6 px-8 border-b border-slate-600 rounded-t-xl">
+                    <h2 className="text-xl font-semibold text-white uppercase tracking-tight">
                         Añadir Colaboradores
                     </h2>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">
+                    <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-widest mt-1">
                         {selectedCourse?.nombre}
                     </p>
                 </div>
@@ -534,7 +534,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                             <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>
                         ) : (
                             <>
-                                <p className="text-[10px] font-black uppercase text-slate-400 mb-4 px-1">Resultados de búsqueda ({availableUsers.length})</p>
+                                <p className="text-[10px] font-semibold uppercase text-slate-400 mb-4 px-1">Resultados de búsqueda ({availableUsers.length})</p>
                                 <div className="space-y-2">
                                     {availableUsers.map(u => (
                                         <div key={u.id} className="flex items-center justify-between p-3 rounded-xl border-2 border-slate-50 bg-slate-50/30 hover:bg-slate-50 transition-colors">
@@ -544,7 +544,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                                             </div>
                                             <Button
                                                 type="primary"
-                                                className="h-8 px-4 text-[10px] font-black uppercase bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-md border-none"
+                                                className="h-8 px-4 text-[10px] font-semibold uppercase bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-md border-none"
                                                 onClick={() => handleManualEnroll(u.id)}
                                             >
                                                 Inscribir
@@ -559,7 +559,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                 </div>
 
                 <div className="p-4 bg-slate-50 border-t-2 border-slate-100 flex justify-end rounded-b-xl">
-                    <Button onClick={() => setIsManagingUsers(false)} className="font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl border-2 border-slate-200">
+                    <Button onClick={() => setIsManagingUsers(false)} className="font-semibold uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl border-2 border-slate-200">
                         Cerrar
                     </Button>
                 </div>
@@ -567,21 +567,21 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
 
             {/* Modal: Gestión de Matrículas */}
             <Modal open={isManagingEnrollments} onCancel={() => { setIsManagingEnrollments(false); setSelectedCourse(null); }} footer={null} width={800} className="p-0" centered closable={false}>
-                <div className="bg-slate-900 py-6 px-8 border-b border-slate-800 flex justify-between items-center rounded-t-xl">
+                <div className="bg-slate-700 py-6 px-8 border-b border-slate-600 flex justify-between items-center rounded-t-xl">
                     <div>
-                        <h2 className="text-xl font-black text-white uppercase tracking-tight">
+                        <h2 className="text-xl font-semibold text-white uppercase tracking-tight">
                             Gestión de Matrículas
                         </h2>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">
+                        <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-widest mt-1">
                             {selectedCourse?.nombre}
                         </p>
                     </div>
                     <div className="flex gap-2">
                         <div className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
-                            <span className="text-[9px] font-black text-amber-500 uppercase italic">{enrollments.filter(e => e.estado === 'solicitado').length} Solicitados</span>
+                            <span className="text-[9px] font-semibold text-amber-500 uppercase italic">{enrollments.filter(e => e.estado === 'solicitado').length} Solicitados</span>
                         </div>
                         <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                            <span className="text-[9px] font-black text-emerald-500 uppercase italic">{enrollments.filter(e => e.estado === 'matriculado').length} Inscriptos</span>
+                            <span className="text-[9px] font-semibold text-emerald-500 uppercase italic">{enrollments.filter(e => e.estado === 'matriculado').length} Inscriptos</span>
                         </div>
                     </div>
                 </div>
@@ -596,7 +596,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                                 dataSource={enrollments}
                                 rowKey="id"
                                 pagination={false}
-                                className="[&_.ant-table-thead_th]:bg-slate-50/50 [&_.ant-table-thead_th]:text-[10px] [&_.ant-table-thead_th]:font-black [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-thead_th]:tracking-wider"
+                                className="[&_.ant-table-thead_th]:bg-slate-50/50 [&_.ant-table-thead_th]:text-[10px] [&_.ant-table-thead_th]:font-semibold [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-thead_th]:tracking-wider"
                                 size="small"
                                 scroll={{ y: 300 }}
                             />
@@ -605,7 +605,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                 </div>
 
                 <div className="p-4 bg-slate-50 border-t-2 border-slate-100 flex justify-end rounded-b-xl">
-                    <Button onClick={() => setIsManagingEnrollments(false)} className="font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl border-2 border-slate-200">
+                    <Button onClick={() => setIsManagingEnrollments(false)} className="font-semibold uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl border-2 border-slate-200">
                         Cerrar Panel
                     </Button>
                 </div>

@@ -1,15 +1,16 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu as MenuIcon, Search } from 'lucide-react';
+import { BookOpen, CircleUserRound, Folder, LayoutGrid, Menu as MenuIcon, BarChart3, Wallet, Settings } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { Avatar, Button, Drawer, Dropdown, Tooltip } from 'antd';
+import { Button, Drawer, Dropdown } from 'antd';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { useInitials } from '@/hooks/use-initials';
-import { cn, toUrl } from '@/lib/utils';
+
+import { cn } from '@/lib/utils';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 import { useState } from 'react';
+import type { MenuProps } from 'antd';
 
 type Props = {
     breadcrumbs?: BreadcrumbItem[];
@@ -26,30 +27,45 @@ const mainNavItems: NavItem[] = [
         href: '/courses',
         icon: BookOpen,
     },
+];
+
+const adminSubItems: MenuProps['items'] = [
     {
-        title: 'Administración',
-        href: '/admin',
-        icon: Folder,
+        key: 'courses',
+        label: <Link href="/admin/courses" className="no-underline">Cursos e Inscripciones</Link>,
+        icon: <BookOpen className="w-4 h-4" />,
+    },
+    {
+        key: 'metrics',
+        label: <Link href="/admin/metrics" className="no-underline">Métricas y Análisis</Link>,
+        icon: <BarChart3 className="w-4 h-4" />,
+    },
+    { type: 'divider' },
+    {
+        key: 'structure',
+        label: <Link href="/admin/structure" className="no-underline">Presupuestos y Estructura</Link>,
+        icon: <Wallet className="w-4 h-4" />,
+    },
+    {
+        key: 'admin',
+        label: <Link href="/admin/users" className="no-underline">Coloboradores</Link>,
+        icon: <Settings className="w-4 h-4" />,
     },
 ];
 
-const rightNavItems: NavItem[] = [
-    {
-        title: 'Documentación',
-        href: 'https://laravel.com/docs',
-        icon: BookOpen,
-    },
-];
 
-const activeItemStyles =
-    'bg-white/10 text-white';
+
+
 
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
     const { auth } = page.props as any;
-    const getInitials = useInitials();
+
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
     const [drawerOpen, setDrawerOpen] = useState(false);
+
+    const currentUrlPath = typeof window !== 'undefined' ? new URL(page.url, window.location.origin).pathname : page.url;
+    const isAdminActive = currentUrlPath.startsWith('/admin');
 
     return (
         <>
@@ -87,21 +103,14 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                             <span>{item.title}</span>
                                         </Link>
                                     ))}
+                                    <div className="border-t pt-2 mt-2">
+                                        <div className="text-[9px] font-semibold uppercase text-slate-400 tracking-wider px-4 mb-2">Administración</div>
+                                        {(adminSubItems || []).filter(i => i && i.key).map((item: any) => (
+                                            <div key={item.key} className="px-2 py-1" onClick={() => setDrawerOpen(false)}>{item.label}</div>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div className="flex flex-col space-y-2 mt-auto">
-                                    {rightNavItems.map((item) => (
-                                        <a
-                                            key={item.title}
-                                            href={toUrl(item.href)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center space-x-2 font-medium px-4 py-3 text-neutral-600 hover:bg-neutral-50 dark:text-neutral-400 dark:hover:bg-neutral-900 rounded-md transition-colors"
-                                        >
-                                            {item.icon && <item.icon className="h-5 w-5" />}
-                                            <span>{item.title}</span>
-                                        </a>
-                                    ))}
-                                </div>
+
                             </div>
                         </Drawer>
                     </div>
@@ -117,7 +126,6 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     {/* Desktop Navigation */}
                     <div className="ml-6 hidden h-full items-center space-x-2 lg:flex">
                         {mainNavItems.map((item, index) => {
-                            const currentUrlPath = new URL(page.url, window?.location.origin).pathname;
                             const isActive = item.href === '/dashboard'
                                 ? currentUrlPath === '/dashboard' || currentUrlPath === '/'
                                 : currentUrlPath.startsWith(item.href as string);
@@ -126,10 +134,10 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                     key={index}
                                     href={item.href}
                                     className={cn(
-                                        'relative flex items-center h-9 cursor-pointer px-4 rounded-md text-sm font-semibold transition-colors',
+                                        'relative flex items-center h-9 cursor-pointer px-4 rounded-md text-sm font-semibold transition-colors no-underline!',
                                         isActive
-                                            ? 'bg-white/15 text-white'
-                                            : 'bg-transparent text-white hover:bg-white/10',
+                                            ? 'bg-white/15 text-white!'
+                                            : 'bg-transparent text-white/80! hover:bg-white/10 hover:text-white!',
                                     )}
                                 >
                                     {item.icon && (
@@ -142,43 +150,30 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 </Link>
                             );
                         })}
+
+                        {/* Admin Dropdown */}
+                        <Dropdown menu={{ items: adminSubItems }} trigger={['hover']} placement="bottomLeft">
+                            <div
+                                className={cn(
+                                    'relative flex items-center h-9 cursor-pointer px-4 rounded-md text-sm font-semibold transition-colors no-underline! select-none',
+                                    isAdminActive
+                                        ? 'bg-white/15 text-white!'
+                                        : 'bg-transparent text-white/80! hover:bg-white/10 hover:text-white!',
+                                )}
+                            >
+                                <Folder className="mr-2 h-4 w-4" />
+                                Administración
+                                {isAdminActive && (
+                                    <div className="absolute bottom-[-13px] left-0 h-[3px] w-full bg-white rounded-t"></div>
+                                )}
+                            </div>
+                        </Dropdown>
                     </div>
 
-                    <div className="ml-auto flex items-center space-x-2">
-                        <div className="relative flex items-center space-x-1">
-                            <Button
-                                type="text"
-                                icon={<Search className="h-5 w-5 text-white" />}
-                                className="group hover:bg-white/10 flex items-center justify-center p-0 w-9 h-9"
-                            />
-                            <div className="ml-1 hidden gap-1 lg:flex text-white">
-                                {rightNavItems.map((item) => (
-                                    <Tooltip
-                                        key={item.title}
-                                        title={item.title}
-                                    >
-                                        <a
-                                            href={toUrl(item.href)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="group inline-flex h-9 w-9 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium text-white transition-colors hover:bg-white/10"
-                                        >
-                                            <span className="sr-only">
-                                                {item.title}
-                                            </span>
-                                            {item.icon && (
-                                                <item.icon className="h-5 w-5 text-white" />
-                                            )}
-                                        </a>
-                                    </Tooltip>
-                                ))}
-                            </div>
-                        </div>
+                    <div className="ml-auto flex items-center">
                         <Dropdown popupRender={() => <UserMenuContent user={auth.user} />} trigger={['click']} placement="bottomRight">
-                            <Button type="text" className="h-10 w-10 p-1 flex justify-center items-center hover:bg-white/10 rounded-full">
-                                <Avatar src={auth.user.avatar} className="bg-white text-tuteur-red flex justify-center items-center font-bold h-8 w-8 text-sm">
-                                    {getInitials(auth.user.name)}
-                                </Avatar>
+                            <Button type="text" className="h-12 w-12 p-0 flex justify-center items-center hover:bg-white/10 rounded-full border-0">
+                                <CircleUserRound className="w-8 h-8 text-white" />
                             </Button>
                         </Dropdown>
                     </div>
@@ -194,3 +189,4 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
         </>
     );
 }
+
