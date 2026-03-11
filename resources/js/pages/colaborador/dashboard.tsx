@@ -70,13 +70,13 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
             <div className="flex flex-col gap-8 p-6 lg:p-10 w-full">
 
                 {/* Welcome Header */}
-                <header className="relative overflow-hidden bg-white rounded-2xl border border-slate-100 p-8 shadow-sm">
+                <header className="relative overflow-hidden bg-white rounded-2xl border border-slate-100 p-8 shadow-lg shadow-slate-400/40 hover:shadow-xl hover:shadow-slate-400/50 transition-shadow duration-300">
                     <div className="relative z-10">
                         <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-                            ¡Hola, {auth.user.name.split(' ')[0]}! 👋
+                            ¡{auth.user.name.split(' ')[0]}! 👋 Te damos la bienvenida al Hub de Aprendizaje Tuteur.
                         </h1>
-                        <p className="mt-2 text-slate-500 max-w-xl text-lg">
-                            Bienvenido a tu panel de capacitaciones. Aquí podrás gestionar tu crecimiento profesional y descubrir nuevas oportunidades de aprendizaje.
+                        <p className="mt-4 text-slate-500 max-w-3xl text-lg leading-relaxed">
+                            Aquí podrás explorar el catálogo de cursos disponibles, gestionar tus solicitudes de inscripción y seguir tu recorrido de capacitaciones dentro de la compañía.
                         </p>
                     </div>
                     {/* Decorative element */}
@@ -89,7 +89,7 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                     <button
                         onClick={() => handleFilter(null)}
                         className={cn(
-                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-sm border transition-all hover:shadow-md",
+                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-md shadow-slate-400/30 border transition-all hover:shadow-lg hover:shadow-slate-400/50 hover:-translate-y-0.5",
                             !activeStatus ? "border-red-500 ring-2 ring-red-50" : "border-slate-100 hover:border-red-100"
                         )}
                     >
@@ -106,7 +106,7 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                     <button
                         onClick={() => handleFilter('solicitado')}
                         className={cn(
-                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-sm border transition-all hover:shadow-md",
+                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-md shadow-slate-400/30 border transition-all hover:shadow-lg hover:shadow-slate-400/50 hover:-translate-y-0.5",
                             activeStatus === 'solicitado' ? "border-amber-500 ring-2 ring-amber-50" : "border-slate-100 hover:border-amber-100"
                         )}
                     >
@@ -123,7 +123,7 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                     <button
                         onClick={() => handleFilter('matriculado')}
                         className={cn(
-                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-sm border transition-all hover:shadow-md",
+                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-md shadow-slate-400/30 border transition-all hover:shadow-lg hover:shadow-slate-400/50 hover:-translate-y-0.5",
                             activeStatus === 'matriculado' ? "border-blue-500 ring-2 ring-blue-50" : "border-slate-100 hover:border-blue-100"
                         )}
                     >
@@ -140,7 +140,7 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                     <button
                         onClick={() => handleFilter('terminado')}
                         className={cn(
-                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-sm border transition-all hover:shadow-md",
+                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-md shadow-slate-400/30 border transition-all hover:shadow-lg hover:shadow-slate-400/50 hover:-translate-y-0.5",
                             activeStatus === 'terminado' ? "border-emerald-500 ring-2 ring-emerald-50" : "border-slate-100 hover:border-emerald-100"
                         )}
                     >
@@ -153,45 +153,12 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                         </div>
                     </button>
 
-                    {/* Certificado */}
-                    <button
-                        onClick={() => handleFilter('certificado')}
-                        className={cn(
-                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-sm border transition-all hover:shadow-md",
-                            activeStatus === 'certificado' ? "border-violet-500 ring-2 ring-violet-50" : "border-slate-100 hover:border-violet-100"
-                        )}
-                    >
-                        <div className="flex flex-col items-center text-center gap-2">
-                            <div className="rounded-lg bg-violet-50 p-2 text-violet-600">
-                                <Award size={20} />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900">{stats.certificado}</h3>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Certificado</p>
-                        </div>
-                    </button>
-
-                    {/* Incompleto */}
-                    <button
-                        onClick={() => handleFilter('incompleto')}
-                        className={cn(
-                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-sm border transition-all hover:shadow-md",
-                            activeStatus === 'incompleto' ? "border-slate-500 ring-2 ring-slate-50" : "border-slate-100 hover:border-slate-200"
-                        )}
-                    >
-                        <div className="flex flex-col items-center text-center gap-2">
-                            <div className="rounded-lg bg-slate-50 p-2 text-slate-600">
-                                <ArrowRight className="rotate-45" size={20} />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900">{stats.incompleto}</h3>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Incompleto</p>
-                        </div>
-                    </button>
 
                     {/* Cancelado */}
                     <button
                         onClick={() => handleFilter('cancelado')}
                         className={cn(
-                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-sm border transition-all hover:shadow-md",
+                            "group relative overflow-hidden rounded-xl bg-white p-4 shadow-md shadow-slate-400/30 border transition-all hover:shadow-lg hover:shadow-slate-400/50 hover:-translate-y-0.5",
                             activeStatus === 'cancelado' ? "border-rose-500 ring-2 ring-rose-50" : "border-slate-100 hover:border-rose-100"
                         )}
                     >

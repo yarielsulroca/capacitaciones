@@ -35,11 +35,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Cursos y Capacitaciones', href: '/courses' },
 ];
 
-export default function Index({ courses, filters, metadata, stats }: CourseGalleryProps & { metadata: Metadata }) {
+export default function Index({ courses, filters, metadata, stats, is_admin, is_lider }: CourseGalleryProps & { metadata: Metadata, is_admin: boolean, is_lider: boolean }) {
     const { auth } = usePage().props as any;
 
-    // For development, we force admin mode as requested to bypass role restrictions
-    const isAdmin = true;
+    const isAdmin = is_admin;
+    const isLider = is_lider;
 
     const [isEditing, setIsEditing] = useState(false);
     const [isManagingUsers, setIsManagingUsers] = useState(false);
@@ -196,27 +196,49 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
         )},
         { title: 'Acciones', key: 'acciones', align: 'right' as const, render: (_: any, r: any) => (
             r.estado === 'solicitado' ? (
-                <Button
-                    size="small"
-                    type="primary"
-                    className="bg-primary text-white border-none font-semibold uppercase text-[10px] px-3 h-7 rounded-md"
-                    onClick={() => {
-                        router.post('/admin/enrollments/update-status', {
-                            user_id: r.id,
-                            curso_id: selectedCourse?.id,
-                            estado_slug: 'matriculado'
-                        }, {
-                            onSuccess: () => {
-                                toast.success("Estado actualizado");
-                                fetch(`/admin/courses/${selectedCourse?.id}/enrollments`)
-                                    .then(res => res.json())
-                                    .then(data => setEnrollments(data));
-                            }
-                        });
-                    }}
-                >
-                    Aprobar
-                </Button>
+                <div className="flex gap-1 justify-end">
+                    <Button
+                        size="small"
+                        type="primary"
+                        className="bg-emerald-500 text-white border-none font-semibold uppercase text-[10px] px-3 h-7 rounded-md"
+                        onClick={() => {
+                            router.post('/admin/enrollments/update-status', {
+                                user_id: r.id,
+                                curso_id: selectedCourse?.id,
+                                estado_slug: 'matriculado'
+                            }, {
+                                onSuccess: () => {
+                                    toast.success("Estado actualizado");
+                                    fetch(`/admin/courses/${selectedCourse?.id}/enrollments`)
+                                        .then(res => res.json())
+                                        .then(data => setEnrollments(data));
+                                }
+                            });
+                        }}
+                    >
+                        Aprobar
+                    </Button>
+                    <Button
+                        size="small"
+                        className="text-tuteur-red border-tuteur-red/20 bg-red-50 hover:bg-tuteur-red hover:text-white transition-colors font-semibold uppercase text-[10px] px-3 h-7 rounded-md"
+                        onClick={() => {
+                            router.post('/admin/enrollments/update-status', {
+                                user_id: r.id,
+                                curso_id: selectedCourse?.id,
+                                estado_slug: 'cancelado'
+                            }, {
+                                onSuccess: () => {
+                                    toast.success("Solicitud rechazada");
+                                    fetch(`/admin/courses/${selectedCourse?.id}/enrollments`)
+                                        .then(res => res.json())
+                                        .then(data => setEnrollments(data));
+                                }
+                            });
+                        }}
+                    >
+                        Rechazar
+                    </Button>
+                </div>
             ) : null
         )}
     ];
@@ -292,50 +314,52 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                         />
                     </div>
 
-                    <div className="flex gap-2 items-center overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-                        <Select
-                            className="w-[160px]"
-                            size="large"
-                            value={filters.habilidad_id || undefined}
-                            onChange={(val) => handleFilterChange('habilidad_id', val)}
-                            placeholder="Habilidad"
-                            allowClear
-                        >
-                            {metadata?.habilidades.map(h => (
-                                <Select.Option key={h.id} value={h.id.toString()}>{h.habilidad}</Select.Option>
-                            ))}
-                        </Select>
+                    {(!isLider || isAdmin) && (
+                        <div className="flex gap-2 items-center overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+                            <Select
+                                className="w-[160px]"
+                                size="large"
+                                value={filters.habilidad_id || undefined}
+                                onChange={(val) => handleFilterChange('habilidad_id', val)}
+                                placeholder="Habilidad"
+                                allowClear
+                            >
+                                {metadata?.habilidades.map(h => (
+                                    <Select.Option key={h.id} value={h.id.toString()}>{h.habilidad}</Select.Option>
+                                ))}
+                            </Select>
 
-                        <Select
-                            className="w-[160px]"
-                            size="large"
-                            value={filters.cdc_id || undefined}
-                            onChange={(val) => handleFilterChange('cdc_id', val)}
-                            placeholder="Centro de Costo"
-                            allowClear
-                        >
-                            {metadata?.cdcs.map(c => (
-                                <Select.Option key={c.id} value={c.id.toString()}>{c.cdc}</Select.Option>
-                            ))}
-                        </Select>
+                            <Select
+                                className="w-[160px]"
+                                size="large"
+                                value={filters.cdc_id || undefined}
+                                onChange={(val) => handleFilterChange('cdc_id', val)}
+                                placeholder="Centro de Costo"
+                                allowClear
+                            >
+                                {metadata?.cdcs.map(c => (
+                                    <Select.Option key={c.id} value={c.id.toString()}>{c.cdc}</Select.Option>
+                                ))}
+                            </Select>
 
-                        <Select
-                            className="w-[160px]"
-                            size="large"
-                            value={filters.categoria_id || undefined}
-                            onChange={(val) => handleFilterChange('categoria_id', val)}
-                            placeholder="Categoría"
-                            allowClear
-                        >
-                            {metadata?.categorias.map(c => (
-                                <Select.Option key={c.id} value={c.id.toString()}>{c.categoria}</Select.Option>
-                            ))}
-                        </Select>
+                            <Select
+                                className="w-[160px]"
+                                size="large"
+                                value={filters.categoria_id || undefined}
+                                onChange={(val) => handleFilterChange('categoria_id', val)}
+                                placeholder="Categoría"
+                                allowClear
+                            >
+                                {metadata?.categorias.map(c => (
+                                    <Select.Option key={c.id} value={c.id.toString()}>{c.categoria}</Select.Option>
+                                ))}
+                            </Select>
 
-                        <Button type="text" className="shrink-0 hover:bg-white/50 h-10 w-10 p-0 flex items-center justify-center">
-                            <SlidersHorizontal className="w-4 h-4" />
-                        </Button>
-                    </div>
+                            <Button type="text" className="shrink-0 hover:bg-white/50 h-10 w-10 p-0 flex items-center justify-center">
+                                <SlidersHorizontal className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Grid */}
@@ -346,6 +370,7 @@ export default function Index({ courses, filters, metadata, stats }: CourseGalle
                                 key={curso.id}
                                 curso={curso}
                                 isAdmin={isAdmin}
+                                isLider={isLider && !isAdmin}
                                 onEdit={handleEdit}
                                 onManageUsers={(c) => { setSelectedCourse(c); setIsManagingUsers(true); }}
                                 onManageEnrollments={(c) => { setSelectedCourse(c); setIsManagingEnrollments(true); }}

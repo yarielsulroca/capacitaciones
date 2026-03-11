@@ -22,7 +22,19 @@ class CourseController extends Controller
 
     public function index(Request $request)
     {
-        $query = $this->courseService->getFilteredCoursesQuery($request, $request->user()->role === 'admin');
+        $user = $request->user();
+        $is_admin = $user->role === 'admin';
+        $is_lider = $user->role === 'lider' || \App\Models\User::where('id_jefe', $user->id)->exists();
+
+        $query = $this->courseService->getFilteredCoursesQuery($request, $is_admin);
+
+        if ($is_lider && !$is_admin) {
+            $teamMemberIds = \App\Models\User::where('id_jefe', $user->id)->pluck('id');
+            // Show course if a team member is enrolled
+            $query->whereHas('users', function($q) use ($teamMemberIds) {
+                $q->whereIn('cursos_users.id_user', $teamMemberIds);
+            });
+        }
 
         $courses = $query->latest()->paginate($request->get('limit', 15));
 
@@ -41,6 +53,8 @@ class CourseController extends Controller
                 'total_categorias' => Categoria::count(),
                 'total_programas' => \App\Models\ProgramaAsociado::count(),
             ],
+            'is_admin' => $is_admin,
+            'is_lider' => $is_lider,
         ]);
     }
 

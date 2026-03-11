@@ -1,12 +1,13 @@
 import { Button, Tag } from 'antd';
 import { Curso, EnrollmentStatus } from '@/types/capacitaciones';
-import { Calendar, Clock, Laptop, Users, GraduationCap } from 'lucide-react';
+import { Calendar, Clock, Laptop, Users, GraduationCap, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CourseCardProps {
     curso: Curso;
     status?: EnrollmentStatus;
     isAdmin?: boolean;
+    isLider?: boolean;
     onEnroll?: (id: number) => void;
     onCancel?: (id: number) => void;
     onEdit?: (curso: Curso) => void;
@@ -37,7 +38,7 @@ const formatDate = (val: string | null | undefined) => {
     catch { return val; }
 };
 
-export function CourseCard({ curso, status, isAdmin, onEnroll, onCancel, onEdit, onManageUsers, onManageEnrollments, onClick, className }: CourseCardProps) {
+export function CourseCard({ curso, status, isAdmin, isLider, onEnroll, onCancel, onEdit, onManageUsers, onManageEnrollments, onClick, className }: CourseCardProps) {
     const style = status ? statusStyles[status] : { bg: 'bg-white', border: 'border-slate-100', accent: 'bg-slate-200', text: 'text-slate-400' };
 
     const modalidadLabel = typeof curso.modalidad === 'object' ? curso.modalidad?.modalidad : curso.modalidad || 'Presencial';
@@ -45,27 +46,35 @@ export function CourseCard({ curso, status, isAdmin, onEnroll, onCancel, onEdit,
     return (
         <div className={cn(
             "group relative flex flex-col h-full rounded-2xl overflow-hidden bg-white border border-slate-200/80",
-            "shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1",
+            "shadow-md shadow-slate-400/30 hover:shadow-xl hover:shadow-slate-400/50 transition-all duration-300 hover:-translate-y-1",
             className
         )}>
             {/* Clickable overlay for details (covers everything except footer buttons) */}
             {onClick && (
                 <div
-                    className="absolute inset-0 z-10 cursor-pointer"
+                    className="absolute inset-0 z-10 cursor-pointer rounded-2xl ring-2 ring-transparent transition-all hover:ring-tuteur-red/20 hover:bg-slate-50/10"
                     onClick={(e) => { e.stopPropagation(); onClick(curso); }}
                     style={{ bottom: '60px' }}
+                    title="Ver detalles del curso"
                 />
             )}
             {/* Red accent top bar */}
             <div className="h-1 w-full bg-linear-to-r from-tuteur-red via-tuteur-red-light to-tuteur-red" />
 
             {/* Dark Premium Header */}
-            <div className="bg-linear-to-br from-slate-800 to-slate-900 px-5 py-4 relative overflow-hidden">
+            <div className="bg-linear-to-br from-slate-800 to-slate-900 px-5 py-4 relative overflow-hidden group/header">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/3 rounded-full -translate-y-8 translate-x-8" />
                 <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/2 rounded-full translate-y-6 -translate-x-4" />
-                <h3 className="text-base font-semibold text-white leading-snug tracking-tight relative z-10">
-                    {curso.nombre}
-                </h3>
+                <div className="flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-white leading-snug tracking-tight relative z-10 w-[85%] truncate">
+                        {curso.nombre}
+                    </h3>
+                    {onClick && (
+                        <div className="relative z-10 bg-white/10 p-1.5 rounded-full text-white/70 group-hover/header:bg-tuteur-red group-hover/header:text-white transition-all duration-300">
+                            <ChevronRight size={16} className="group-hover/header:translate-x-0.5 transition-transform" />
+                        </div>
+                    )}
+                </div>
                 <div className="flex items-center gap-2 mt-2 relative z-10">
                     <Tag className="bg-white/10 border-white/20 text-white/80 text-[9px] font-semibold uppercase m-0 py-0 rounded-md">
                         {modalidadLabel}
@@ -86,9 +95,22 @@ export function CourseCard({ curso, status, isAdmin, onEnroll, onCancel, onEdit,
                             <Calendar className="h-3.5 w-3.5 text-tuteur-red" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Período</span>
+                            <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Fecha</span>
                             <p className="text-xs font-medium text-slate-700 leading-tight truncate">
-                                {formatDate(curso.inicio)} — {formatDate(curso.fin)}
+                                {formatDate(curso.inicio)}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+                            <Clock className="h-3.5 w-3.5 text-orange-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Horario</span>
+                            <p className="text-xs font-medium text-slate-700 leading-tight truncate">
+                                {curso.horarios
+                                    ? (Array.isArray(curso.horarios) ? curso.horarios.join(', ') : curso.horarios)
+                                    : '10:00h - 12:00h (Ejemplo)'}
                             </p>
                         </div>
                     </div>
@@ -103,17 +125,6 @@ export function CourseCard({ curso, status, isAdmin, onEnroll, onCancel, onEdit,
                             </p>
                         </div>
                     </div>
-                    {curso.capacidad > 0 && (
-                        <div className="flex items-center gap-3 text-sm">
-                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                                <Users className="h-3.5 w-3.5 text-amber-500" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">Cupos</span>
-                                <p className="text-xs font-medium text-slate-700 leading-tight">{curso.capacidad} participantes</p>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* Description */}
@@ -135,7 +146,7 @@ export function CourseCard({ curso, status, isAdmin, onEnroll, onCancel, onEdit,
                             {status ? (statusLabels[status] || status) : 'Disponible'}
                         </span>
 
-                        {isAdmin ? (
+                        {isAdmin && !isLider ? (
                             <div className="flex items-center gap-1.5">
                                 <Button
                                     size="small"
@@ -160,6 +171,14 @@ export function CourseCard({ curso, status, isAdmin, onEnroll, onCancel, onEdit,
                                     Editar
                                 </Button>
                             </div>
+                        ) : isLider ? (
+                            <Button
+                                size="small"
+                                onClick={() => onManageEnrollments?.(curso)}
+                                className="text-[10px] font-semibold uppercase tracking-wider rounded-lg h-8 px-4 border border-tuteur-red text-tuteur-red hover:bg-tuteur-red/10! hover:border-tuteur-red! transition-all"
+                            >
+                                Revisar solicitudes
+                            </Button>
                         ) : !status ? (
                             <Button
                                 onClick={() => onEnroll?.(curso.id)}
