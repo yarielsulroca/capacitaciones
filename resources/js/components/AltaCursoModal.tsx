@@ -61,6 +61,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
         certificado: false,
         anio_formacion: new Date().getFullYear().toString(),
         mes_formacion: '',
+        horarios: '',
         id_presupuesto: '',
         costo_cero: false,
         publicado: true,
@@ -103,6 +104,7 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                     certificado: editCourse.certificado || false,
                     anio_formacion: editCourse.anio_formacion?.toString() || new Date().getFullYear().toString(),
                     mes_formacion: editCourse.mes_formacion || '',
+                    horarios: Array.isArray(editCourse.horarios) ? editCourse.horarios.join(', ') : (editCourse.horarios || ''),
                     inicio: formatDate(editCourse.inicio),
                     fin: formatDate(editCourse.fin),
                     capacidad: editCourse.capacidad?.toString() || '30',
@@ -431,6 +433,12 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                                 />
                                 <ErrorMsg name="id_modalidad" />
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label htmlFor="horarios" className="text-sm font-semibold">Horarios</label>
+                            <Input id="horarios" size="large" value={formData.horarios} onChange={e => setFormData({...formData, horarios: e.target.value})} placeholder="Ej: Lunes y Miércoles 10 a 12hs, 14 a 16hs" />
+                            <ErrorMsg name="horarios" />
                         </div>
                     </div>
 

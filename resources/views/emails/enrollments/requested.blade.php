@@ -1,16 +1,13 @@
 <x-mail::message>
 # Hola {{ $user->name }},
 
-Has enviado una solicitud para inscribirte en el curso: **{{ $curso->nombre }}**.
+Recibimos tu solicitud para inscribirte al curso: **{{ $curso->nombre }}**.
 
-Tu solicitud está siendo actualmente **Procesada** por el equipo de Administración y Capital Humano.
+Tu solicitud está siendo actualmente Procesada por el equipo de Capital Humano.
 
-Te informaremos a la brevedad sobre el estado de tu matrícula.
+En cuanto tengamos la confirmación, te haremos llegar un mail informándote para que agendes la actividad. Pero si en el transcurso de los próximos días, queres cancelar tu solicitud, podrás hacerlo desde el portal de Capacitación Tuteur
 
-<x-mail::button :url="config('app.url') . '/dashboard'">
-Ver mis solicitudes
-</x-mail::button>
+Muchas gracias por tu interés.
 
-Gracias,<br>
 {{ config('app.name') }}
 </x-mail::message>

@@ -29,7 +29,7 @@ class EnrollmentConfirmed extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '¡Tu matrícula ha sido confirmada! - '.$this->curso->nombre,
+            subject: 'Capacitación Confirmada',
         );
     }
 

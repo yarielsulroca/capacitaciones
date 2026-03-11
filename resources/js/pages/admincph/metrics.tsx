@@ -191,6 +191,26 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
     const totalHorasPersona = deptHours.reduce((s, d) => s + d.personaHoras, 0);
     const maxDeptHoursVal = deptHours.length > 0 ? Math.max(...deptHours.map(d => d.personaHoras)) : 1;
 
+    // ---- Habilidad (Skill) Breakdown ----
+    const habilidadStats = useMemo(() => {
+        const map: Record<string, { nombre: string; cursos: number; personaHoras: number; inscripciones: number }> = {};
+
+        filteredCursos.forEach(c => {
+            const hab = (typeof c.habilidad === 'string' ? c.habilidad : null) || 'Sin habilidad';
+            const horas = Number(c.cant_horas || 0);
+            const enrolledCount = (c.users || []).length;
+
+            if (!map[hab]) map[hab] = { nombre: hab, cursos: 0, personaHoras: 0, inscripciones: 0 };
+            map[hab].cursos++;
+            map[hab].personaHoras += horas * enrolledCount;
+            map[hab].inscripciones += enrolledCount;
+        });
+
+        return Object.values(map).sort((a, b) => b.cursos - a.cursos);
+    }, [filteredCursos]);
+
+    const totalHabCursos = habilidadStats.reduce((s, h) => s + h.cursos, 0);
+    const maxHabCursos = habilidadStats.length > 0 ? Math.max(...habilidadStats.map(h => h.cursos)) : 1;
     // ---- Monthly Breakdown Matrix ----
     const monthlyMatrix = useMemo(() => {
         const map: Record<number, { id: number, nombre: string, total: number, months: Record<string, number> }> = {};
@@ -675,6 +695,45 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
             y += 15;
         }
 
+        // ── Habilidad (Skill) Breakdown ──
+        if (habilidadStats.length > 0) {
+            if (y > doc.internal.pageSize.getHeight() - 40) {
+                doc.addPage();
+                y = 14;
+            }
+            doc.setFontSize(12);
+            doc.setTextColor(30, 41, 59);
+            doc.text('Análisis por Habilidad', 14, y);
+            y += 2;
+
+            autoTable(doc, {
+                startY: y,
+                head: [['#', 'Habilidad', 'Cursos', 'Persona-Horas', 'Inscripciones', '% Cursos']],
+                body: habilidadStats.map((h, i) => [
+                    (i + 1).toString(),
+                    h.nombre,
+                    h.cursos.toString(),
+                    `${h.personaHoras.toLocaleString()}h`,
+                    h.inscripciones.toString(),
+                    `${totalHabCursos > 0 ? Math.round((h.cursos / totalHabCursos) * 100) : 0}%`,
+                ]),
+                foot: [[
+                    '', 'TOTAL',
+                    totalHabCursos.toString(),
+                    `${habilidadStats.reduce((s, h) => s + h.personaHoras, 0).toLocaleString()}h`,
+                    habilidadStats.reduce((s, h) => s + h.inscripciones, 0).toString(),
+                    '100%',
+                ]],
+                styles: { fontSize: 7, cellPadding: 2 },
+                headStyles: { fillColor: [20, 184, 166], textColor: 255, fontStyle: 'bold', fontSize: 7 },
+                footStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                columnStyles: { 2: { halign: 'center' }, 3: { halign: 'right' }, 4: { halign: 'center' }, 5: { halign: 'center' } },
+                margin: { left: 14, right: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 10;
+        }
+
         // ── Monthly Breakdown Matrix ──
         if (monthlyMatrix.length > 0) {
             if (y > doc.internal.pageSize.getHeight() - 40) {
@@ -718,7 +777,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
         }
 
         doc.save(`informe_metricas_tuteur_${new Date().toISOString().slice(0, 10)}.pdf`);
-    }, [stats, users, pctGastado, presupuestoDisponible, deptBudgets, totalAccumulatedGastado, deptHours, totalHorasPersona, monthlyMatrix, filterArea, filterDept, filterMonth, filterYear]);
+    }, [stats, users, pctGastado, presupuestoDisponible, deptBudgets, totalAccumulatedGastado, deptHours, totalHorasPersona, habilidadStats, totalHabCursos, monthlyMatrix, filterArea, filterDept, filterMonth, filterYear]);
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Administración', href: '/admin' }, { title: 'Métricas', href: '/admin/metrics' }]}>
@@ -1348,6 +1407,107 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                                 <div key={i} className="flex-1 max-w-[50px] flex justify-center">
                                                     <span className="text-[8px] font-bold text-slate-600 uppercase text-center leading-tight line-clamp-3 block w-full px-0.5" title={dept.nombre}>
                                                         {dept.nombre}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+
+                        {/* Habilidad (Skill) Analysis: Ranking + Bar Chart */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                            {/* Habilidad Ranking */}
+                            <Card
+                                title={
+                                    <div className="flex items-center justify-between w-full">
+                                        <div className="flex items-center gap-2 text-sm font-semibold uppercase text-slate-500 tracking-wide">
+                                            <GraduationCap className="w-4 h-4 text-teal-500" />
+                                            Cursos por Habilidad
+                                        </div>
+                                        <Tag color="cyan" className="font-semibold text-xs m-0">{totalHabCursos} cursos</Tag>
+                                    </div>
+                                }
+                                className="border-none shadow-md rounded-2xl"
+                                bodyStyle={{ padding: '0' }}
+                            >
+                                <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+                                    {habilidadStats.map((hab, i) => {
+                                        const pct = totalHabCursos > 0 ? Math.round((hab.cursos / totalHabCursos) * 100) : 0;
+                                        return (
+                                            <div key={i} className="px-5 py-3 flex items-center gap-4 hover:bg-slate-50/50 transition-colors">
+                                                <div className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center text-[10px] font-semibold text-teal-600 shrink-0">
+                                                    {i + 1}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-xs font-bold text-slate-700 truncate">{hab.nombre}</div>
+                                                    <div className="flex items-center gap-3 mt-1">
+                                                        <Progress
+                                                            percent={pct}
+                                                            size="small"
+                                                            showInfo={false}
+                                                            strokeColor="#14b8a6"
+                                                            strokeWidth={5}
+                                                            className="flex-1 m-0"
+                                                        />
+                                                        <span className="text-[10px] font-bold text-slate-400 w-10 text-right">{pct}%</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <div className="text-xs font-semibold text-teal-600">{hab.cursos} cursos</div>
+                                                    <div className="text-[9px] text-slate-400 font-bold">{hab.inscripciones} inscr. · {hab.personaHoras.toLocaleString()}h</div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {habilidadStats.length === 0 && (
+                                        <div className="p-6 text-center text-slate-400 text-sm italic">Sin datos de habilidades</div>
+                                    )}
+                                </div>
+                            </Card>
+
+                            {/* Bar Chart – Skills Distribution */}
+                            <Card
+                                title={
+                                    <div className="flex items-center gap-2 text-sm font-semibold uppercase text-slate-500 tracking-wide">
+                                        <BarChart3 className="w-4 h-4 text-teal-500" />
+                                        Distribución por Habilidad
+                                    </div>
+                                }
+                                className="border-none shadow-md rounded-2xl"
+                                bodyStyle={{ padding: '0' }}
+                            >
+                                <div className="px-4 pt-3 pb-0 flex justify-end gap-4">
+                                    <div className="flex items-center gap-1"><div className="w-3 h-3 bg-linear-to-t from-teal-600 to-cyan-400 rounded-sm"></div><span className="text-[10px] font-bold text-slate-500 uppercase">Cursos</span></div>
+                                </div>
+                                <div className="p-6 overflow-x-auto pt-2">
+                                    <div className="flex flex-col h-[340px] min-w-[400px]">
+                                        <div className="flex-1 flex items-end justify-start gap-[3px] border-b-2 border-slate-800 pb-1">
+                                            {habilidadStats.slice(0, 15).map((hab, i) => {
+                                                const hPct = maxHabCursos > 0 ? Math.max((hab.cursos / maxHabCursos) * 100, 2) : 2;
+                                                return (
+                                                    <div key={i} className="flex-1 max-w-[50px] h-full flex flex-col items-center justify-end relative group cursor-pointer">
+                                                        <div className="absolute left-1/2 -translate-x-1/2 top-0 bg-slate-800 text-white text-[10px] font-bold px-3 py-2 flex flex-col items-center gap-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-40 pointer-events-none shadow-xl border border-slate-600">
+                                                            <span className="font-semibold text-white text-[11px]">{hab.nombre}</span>
+                                                            <span className="text-teal-300">{hab.cursos} cursos</span>
+                                                            <span className="text-slate-300">{hab.inscripciones} inscripciones · {hab.personaHoras.toLocaleString()}h</span>
+                                                        </div>
+                                                        <div className="w-full max-w-[40px] bg-linear-to-t from-teal-600 to-cyan-400 absolute bottom-0 z-10 transition-all duration-500 hover:brightness-110 shadow-[0_-2px_5px_rgba(20,184,166,0.25)] rounded-t-sm" style={{ height: `${hPct}%` }} />
+                                                    </div>
+                                                );
+                                            })}
+                                            {habilidadStats.length === 0 && (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <Empty description={<span className="font-bold text-slate-400">Sin datos de habilidades</span>} />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex items-start justify-start gap-[3px] mt-2">
+                                            {habilidadStats.slice(0, 15).map((hab, i) => (
+                                                <div key={i} className="flex-1 max-w-[50px] flex justify-center">
+                                                    <span className="text-[8px] font-bold text-slate-600 uppercase text-center leading-tight line-clamp-3 block w-full px-0.5" title={hab.nombre}>
+                                                        {hab.nombre}
                                                     </span>
                                                 </div>
                                             ))}

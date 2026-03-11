@@ -168,6 +168,7 @@ class AdminController extends Controller
             'certificado'         => 'sometimes|boolean',
             'anio_formacion'      => 'nullable|integer',
             'mes_formacion'       => 'nullable|string',
+            'horarios'            => 'nullable|string',
             // Multi-CDC: array of { cdc_id, monto }
             'cdc_items'           => 'nullable|array',
             'cdc_items.*.cdc_id'  => 'required|exists:cdcs,id',
@@ -235,6 +236,7 @@ class AdminController extends Controller
             'certificado'         => 'sometimes|boolean',
             'anio_formacion'      => 'nullable|integer',
             'mes_formacion'       => 'nullable|string',
+            'horarios'            => 'nullable|string',
             // Multi-CDC
             'cdc_items'           => 'nullable|array',
             'cdc_items.*.cdc_id'  => 'required|exists:cdcs,id',
@@ -559,6 +561,7 @@ class AdminController extends Controller
                 'certificado'      => 'sometimes|boolean',
                 'anio_formacion'   => 'nullable|integer',
                 'mes_formacion'    => 'nullable|string',
+                'horarios'         => 'nullable|string',
             ],
             default => [],
         };
@@ -569,11 +572,20 @@ class AdminController extends Controller
     /**
      * Get all enrollments for a specific course grouped by state
      */
-    public function courseEnrollments(Curso $course): JsonResponse
+    public function courseEnrollments(Request $request, Curso $course): JsonResponse
     {
-        $enrollments = $course->users()
-            ->with(['departamento.area'])
-            ->get()
+        $user = $request->user();
+        $is_admin = $user->role === 'admin';
+        $is_lider = $user->role === 'lider' || \App\Models\User::where('id_jefe', $user->id)->exists();
+
+        $query = $course->users()->with(['departamento.area']);
+
+        if ($is_lider && !$is_admin) {
+            $teamMemberIds = \App\Models\User::where('id_jefe', $user->id)->pluck('id');
+            $query->whereIn('cursos_users.id_user', $teamMemberIds);
+        }
+
+        $enrollments = $query->get()
             ->map(function ($user) {
                 return [
                     'id'     => $user->id,

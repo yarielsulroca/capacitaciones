@@ -26,8 +26,10 @@ class EnrollmentService
             'updated_at' => now(),
         ]);
 
-        // Send intermediate email (Solicitado / Procesando)
-        Mail::to($user->email)->send(new EnrollmentRequested($user, $curso));
+        // Send intermediate email (Solicitado / Procesando) ONLY for "Abierto" courses
+        if ($curso->tipo && strtolower($curso->tipo->tipo) === 'abierto') {
+            Mail::to($user->email)->send(new EnrollmentRequested($user, $curso));
+        }
     }
 
     /**
@@ -71,12 +73,16 @@ class EnrollmentService
         ]);
 
         // Immediate Notifications for certain states
-        if (in_array($newStateName, ['cancelado', 'incompleto'])) {
-            Mail::to($user->email)->send(new \App\Mail\EnrollmentCancelled($user, $curso));
-        } elseif ($newStateName === 'matriculado') {
-            Mail::to($user->email)->send(new \App\Mail\EnrollmentConfirmed($user, $curso));
-        } elseif ($newStateName === 'certificado') {
-            Mail::to($user->email)->send(new \App\Mail\StatusUpdated($user, $curso, $newStateName));
+        if ($curso->tipo && strtolower($curso->tipo->tipo) === 'abierto') {
+            if (in_array($newStateName, ['solicitado', 'procesando'])) {
+                Mail::to($user->email)->send(new \App\Mail\EnrollmentRequested($user, $curso));
+            } elseif (in_array($newStateName, ['cancelado', 'incompleto'])) {
+                Mail::to($user->email)->send(new \App\Mail\EnrollmentCancelled($user, $curso));
+            } elseif ($newStateName === 'matriculado') {
+                Mail::to($user->email)->send(new \App\Mail\EnrollmentConfirmed($user, $curso));
+            } elseif ($newStateName === 'certificado') {
+                Mail::to($user->email)->send(new \App\Mail\StatusUpdated($user, $curso, $newStateName));
+            }
         }
     }
 
