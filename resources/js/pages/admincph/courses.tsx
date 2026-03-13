@@ -28,11 +28,9 @@ interface Metadata {
 interface EnrollmentStats {
     inscriptos: number;
     solicitados: number;
-    procesando: number;
     cancelados: number;
     terminados: number;
     incompletos: number;
-    certificados: number;
     totalEnrollments: number;
     totalHoras: number;
     totalHorasColaboradores: number;
@@ -122,17 +120,37 @@ export default function CourseIndex({ cursos, enrollments, presupuestos, enrollm
         XLSX.writeFile(wb, `cursos_${new Date().toISOString().slice(0, 10)}.xlsx`);
     }, [buildExportData]);
 
-    const exportToPDF = useCallback(() => {
+    const loadLogo = useCallback((): Promise<string> => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                canvas.getContext('2d')!.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => resolve('');
+            img.src = '/logo_tuteur_transparente.png';
+        });
+    }, []);
+
+    const exportToPDF = useCallback(async () => {
         const data = buildExportData();
         const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const logoData = await loadLogo();
 
-        // Title
+        // Header with logo
+        if (logoData) {
+            doc.addImage(logoData, 'PNG', 14, 8, 20, 12);
+        }
         doc.setFontSize(16);
         doc.setTextColor(30, 41, 59);
-        doc.text('Reporte de Cursos — Capacitaciones', 14, 15);
+        doc.text('Reporte de Cursos — Capacitaciones', logoData ? 38 : 14, 15);
         doc.setFontSize(9);
         doc.setTextColor(100, 116, 139);
-        doc.text(`Generado: ${new Date().toLocaleString()}  ·  Total: ${data.length} cursos`, 14, 21);
+        doc.text(`Generado: ${new Date().toLocaleString()}  ·  Total: ${data.length} cursos`, logoData ? 38 : 14, 21);
 
         const headers = Object.keys(data[0] || {});
         const rows = data.map(row => headers.map(h => String((row as any)[h] ?? '')));
@@ -153,7 +171,7 @@ export default function CourseIndex({ cursos, enrollments, presupuestos, enrollm
         });
 
         doc.save(`cursos_${new Date().toISOString().slice(0, 10)}.pdf`);
-    }, [buildExportData]);
+    }, [buildExportData, loadLogo]);
 
     // ─── Expandable table config ───────────────────────────────
 
@@ -431,16 +449,14 @@ export default function CourseIndex({ cursos, enrollments, presupuestos, enrollm
                                     align: 'center' as const,
                                     render: (_: any, row: any) => {
                                         const colorMap: Record<string, string> = {
-                                            matriculado: 'green', solicitado: 'gold', procesando: 'blue', cancelado: 'red', terminado: 'cyan', incompleto: 'orange', certificado: 'purple'
+                                            matriculado: 'green', solicitado: 'gold', cancelado: 'red', terminado: 'cyan', incompleto: 'orange'
                                         };
                                         const options = [
                                             { value: 'solicitado', label: 'Solicitado' },
-                                            { value: 'procesando', label: 'Procesando' },
                                             { value: 'matriculado', label: 'Inscripto' },
                                             { value: 'cancelado', label: 'Cancelado' },
                                             { value: 'terminado', label: 'Terminado' },
-                                            { value: 'incompleto', label: 'Incompleto' },
-                                            { value: 'certificado', label: 'Certificado' },
+                                            { value: 'incompleto', label: 'Interrumpido' },
                                         ];
                                         return (
                                             <Select
@@ -466,8 +482,8 @@ export default function CourseIndex({ cursos, enrollments, presupuestos, enrollm
                                                 optionRender={(option) => (
                                                     <div className="flex items-center gap-2">
                                                         <div className={`w-2 h-2 rounded-full`} style={{ backgroundColor: {
-                                                            solicitado: '#eab308', procesando: '#3b82f6', matriculado: '#22c55e',
-                                                            cancelado: '#ef4444', terminado: '#06b6d4', incompleto: '#f97316', certificado: '#8b5cf6'
+                                                        solicitado: '#eab308', matriculado: '#22c55e',
+                                                            cancelado: '#ef4444', terminado: '#06b6d4', incompleto: '#f97316'
                                                         }[option.value as string] || '#94a3b8' }} />
                                                         <span className="text-xs font-semibold">{option.label}</span>
                                                     </div>
@@ -510,7 +526,7 @@ export default function CourseIndex({ cursos, enrollments, presupuestos, enrollm
                                 estado: (u as any).pivot?.curso_estado
                                     ? (() => {
                                         const estadoId = (u as any).pivot.curso_estado;
-                                        const map: Record<number, string> = { 1: 'solicitado', 2: 'procesando', 3: 'matriculado', 4: 'cancelado', 5: 'terminado', 6: 'incompleto', 7: 'certificado' };
+                                        const map: Record<number, string> = { 1: 'solicitado', 3: 'matriculado', 4: 'cancelado', 5: 'terminado', 6: 'incompleto' };
                                         return map[estadoId] || 'solicitado';
                                     })()
                                     : 'matriculado',
@@ -574,15 +590,13 @@ export default function CourseIndex({ cursos, enrollments, presupuestos, enrollm
                 </div>
 
                 {/* Enrollment Status Breakdown */}
-                <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {[
                         { label: 'Inscriptos', value: enrollmentStats.inscriptos, color: 'text-emerald-600', dot: 'bg-emerald-500' },
                         { label: 'Solicitados', value: enrollmentStats.solicitados, color: 'text-amber-600', dot: 'bg-amber-500' },
-                        { label: 'Procesando', value: enrollmentStats.procesando, color: 'text-blue-600', dot: 'bg-blue-500' },
                         { label: 'Terminados', value: enrollmentStats.terminados, color: 'text-cyan-600', dot: 'bg-cyan-500' },
-                        { label: 'Certificados', value: enrollmentStats.certificados, color: 'text-violet-600', dot: 'bg-violet-500' },
                         { label: 'Cancelados', value: enrollmentStats.cancelados, color: 'text-rose-600', dot: 'bg-rose-500' },
-                        { label: 'Incompletos', value: enrollmentStats.incompletos, color: 'text-orange-600', dot: 'bg-orange-500' },
+                        { label: 'Interrumpidos', value: enrollmentStats.incompletos, color: 'text-orange-600', dot: 'bg-orange-500' },
                     ].map((s, i) => (
                         <div key={i} className="bg-white rounded-lg px-3 py-2.5 border border-slate-100 flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${s.dot}`} />

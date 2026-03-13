@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAT — Documentación del Proyecto</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root { --red: #C8102E; --dark: #1e293b; --bg: #f8fafc; --card: #fff; --border: #e2e8f0; --text: #334155; --muted: #64748b; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+        .hero { background: linear-gradient(135deg, var(--red) 0%, #991b1b 100%); color: #fff; padding: 60px 40px; text-align: center; }
+        .hero h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 8px; }
+        .hero p { font-size: 1.1rem; opacity: .85; max-width: 700px; margin: 0 auto; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+        .toc { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 40px; }
+        .toc h2 { font-size: 1.2rem; color: var(--red); margin-bottom: 16px; }
+        .toc ol { padding-left: 20px; }
+        .toc li { margin: 6px 0; }
+        .toc a { color: var(--red); text-decoration: none; font-weight: 500; }
+        .toc a:hover { text-decoration: underline; }
+        section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 36px; margin-bottom: 32px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+        h2 { font-size: 1.6rem; color: var(--dark); border-bottom: 3px solid var(--red); padding-bottom: 10px; margin-bottom: 24px; }
+        h3 { font-size: 1.2rem; color: var(--dark); margin: 24px 0 12px; }
+        h4 { font-size: 1rem; color: var(--muted); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: .9rem; }
+        th { background: var(--dark); color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+        td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+        tr:hover td { background: #f1f5f9; }
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: .85em; color: var(--red); }
+        pre { background: var(--dark); color: #e2e8f0; padding: 20px; border-radius: 10px; overflow-x: auto; margin: 16px 0; font-size: .85rem; line-height: 1.6; }
+        pre code { background: none; color: inherit; padding: 0; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+        .badge-red { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
+        .badge-green { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .badge-blue { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        .badge-amber { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+        .mermaid { margin: 20px 0; text-align: center; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .hero h1 { font-size: 1.8rem; } }
+        .tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+        .tech-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+        .tech-card strong { display: block; color: var(--dark); margin-bottom: 4px; }
+        .tech-card span { font-size: .85rem; color: var(--muted); }
+        .flow-step { display: flex; align-items: flex-start; gap: 14px; margin: 12px 0; }
+        .flow-num { min-width: 32px; height: 32px; background: var(--red); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; }
+        .flow-text { flex: 1; }
+        .alert { padding: 14px 18px; border-radius: 10px; margin: 16px 0; font-size: .9rem; }
+        .alert-info { background: #eff6ff; border-left: 4px solid #2563eb; color: #1e40af; }
+        .alert-warn { background: #fffbeb; border-left: 4px solid #d97706; color: #92400e; }
+        .tree { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: .85rem; background: #f8fafc; padding: 16px 20px; border-radius: 10px; border: 1px solid var(--border); white-space: pre; overflow-x: auto; }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>🎓 Hub de Aprendizaje Tuteur (HAT)</h1>
+    <p>Documentación técnica completa del proyecto — Plataforma de gestión de capacitaciones corporativas</p>
+</div>
+
+<div class="container">
+
+<!-- TOC -->
+<div class="toc">
+    <h2>📑 Índice</h2>
+    <ol>
+        <li><a href="#tech">Tech Stack</a></li>
+        <li><a href="#structure">Estructura del Proyecto</a></li>
+        <li><a href="#models">Base de Datos y Modelos</a></li>
+        <li><a href="#auth">Autenticación (LDAP + Fortify)</a></li>
+        <li><a href="#permissions">Sistema de Permisos</a></li>
+        <li><a href="#enrollment">Flujo de Inscripciones</a></li>
+        <li><a href="#jefe">Visibilidad para Jefes</a></li>
+        <li><a href="#budget">Gestión de Presupuestos</a></li>
+        <li><a href="#emails">Emails Transaccionales</a></li>
+        <li><a href="#routes">Rutas y Endpoints</a></li>
+        <li><a href="#frontend">Componentes Frontend</a></li>
+        <li><a href="#setup">Cómo Ejecutar</a></li>
+    </ol>
+</div>
+
+<!-- 1. TECH STACK -->
+<section id="tech">
+    <h2>1. Tech Stack</h2>
+    <div class="tech-grid">
+        <div class="tech-card"><strong>Laravel 11</strong><span>Backend PHP 8.2+</span></div>
+        <div class="tech-card"><strong>React 19</strong><span>Frontend + TypeScript</span></div>
+        <div class="tech-card"><strong>Inertia.js</strong><span>SPA Bridge</span></div>
+        <div class="tech-card"><strong>Vite</strong><span>Build Tool</span></div>
+        <div class="tech-card"><strong>Ant Design</strong><span>UI Components</span></div>
+        <div class="tech-card"><strong>Tailwind CSS 4</strong><span>Estilos utility-first</span></div>
+        <div class="tech-card"><strong>Lucide Icons</strong><span>Iconos SVG</span></div>
+        <div class="tech-card"><strong>Fortify + LDAP</strong><span>Autenticación AD</span></div>
+        <div class="tech-card"><strong>MySQL/MariaDB</strong><span>Base de datos</span></div>
+        <div class="tech-card"><strong>Sonner</strong><span>Toast notifications</span></div>
+    </div>
+</section>
+
+<!-- 2. STRUCTURE -->
+<section id="structure">
+    <h2>2. Estructura del Proyecto</h2>
+    <div class="tree">capacitaciones2/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Web/                        → Controladores Inertia (renderizan páginas)
+│   │   │   │   ├── AdminCphController       → Páginas admin (users, courses, structure, metrics)
+│   │   │   │   ├── ColaboradorController    → Dashboard del colaborador
+│   │   │   │   └── CourseController         → Catálogo de cursos (colaborador/jefe)
+│   │   │   ├── Api/Admin/                   → API endpoints (JSON responses)
+│   │   │   │   ├── AdminController          → CRUD cursos, users, enrollments, views
+│   │   │   │   └── [Resource]Controller     → CRUD para cada recurso de estructura
+│   │   │   └── Settings/                    → Configuración de perfil y contraseña
+│   │   └── Middleware/
+│   │       ├── CheckRole                    → Verifica rol del usuario
+│   │       ├── CheckViewAccess              → Verifica acceso por vista (view_key)
+│   │       ├── HandleInertiaRequests        → Comparte datos globales (auth, user_views)
+│   │       └── HandleAppearance             → Modo claro/oscuro
+│   ├── Models/                              → 20 modelos Eloquent
+│   ├── Services/
+│   │   ├── EnrollmentService               → Lógica de inscripciones y estados
+│   │   ├── CourseService                   → Filtros y transiciones automáticas
+│   │   └── LdapService                    → Sincronización con Active Directory
+│   └── Mail/                               → 7 Mailables (emails transaccionales)
+├── resources/js/
+│   ├── components/                          → 24 componentes React reutilizables
+│   ├── pages/
+│   │   ├── admincph/                        → 5 páginas admin
+│   │   ├── colaborador/                     → Dashboard + Catálogo de cursos
+│   │   ├── auth/                            → Login, register, forgot-password
+│   │   └── settings/                        → Profile, password, appearance
+│   └── layouts/app-layout.tsx               → Layout principal
+├── routes/
+│   ├── web.php                              → Rutas con middleware view.access
+│   └── api.php                              → Rutas API (CRUD)
+└── database/migrations/                     → Esquema de BD</div>
+</section>
+
+<!-- 3. MODELS -->
+<section id="models">
+    <h2>3. Base de Datos y Modelos</h2>
+
+    <h3>Diagrama de Relaciones (ER)</h3>
+    <div class="mermaid">
+    erDiagram
+        User ||--o{ CursoUser : "inscripciones"
+        Curso ||--o{ CursoUser : "inscripciones"
+        User ||--o{ User : "jefe id_jefe"
+        User ||--o{ UserView : "permisos vista"
+        User }o--|| Departamento : "pertenece"
+        Departamento }o--|| Area : "pertenece"
+        Curso }o--|| Habilidad : "desarrolla"
+        Curso }o--|| Categoria : "clasificacion"
+        Curso }o--|| CursoTipo : "tipo"
+        Curso }o--|| Modalidad : "modalidad"
+        Curso }o--|| Proveedor : "proveedor"
+        Curso }o--|| PresupuestoGrupo : "presupuesto"
+        Curso ||--o{ CdcCurso : "financiamiento"
+        Cdc ||--o{ CdcCurso : "financia"
+        Cdc }o--|| Departamento : "pertenece"
+        PresupuestoGrupo ||--o{ Presupuesto : "partidas"
+        Presupuesto }o--|| Departamento : "asignado"
+    </div>
+
+    <h3>Modelo <code>User</code></h3>
+    <table>
+        <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+        <tr><td><code>name</code>, <code>email</code>, <code>password</code></td><td>string</td><td>Datos básicos (sync desde LDAP)</td></tr>
+        <tr><td><code>role</code></td><td>string</td><td><span class="badge badge-red">admin</span> <span class="badge badge-blue">user</span> <span class="badge badge-amber">jefe_area</span> <span class="badge badge-green">jefe_general</span></td></tr>
+        <tr><td><code>cargo</code></td><td>string</td><td>Cargo/posición laboral</td></tr>
+        <tr><td><code>id_departamento</code></td><td>FK → Departamento</td><td>Departamento al que pertenece</td></tr>
+        <tr><td><code>id_empresa</code></td><td>FK → Empresa</td><td>Empresa del grupo</td></tr>
+        <tr><td><code>id_jefe</code></td><td>FK → User</td><td><strong>Jefe directo</strong> (forma cadena jerárquica)</td></tr>
+    </table>
+    <div class="alert alert-info">
+        <strong>Métodos clave:</strong>
+        <code>getAllSubordinateIds()</code> — subordinados recursivos &bull;
+        <code>isJefe()</code> — tiene subordinados? &bull;
+        <code>hasViewAccess($key)</code> — verifica acceso a vista
+    </div>
+
+    <h3>Modelo <code>Curso</code></h3>
+    <table>
+        <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+        <tr><td><code>nombre</code>, <code>descripcion</code></td><td>string</td><td>Datos del curso</td></tr>
+        <tr><td><code>inicio</code>, <code>fin</code></td><td>date</td><td>Período del curso</td></tr>
+        <tr><td><code>horarios</code></td><td>JSON array</td><td>Horarios (cast a array en PHP)</td></tr>
+        <tr><td><code>costo</code></td><td>decimal</td><td>Costo total</td></tr>
+        <tr><td><code>costo_cero</code></td><td>boolean</td><td>Si es gratuito</td></tr>
+        <tr><td><code>capacidad</code></td><td>integer</td><td>Cupos (se decrementa al matricular)</td></tr>
+        <tr><td><code>publicado</code></td><td>boolean</td><td>Visible para colaboradores</td></tr>
+        <tr><td><code>id_tipo</code></td><td>FK → CursoTipo</td><td><code>abierto</code> o <code>cerrado</code></td></tr>
+        <tr><td><code>id_presupuesto</code></td><td>FK → PresupuestoGrupo</td><td>Presupuesto que financia</td></tr>
+    </table>
+
+    <h3>Estados de Inscripción (<code>EstadoCurso</code>)</h3>
+    <table>
+        <tr><th>Estado</th><th>Descripción</th></tr>
+        <tr><td><span class="badge badge-amber">solicitado</span></td><td>El usuario pidió inscribirse</td></tr>
+        <tr><td><span class="badge badge-green">matriculado</span></td><td>Admin aprobó (decrementa capacidad)</td></tr>
+        <tr><td><span class="badge badge-red">cancelado</span></td><td>Cancelado por usuario, jefe o admin</td></tr>
+        <tr><td><span class="badge badge-blue">terminado</span></td><td>Curso completado (automático)</td></tr>
+        <tr><td>incompleto</td><td>No completó el curso (interrumpido)</td></tr>
+    </table>
+
+    <h3>Jerarquía de Presupuestos</h3>
+    <div class="mermaid">
+    graph TD
+        PG["PresupuestoGrupo<br/>(descripción + año)"] --> P1["Presupuesto Depto A<br/>(inicial / actual)"]
+        PG --> P2["Presupuesto Depto B<br/>(inicial / actual)"]
+        PG --> P3["Presupuesto Depto C<br/>(inicial / actual)"]
+        P1 -..->|"deduct() / restore()"| MOVS["Movimientos de costos"]
+    </div>
+
+    <h3>Estructura Organizacional</h3>
+    <div class="mermaid">
+    graph LR
+        E["Empresa"] --> A["Área"]
+        A --> D["Departamento"]
+        D --> C["CDC<br/>(Centro de Costo)"]
+    </div>
+</section>
+
+<!-- 4. AUTH -->
+<section id="auth">
+    <h2>4. Autenticación</h2>
+    <div class="grid-2">
+        <div>
+            <h3>LDAP / Active Directory</h3>
+            <ul>
+                <li><code>LdapService</code> sincroniza usuarios desde AD</li>
+                <li>Botón <strong>"Sincronizar AD"</strong> en <code>/admin/users</code></li>
+                <li>Mapea campos LDAP → modelo <code>User</code></li>
+                <li>Crea nuevos o actualiza existentes por email</li>
+            </ul>
+        </div>
+        <div>
+            <h3>Laravel Fortify</h3>
+            <ul>
+                <li>Login/logout estándar</li>
+                <li>Soporte <strong>2FA</strong> (TOTP) con QR</li>
+                <li>Recovery codes disponibles</li>
+                <li>Modal de configuración en el frontend</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- 5. PERMISSIONS -->
+<section id="permissions">
+    <h2>5. Sistema de Permisos</h2>
+
+    <h3>Roles del Usuario</h3>
+    <table>
+        <tr><th>Rol</th><th>Acceso por defecto</th></tr>
+        <tr><td><span class="badge badge-red">admin</span></td><td><strong>Todo</strong> — acceso completo automático</td></tr>
+        <tr><td><span class="badge badge-amber">jefe_general</span></td><td>Dashboard</td></tr>
+        <tr><td><span class="badge badge-amber">jefe_area</span></td><td>Dashboard</td></tr>
+        <tr><td><span class="badge badge-blue">user</span></td><td>Dashboard</td></tr>
+    </table>
+
+    <h3>Permisos de Vista (<code>user_views</code>)</h3>
+    <p>Cada usuario puede tener acceso a vistas adicionales asignadas por un admin:</p>
+    <table>
+        <tr><th>View Key</th><th>Ruta</th><th>Descripción</th></tr>
+        <tr><td><code>dashboard</code></td><td>/dashboard</td><td>Siempre accesible para todos</td></tr>
+        <tr><td><code>courses</code></td><td>/courses</td><td>Catálogo (automático para jefes)</td></tr>
+        <tr><td><code>admin.dashboard</code></td><td>/admin</td><td>Panel admin</td></tr>
+        <tr><td><code>admin.courses</code></td><td>/admin/courses</td><td>Gestión de cursos</td></tr>
+        <tr><td><code>admin.users</code></td><td>/admin/users</td><td>Gestión de usuarios</td></tr>
+        <tr><td><code>admin.structure</code></td><td>/admin/structure</td><td>Estructura organizacional</td></tr>
+        <tr><td><code>admin.metrics</code></td><td>/admin/metrics</td><td>Métricas</td></tr>
+    </table>
+
+    <h3>Flujo de Verificación</h3>
+    <div class="mermaid">
+    flowchart TD
+        REQ["Request a ruta protegida"] --> MW["Middleware CheckViewAccess"]
+        MW --> IS_ADMIN{"¿Es admin?"}
+        IS_ADMIN -->|Sí| ALLOW["✅ Acceso permitido"]
+        IS_ADMIN -->|No| IS_DASH{"¿Es dashboard?"}
+        IS_DASH -->|Sí| ALLOW
+        IS_DASH -->|No| IS_JEFE{"¿Es jefe y vista=courses?"}
+        IS_JEFE -->|Sí| ALLOW
+        IS_JEFE -->|No| HAS_VIEW{"¿Tiene view_key en user_views?"}
+        HAS_VIEW -->|Sí| ALLOW
+        HAS_VIEW -->|No| DENY["🚫 403 Forbidden"]
+    </div>
+
+    <h3>Navegación Dinámica</h3>
+    <div class="alert alert-info">
+        <code>HandleInertiaRequests</code> comparte <code>user_views[]</code> en cada request.
+        <code>app-header.tsx</code> y <code>app-sidebar.tsx</code> filtran los ítems del menú según estos permisos.
+        Si no tiene ningún <code>admin.*</code> → no se muestra "Administración".
+    </div>
+</section>
+
+<!-- 6. ENROLLMENT -->
+<section id="enrollment">
+    <h2>6. Flujo de Inscripciones</h2>
+
+    <h3>Diagrama de Estados</h3>
+    <div class="mermaid">
+    stateDiagram-v2
+        [*] --> Solicitado: Usuario se inscribe
+        Solicitado --> Matriculado: Admin aprueba
+        Solicitado --> Cancelado: Usuario/Jefe/Admin cancela
+        Matriculado --> Terminado: Curso finaliza (auto)
+        Matriculado --> Cancelado: Admin cancela
+        Matriculado --> Incompleto: No completó
+        Cancelado --> [*]
+        Terminado --> [*]
+        Incompleto --> [*]
+    </div>
+
+    <h3><code>EnrollmentService::enroll()</code></h3>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Crea entrada en <code>cursos_users</code> con estado <code>solicitado</code></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Si curso tipo <code>abierto</code> → envía email <code>EnrollmentRequested</code></div></div>
+
+    <h3><code>EnrollmentService::updateState()</code></h3>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-text"><strong>Validaciones:</strong> Regla de 7 días para cancelación por jefes. Si matriculado, usuario no puede cancelar (solo admin).</div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Actualiza <code>curso_estado</code> en el pivot</div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-text"><strong>Capacidad:</strong> → matriculado: <code>capacidad--</code> | matriculado → cancelado/incompleto: <code>capacidad++</code></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-text"><strong>Emails:</strong> solicitado → EnrollmentRequested | matriculado → EnrollmentConfirmed | incompleto → EnrollmentCancelled</div></div>
+</section>
+
+<!-- 7. JEFE -->
+<section id="jefe">
+    <h2>7. Visibilidad para Jefes</h2>
+    <p>Los jefes ven <strong>únicamente</strong> cursos donde alguno de sus subordinados (recursivamente) está inscripto.</p>
+
+    <h3>Cadena Jerárquica (Ejemplo)</h3>
+    <div class="mermaid">
+    graph TD
+        HAHN["HAHN JONATHAN<br/>jhahn@tuteurgroup.com<br/><em>590+ subordinados</em>"]
+        HAHN --> GALL["GALLUZZO FEDERICO"]
+        HAHN --> DUAR["DUARTE VIAGGIO J.M."]
+        HAHN --> NIETO["NIETO LUCIANO<br/>lnieto@tuteurgroup.com"]
+        NIETO --> RUIZ["RUIZ OVEJERO J.I."]
+        NIETO --> VILL["VILLEGAS CARRERA A.L."]
+        NIETO --> WEISS["WEISS CAROLINA"]
+        NIETO --> YARI["Yariel Sulroca"]
+        GALL --> SUB1["...subordinados"]
+        DUAR --> SUB2["...subordinados"]
+        style HAHN fill:#C8102E,color:#fff
+        style NIETO fill:#C8102E,color:#fff
+    </div>
+
+    <h3>Implementación</h3>
+    <table>
+        <tr><th>Archivo</th><th>Método</th><th>Función</th></tr>
+        <tr><td><code>User.php</code></td><td><code>getAllSubordinateIds()</code></td><td>Recorre <code>id_jefe</code> recursivamente → toda la cadena descendente</td></tr>
+        <tr><td><code>CourseController.php</code></td><td><code>index()</code></td><td>Filtra cursos con <code>whereHas</code> subordinados + calcula <code>team_enrollments</code></td></tr>
+        <tr><td><code>AdminController.php</code></td><td><code>courseEnrollments()</code></td><td>Modal "Revisar Solicitudes" filtra solo subordinados</td></tr>
+        <tr><td><code>course-card.tsx</code></td><td><code>teamCount</code> prop</td><td>Muestra badge azul "X colaboradores" en el card</td></tr>
+    </table>
+</section>
+
+<!-- 8. BUDGET -->
+<section id="budget">
+    <h2>8. Gestión de Presupuestos</h2>
+    <h3>Flujo de Financiamiento</h3>
+    <div class="mermaid">
+    flowchart LR
+        A["Crear Grupo<br/>Presupuesto"] --> B["Asignar montos<br/>por Departamento"]
+        B --> C["Crear Curso<br/>+ asignar CDCs"]
+        C --> D["Matricular<br/>usuario"]
+        D --> E["deduct() del<br/>presupuesto"]
+        D -.->|"Si cancela"| F["restore() al<br/>presupuesto"]
+    </div>
+    <div class="alert alert-warn">
+        <strong>Multi-CDC:</strong> Un curso puede ser financiado por múltiples CDCs, cada uno con su monto en la tabla pivot <code>cdc_curso</code>.
+    </div>
+</section>
+
+<!-- 9. EMAILS -->
+<section id="emails">
+    <h2>9. Emails Transaccionales</h2>
+    <table>
+        <tr><th>Mailable</th><th>Cuándo se envía</th></tr>
+        <tr><td><code>EnrollmentRequested</code></td><td>Usuario solicita inscripción (curso abierto)</td></tr>
+        <tr><td><code>EnrollmentConfirmed</code></td><td>Admin aprueba inscripción / 6 días antes del inicio</td></tr>
+        <tr><td><code>EnrollmentCancelled</code></td><td>Estado → incompleto (curso abierto)</td></tr>
+        <tr><td><code>EnrollmentRejected</code></td><td>Jefe rechaza desde <code>/courses</code></td></tr>
+        <tr><td><code>EnrollmentAdminCancelled</code></td><td>Admin cancela desde <code>/admin/courses</code></td></tr>
+        <tr><td><code>CourseFinished</code></td><td>Curso terminado (transición automática)</td></tr>
+        <tr><td><code>StatusUpdated</code></td><td>Cambio genérico de estado</td></tr>
+    </table>
+</section>
+
+<!-- 10. ROUTES -->
+<section id="routes">
+    <h2>10. Rutas y Endpoints</h2>
+
+    <h3>Rutas Web (Inertia)</h3>
+    <table>
+        <tr><th>Método</th><th>Ruta</th><th>Middleware</th><th>Descripción</th></tr>
+        <tr><td>GET</td><td><code>/dashboard</code></td><td>—</td><td>Dashboard colaborador</td></tr>
+        <tr><td>GET</td><td><code>/courses</code></td><td><code>view.access:courses</code></td><td>Catálogo de cursos</td></tr>
+        <tr><td>POST</td><td><code>/courses/{id}/enroll</code></td><td><code>view.access:courses</code></td><td>Inscribirse</td></tr>
+        <tr><td>GET</td><td><code>/admin</code></td><td><code>view.access:admin.dashboard</code></td><td>Dashboard admin</td></tr>
+        <tr><td>GET</td><td><code>/admin/users</code></td><td><code>view.access:admin.users</code></td><td>Gestión usuarios</td></tr>
+        <tr><td>GET</td><td><code>/admin/courses</code></td><td><code>view.access:admin.courses</code></td><td>Gestión cursos</td></tr>
+        <tr><td>GET</td><td><code>/admin/structure</code></td><td><code>view.access:admin.structure</code></td><td>Estructura org.</td></tr>
+        <tr><td>GET</td><td><code>/admin/metrics</code></td><td><code>view.access:admin.metrics</code></td><td>Métricas</td></tr>
+    </table>
+
+    <h3>API Endpoints (JSON)</h3>
+    <table>
+        <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+        <tr><td>POST</td><td><code>/admin/courses</code></td><td>Crear curso</td></tr>
+        <tr><td>PATCH</td><td><code>/admin/courses/{id}</code></td><td>Editar curso</td></tr>
+        <tr><td>DELETE</td><td><code>/admin/courses/{id}</code></td><td>Eliminar curso</td></tr>
+        <tr><td>GET</td><td><code>/admin/courses/{id}/enrollments</code></td><td>Listar inscripciones</td></tr>
+        <tr><td>POST</td><td><code>/admin/enrollments/update-status</code></td><td>Cambiar estado inscripción</td></tr>
+        <tr><td>POST</td><td><code>/admin/enrollments/reject</code></td><td>Rechazar inscripción</td></tr>
+        <tr><td>POST</td><td><code>/admin/courses/{id}/enroll-manual</code></td><td>Inscripción manual</td></tr>
+        <tr><td>POST</td><td><code>/admin/users/sync-ad</code></td><td>Sincronizar LDAP</td></tr>
+        <tr><td>GET/POST</td><td><code>/admin/users/{id}/views</code></td><td>Gestionar permisos vista</td></tr>
+    </table>
+</section>
+
+<!-- 11. FRONTEND -->
+<section id="frontend">
+    <h2>11. Componentes Frontend</h2>
+    <table>
+        <tr><th>Componente</th><th>Descripción</th></tr>
+        <tr><td><code>AppLayout</code></td><td>Layout con header + sidebar responsivo</td></tr>
+        <tr><td><code>AppHeader</code></td><td>Navbar con menú dinámico según permisos</td></tr>
+        <tr><td><code>AppSidebar</code></td><td>Sidebar filtrado por permisos</td></tr>
+        <tr><td><code>CourseCard</code></td><td>Card de curso con estado, acciones y badge de equipo</td></tr>
+        <tr><td><code>AltaCursoModal</code></td><td>Modal de creación/edición de cursos (53KB)</td></tr>
+        <tr><td><code>TwoFactorSetupModal</code></td><td>Configuración de 2FA con QR</td></tr>
+        <tr><td><code>UserMenuContent</code></td><td>Menú del usuario (perfil, 2FA, logout)</td></tr>
+        <tr><td><code>CourseEnrollmentsModal</code></td><td>Modal de inscripciones de un curso</td></tr>
+    </table>
+
+    <h3>Páginas Admin (<code>/admincph</code>)</h3>
+    <table>
+        <tr><th>Página</th><th>Descripción</th></tr>
+        <tr><td><code>dashboard.tsx</code></td><td>Panel admin principal</td></tr>
+        <tr><td><code>courses.tsx</code></td><td>Tabla de cursos + modal AltaCurso + gestión inscripciones</td></tr>
+        <tr><td><code>users.tsx</code></td><td>Tabla usuarios + modal permisos de vistas</td></tr>
+        <tr><td><code>structure.tsx</code></td><td>Tabs: Empresas, Áreas, Deptos, CDCs, Presupuestos, etc.</td></tr>
+        <tr><td><code>metrics.tsx</code></td><td>Métricas y reportes de capacitación</td></tr>
+    </table>
+</section>
+
+<!-- 12. SETUP -->
+<section id="setup">
+    <h2>12. Cómo Ejecutar el Proyecto</h2>
+    <pre><code># Instalar dependencias
+composer install
+npm install
+
+# Configurar .env (DB, LDAP, MAIL)
+cp .env.example .env
+php artisan key:generate
+
+# Migraciones
+php artisan migrate
+
+# Dev server
+npm run dev          # Vite (frontend)
+php artisan serve    # Laravel (backend)</code></pre>
+
+    <h3>Variables de Entorno Clave</h3>
+    <table>
+        <tr><th>Variable</th><th>Descripción</th></tr>
+        <tr><td><code>DB_*</code></td><td>Conexión a MySQL/MariaDB</td></tr>
+        <tr><td><code>LDAP_*</code></td><td>Configuración Active Directory para sync</td></tr>
+        <tr><td><code>MAIL_*</code></td><td>Configuración SMTP para emails</td></tr>
+    </table>
+</section>
+
+</div>
+
+<div style="text-align:center; padding: 40px; color: var(--muted); font-size: .85rem;">
+    Hub de Aprendizaje Tuteur (HAT) — Documentación generada el 13 de marzo de 2026
+</div>
+
+<script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

@@ -8,6 +8,7 @@ interface CourseCardProps {
     status?: EnrollmentStatus;
     isAdmin?: boolean;
     isLider?: boolean;
+    teamCount?: number;
     onEnroll?: (id: number) => void;
     onCancel?: (id: number) => void;
     onEdit?: (curso: Curso) => void;
@@ -19,17 +20,15 @@ interface CourseCardProps {
 
 const statusStyles: Record<string, { bg: string, border: string, accent: string, text: string }> = {
     'solicitado': { bg: 'bg-amber-50/50', border: 'border-amber-200', accent: 'bg-amber-500', text: 'text-amber-600' },
-    'procesando': { bg: 'bg-amber-50/50', border: 'border-amber-200', accent: 'bg-amber-500', text: 'text-amber-600' },
-    'aceptado': { bg: 'bg-emerald-50/50', border: 'border-emerald-200', accent: 'bg-emerald-500', text: 'text-emerald-600' },
     'matriculado': { bg: 'bg-emerald-50/50', border: 'border-emerald-200', accent: 'bg-emerald-500', text: 'text-emerald-600' },
     'cancelado': { bg: 'bg-rose-50/50', border: 'border-rose-200', accent: 'bg-rose-500', text: 'text-rose-600' },
     'terminado': { bg: 'bg-blue-50/50', border: 'border-blue-200', accent: 'bg-blue-500', text: 'text-blue-600' },
-    'certificado': { bg: 'bg-violet-50/50', border: 'border-violet-200', accent: 'bg-violet-500', text: 'text-violet-600' },
     'incompleto': { bg: 'bg-slate-50/50', border: 'border-slate-200', accent: 'bg-slate-500', text: 'text-slate-600' },
 };
 
 const statusLabels: Record<string, string> = {
     'matriculado': 'inscripto',
+    'incompleto': 'interrumpido',
 };
 
 const formatDate = (val: string | null | undefined) => {
@@ -38,7 +37,7 @@ const formatDate = (val: string | null | undefined) => {
     catch { return val; }
 };
 
-export function CourseCard({ curso, status, isAdmin, isLider, onEnroll, onCancel, onEdit, onManageUsers, onManageEnrollments, onClick, className }: CourseCardProps) {
+export function CourseCard({ curso, status, isAdmin, isLider, teamCount, onEnroll, onCancel, onEdit, onManageUsers, onManageEnrollments, onClick, className }: CourseCardProps) {
     const style = status ? statusStyles[status] : { bg: 'bg-white', border: 'border-slate-100', accent: 'bg-slate-200', text: 'text-slate-400' };
 
     const modalidadLabel = typeof curso.modalidad === 'object' ? curso.modalidad?.modalidad : curso.modalidad || 'Presencial';
@@ -79,9 +78,15 @@ export function CourseCard({ curso, status, isAdmin, isLider, onEnroll, onCancel
                     <Tag className="bg-white/10 border-white/20 text-white/80 text-[9px] font-semibold uppercase m-0 py-0 rounded-md">
                         {modalidadLabel}
                     </Tag>
-                    {curso.cant_horas > 0 && (
+                    {(curso.cant_horas ?? 0) > 0 && (
                         <Tag className="bg-emerald-500/20 border-emerald-400/30 text-emerald-300 text-[9px] font-semibold m-0 py-0 rounded-md">
                             {curso.cant_horas}h
+                        </Tag>
+                    )}
+                    {isLider && teamCount !== undefined && teamCount > 0 && (
+                        <Tag className="bg-blue-500/20 border-blue-400/30 text-blue-300 text-[9px] font-semibold m-0 py-0 rounded-md">
+                            <Users className="inline h-3 w-3 mr-0.5" />
+                            {teamCount} colaborador{teamCount !== 1 ? 'es' : ''}
                         </Tag>
                     )}
                 </div>
@@ -150,25 +155,10 @@ export function CourseCard({ curso, status, isAdmin, isLider, onEnroll, onCancel
                             <div className="flex items-center gap-1.5">
                                 <Button
                                     size="small"
-                                    onClick={() => onManageUsers?.(curso)}
-                                    className="text-[9px] font-semibold uppercase tracking-wider rounded-lg h-7 px-2.5 border border-slate-200 text-slate-500 hover:border-slate-300! hover:text-slate-700!"
-                                >
-                                    Colaboradores
-                                </Button>
-                                <Button
-                                    size="small"
                                     onClick={() => onManageEnrollments?.(curso)}
                                     className="text-[9px] font-semibold uppercase tracking-wider rounded-lg h-7 px-2.5 border border-slate-200 text-slate-500 hover:border-slate-300! hover:text-slate-700!"
                                 >
-                                    Matrículas
-                                </Button>
-                                <Button
-                                    size="small"
-                                    type="primary"
-                                    onClick={() => onEdit?.(curso)}
-                                    className="bg-tuteur-red hover:bg-tuteur-red-dark! text-white text-[9px] font-semibold uppercase tracking-wider rounded-lg h-7 px-3 border-none shadow-sm"
-                                >
-                                    Editar
+                                    Revisar Solicitudes
                                 </Button>
                             </div>
                         ) : isLider ? (
@@ -187,14 +177,14 @@ export function CourseCard({ curso, status, isAdmin, isLider, onEnroll, onCancel
                             >
                                 Inscribirse
                             </Button>
-                        ) : (
+                        ) : status === 'solicitado' ? (
                             <Button
                                 onClick={() => onCancel?.(curso.id)}
                                 className="text-slate-500 hover:text-rose-600! hover:border-rose-200! border text-[11px] font-semibold rounded-lg h-9 px-5 transition-all"
                             >
                                 Cancelar
                             </Button>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </div>

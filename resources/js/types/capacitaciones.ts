@@ -116,7 +116,7 @@ export interface Curso {
     publicado?: boolean;
 }
 
-export type EnrollmentStatus = 'solicitado' | 'procesando' | 'aceptado' | 'matriculado' | 'cancelar' | 'terminado' | 'incompleto' | 'certificado';
+export type EnrollmentStatus = 'solicitado' | 'matriculado' | 'cancelado' | 'terminado' | 'incompleto';
 
 export interface Modalidad {
     id: number;

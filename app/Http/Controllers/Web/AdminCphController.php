@@ -31,10 +31,14 @@ class AdminCphController extends Controller
 
     public function users(Request $request)
     {
-        $query = User::with(['departamento.area', 'empresa', 'areaRel', 'jefe']);
+        $query = User::with(['departamento.area', 'empresa', 'areaRel', 'jefe', 'views']);
 
         if ($request->has('area_id') && $request->area_id) {
-            $query->whereHas('departamento', fn ($q) => $q->where('id_area', $request->area_id));
+            $areaId = $request->area_id;
+            $query->where(function ($q) use ($areaId) {
+                $q->where('id_area', $areaId)
+                  ->orWhereHas('departamento', fn ($sub) => $sub->where('id_area', $areaId));
+            });
         }
 
         if ($request->has('departamento_id') && $request->departamento_id) {
@@ -236,6 +240,9 @@ class AdminCphController extends Controller
             'proveedor',
         ])
             ->withCount('users')
+            ->withCount(['users as active_users_count' => function ($q) {
+                $q->where('curso_estado', '!=', 6); // Exclude incompleto (interrumpido)
+            }])
             ->orderBy('inicio', 'desc')
             ->get();
 
@@ -245,24 +252,28 @@ class AdminCphController extends Controller
 
         // All users with hierarchy data for the boss filter
         $allUsersData = User::with('departamento:id,nombre')
-            ->select('id', 'name', 'id_departamento', 'id_jefe')
-            ->whereNotNull('id_departamento')
-            ->orderBy('name')
+            ->select('id', 'name', 'id_departamento', 'id_area', 'id_jefe')
             ->get()
             ->map(fn ($u) => [
                 'id' => $u->id,
                 'name' => $u->name,
                 'id_departamento' => $u->id_departamento,
+                'id_area' => $u->id_area,
                 'id_jefe' => $u->id_jefe,
                 'deptNombre' => $u->departamento?->nombre ?? 'Sin depto',
             ]);
 
         // Users who are bosses of at least 1 person
-        $jefeIds = User::whereNotNull('id_jefe')->distinct()->pluck('id_jefe');
-        $jefes = User::select('id', 'name')
-            ->whereIn('id', $jefeIds)
-            ->orderBy('name')
-            ->get();
+        $jefes = User::whereNotNull('id_jefe')
+            ->select('id_jefe')
+            ->distinct()
+            ->get()
+            ->map(function ($row) {
+                $jefe = User::find($row->id_jefe);
+                return $jefe ? ['id' => $jefe->id, 'name' => $jefe->name] : null;
+            })
+            ->filter()
+            ->values();
 
         return Inertia::render('admincph/metrics', [
             'cursos'       => $cursos,
@@ -279,7 +290,7 @@ class AdminCphController extends Controller
                 'totalInscritos'  => $cursos->sum('users_count'),
                 'totalCosto'      => $cursos->sum('costo'),
                 'totalHoras'      => $cursos->sum('cant_horas'),
-                'totalHorasColaboradores' => $cursos->sum(fn ($c) => ($c->cant_horas ?? 0) * ($c->users_count ?? 0)),
+                'totalHorasColaboradores' => $cursos->sum(fn ($c) => ($c->cant_horas ?? 0) * ($c->active_users_count ?? 0)),
                 'totalPresupuesto' => $presupuestoGrupos->flatMap->presupuestos->sum('inicial'),
                 'totalGastado'    => $presupuestoGrupos->flatMap->presupuestos->sum('inicial') - $presupuestoGrupos->flatMap->presupuestos->sum('actual'),
             ],

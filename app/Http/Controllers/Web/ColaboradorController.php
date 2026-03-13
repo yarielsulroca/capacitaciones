@@ -15,13 +15,13 @@ class ColaboradorController extends Controller
     {
         $user = $request->user();
 
-        // 1. Calculate Stats
         $stats = [
-            'available' => Curso::where('publicado', 1)->count(),
+            'available' => Curso::where('publicado', 1)->where(function ($q) {
+                $q->whereNull('fin')->orWhere('fin', '>=', now()->startOfDay());
+            })->count(),
             'solicitado' => $user->cursos()->wherePivotIn('curso_estado', EstadoCurso::where('estado', 'solicitado')->pluck('id'))->count(),
             'matriculado' => $user->cursos()->wherePivotIn('curso_estado', EstadoCurso::where('estado', 'matriculado')->pluck('id'))->count(),
             'terminado' => $user->cursos()->wherePivotIn('curso_estado', EstadoCurso::where('estado', 'terminado')->pluck('id'))->count(),
-            'certificado' => $user->cursos()->wherePivotIn('curso_estado', EstadoCurso::where('estado', 'certificado')->pluck('id'))->count(),
             'incompleto' => $user->cursos()->wherePivotIn('curso_estado', EstadoCurso::where('estado', 'incompleto')->pluck('id'))->count(),
             'cancelado' => $user->cursos()->wherePivotIn('curso_estado', EstadoCurso::where('estado', 'cancelado')->pluck('id'))->count(),
         ];
@@ -41,7 +41,11 @@ class ColaboradorController extends Controller
                 return $curso;
             });
         } else {
+            // Only show courses that haven't ended yet (fin >= today or fin is null)
             $featured = Curso::where('publicado', 1)
+                ->where(function ($q) {
+                    $q->whereNull('fin')->orWhere('fin', '>=', now()->startOfDay());
+                })
                 ->latest()
                 ->with(['habilidad', 'categoria', 'proveedor', 'modalidad', 'tipo'])
                 ->take(3)

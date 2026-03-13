@@ -35,12 +35,26 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        // Build the list of accessible view keys for navigation
+        $userViews = [];
+        if ($user) {
+            $allViews = ['dashboard', 'courses', 'admin.dashboard', 'admin.courses', 'admin.users', 'admin.structure', 'admin.metrics'];
+            foreach ($allViews as $view) {
+                if ($user->hasViewAccess($view)) {
+                    $userViews[] = $view;
+                }
+            }
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
             ],
+            'user_views' => $userViews,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
                 'success' => $request->session()->get('success'),

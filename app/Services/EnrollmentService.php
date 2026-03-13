@@ -55,33 +55,38 @@ class EnrollmentService
             */
         }
 
-        // Logic for "Incompleto" if matriculado user cancels themselves
+        // Block: once inscripto, the user cannot cancel themselves — only admin can
         if ($newStateName === 'cancelado' && $modifier->id === $user->id && $currentStateName === 'matriculado') {
-            $newStateName = 'incompleto';
+            throw new \Exception('Una vez inscripto, solo el administrador puede cancelar tu participación.');
         }
-
-        // Note: Budget Transition Logic (Deduction/Restoration)
-        // is now handled via AdminController global actions (cdc_curso), not per user.
 
         $newState = EstadoCurso::where('estado', $newStateName)->firstOrFail();
 
         $user->cursos()->updateExistingPivot($curso->id, [
             'curso_estado' => $newState->id,
             'id_user_mod' => $modifier->id,
-            'id_presupuesto' => $curso->id_presupuesto, // Ensure group ID is saved
+            'id_presupuesto' => $curso->id_presupuesto,
             'updated_at' => now(),
         ]);
 
-        // Immediate Notifications for certain states
+        // ── Capacity management ──
+        // Decrement capacity when enrolling (matriculado)
+        if ($newStateName === 'matriculado' && $currentStateName !== 'matriculado') {
+            $curso->decrement('capacidad');
+        }
+        // Restore capacity when leaving matriculado (cancel/incompleto)
+        if (in_array($newStateName, ['cancelado', 'incompleto']) && $currentStateName === 'matriculado') {
+            $curso->increment('capacidad');
+        }
+
+        // ── Email notifications (only for "Abierto" courses) ──
         if ($curso->tipo && strtolower($curso->tipo->tipo) === 'abierto') {
-            if (in_array($newStateName, ['solicitado', 'procesando'])) {
+            if ($newStateName === 'solicitado') {
                 Mail::to($user->email)->send(new \App\Mail\EnrollmentRequested($user, $curso));
-            } elseif (in_array($newStateName, ['cancelado', 'incompleto'])) {
+            } elseif ($newStateName === 'incompleto') {
                 Mail::to($user->email)->send(new \App\Mail\EnrollmentCancelled($user, $curso));
             } elseif ($newStateName === 'matriculado') {
                 Mail::to($user->email)->send(new \App\Mail\EnrollmentConfirmed($user, $curso));
-            } elseif ($newStateName === 'certificado') {
-                Mail::to($user->email)->send(new \App\Mail\StatusUpdated($user, $curso, $newStateName));
             }
         }
     }

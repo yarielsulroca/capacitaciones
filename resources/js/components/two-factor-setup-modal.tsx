@@ -285,7 +285,7 @@ export default function TwoFactorSetupModal({
             open={isOpen}
             onCancel={handleClose}
             footer={null}
-            destroyOnClose
+            destroyOnHidden
             centered
         >
             <div className="flex flex-col items-center justify-center mb-6">

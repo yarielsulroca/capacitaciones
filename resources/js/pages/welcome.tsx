@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { dashboard, login } from '@/routes';
-import { BookOpen, ShieldCheck, UserCheck, GraduationCap } from 'lucide-react';
+import { BookOpen, ShieldCheck, UserCheck, BarChart3 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 
 export default function Welcome() {
@@ -85,13 +85,13 @@ export default function Welcome() {
                                         </div>
                                         <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow hover:-translate-y-1 duration-300 group/card">
                                             <div className="h-12 w-12 rounded-xl bg-red-50 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300">
-                                                <GraduationCap className="text-tuteur-red" size={24} />
+                                                <BarChart3 className="text-tuteur-red" size={24} />
                                             </div>
-                                            <h3 className="font-bold text-tuteur-grey text-lg mb-1">Certificados</h3>
-                                            <p className="text-sm text-tuteur-grey-mid">Validados por RRHH.</p>
+                                            <h3 className="font-bold text-tuteur-grey text-lg mb-1">Métricas</h3>
+                                            <p className="text-sm text-tuteur-grey-mid">Análisis estadístico en tiempo real.</p>
                                         </div>
                                     </div>
-                                    <div className="space-y-6 pt-12">
+                                    <div className="space-y-6">
                                         <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow hover:-translate-y-1 duration-300 group/card">
                                             <div className="h-12 w-12 rounded-xl bg-red-50 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300">
                                                 <ShieldCheck className="text-tuteur-red" size={24} />

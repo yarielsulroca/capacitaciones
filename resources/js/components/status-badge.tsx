@@ -9,16 +9,15 @@ interface StatusBadgeProps {
 
 export const statusColors: Record<string, string> = {
     'solicitado': 'warning',
-    'procesando': 'warning',
     'matriculado': 'success',
     'cancelado': 'error',
     'terminado': 'processing',
-    'certificado': 'purple',
     'incompleto': 'default',
 };
 
 const statusLabels: Record<string, string> = {
     'matriculado': 'inscripto',
+    'incompleto': 'interrumpido',
 };
 
 export function StatusBadge({ status, className }: { status: string; className?: string }) {

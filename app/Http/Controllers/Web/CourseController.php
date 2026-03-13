@@ -24,19 +24,31 @@ class CourseController extends Controller
     {
         $user = $request->user();
         $is_admin = $user->role === 'admin';
-        $is_lider = $user->role === 'lider' || \App\Models\User::where('id_jefe', $user->id)->exists();
+        $is_lider = $user->isJefe();
 
         $query = $this->courseService->getFilteredCoursesQuery($request, $is_admin);
 
+        // Recursive subordinate IDs for jefes
+        $subordinateIds = collect();
         if ($is_lider && !$is_admin) {
-            $teamMemberIds = \App\Models\User::where('id_jefe', $user->id)->pluck('id');
-            // Show course if a team member is enrolled
-            $query->whereHas('users', function($q) use ($teamMemberIds) {
-                $q->whereIn('cursos_users.id_user', $teamMemberIds);
+            $subordinateIds = $user->getAllSubordinateIds();
+            // Show courses where any subordinate in the chain is enrolled
+            $query->whereHas('users', function($q) use ($subordinateIds) {
+                $q->whereIn('cursos_users.id_user', $subordinateIds);
             });
         }
 
         $courses = $query->latest()->paginate($request->get('limit', 15));
+
+        // Add team enrollment count per course for jefes
+        $teamEnrollments = [];
+        if ($is_lider && !$is_admin && $subordinateIds->isNotEmpty()) {
+            foreach ($courses as $curso) {
+                $teamEnrollments[$curso->id] = $curso->users()
+                    ->whereIn('cursos_users.id_user', $subordinateIds)
+                    ->count();
+            }
+        }
 
         return Inertia::render('colaborador/courses/index', [
             'courses' => CursoResource::collection($courses),
@@ -55,6 +67,7 @@ class CourseController extends Controller
             ],
             'is_admin' => $is_admin,
             'is_lider' => $is_lider,
+            'team_enrollments' => $teamEnrollments,
         ]);
     }
 

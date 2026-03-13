@@ -1,8 +1,16 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Avatar, Card, Table, Tag, Button, Input, Alert, Tooltip, Select } from 'antd';
+import { Avatar, Card, Table, Tag, Button, Input, Alert, Tooltip, Select, Modal, Checkbox } from 'antd';
 import { useState } from 'react';
-import { Loader2, RefreshCw, CheckCircle2, Search, Users, Filter, X } from 'lucide-react';
+import { Loader2, RefreshCw, CheckCircle2, Search, Users, Filter, X, Settings2 } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
+
+interface UserView {
+    id: number;
+    user_id: number;
+    view_key: string;
+}
 
 interface User {
     id: number;
@@ -33,6 +41,7 @@ interface User {
         id: number;
         name: string;
     };
+    views?: UserView[];
 }
 
 interface Metadata {
@@ -42,6 +51,17 @@ interface Metadata {
     jefes: { id: number; name: string }[];
 }
 
+// All available views in the system
+const AVAILABLE_VIEWS = [
+    { key: 'dashboard', label: 'Dashboard', description: 'Panel principal del colaborador', group: 'Colaborador' },
+    { key: 'courses', label: 'Catálogo de Cursos', description: 'Vista de cursos disponibles', group: 'Colaborador' },
+    { key: 'admin.dashboard', label: 'Admin Dashboard', description: 'Panel administrativo principal', group: 'Administración' },
+    { key: 'admin.courses', label: 'Admin Cursos', description: 'Gestión de cursos y matriculaciones', group: 'Administración' },
+    { key: 'admin.users', label: 'Admin Usuarios', description: 'Gestión de usuarios y permisos', group: 'Administración' },
+    { key: 'admin.structure', label: 'Admin Estructura', description: 'Estructura organizacional y recursos', group: 'Administración' },
+    { key: 'admin.metrics', label: 'Admin Métricas', description: 'Reportes y métricas de capacitación', group: 'Administración' },
+];
+
 export default function UserIndex({ users, usersWithErrors, metadata }: { users: { data: User[] }, usersWithErrors?: { id: number; name: string; email: string; reason: string }[], metadata: Metadata }) {
     const [isSyncing, setIsSyncing] = useState(false);
     const [globalFilter, setGlobalFilter] = useState('');
@@ -50,7 +70,41 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
     const [filterDepto, setFilterDepto] = useState<number | undefined>(undefined);
     const [filterJefe, setFilterJefe] = useState<number | undefined>(undefined);
 
+    // Edit permissions modal state
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [selectedViews, setSelectedViews] = useState<string[]>([]);
+    const [savingViews, setSavingViews] = useState(false);
+
     const { flash } = usePage<any>().props;
+
+    const openEditModal = (user: User) => {
+        setEditingUser(user);
+        const currentViews = (user.views || []).map(v => v.view_key);
+        setSelectedViews(currentViews);
+    };
+
+    const handleToggleView = (viewKey: string) => {
+        setSelectedViews(prev =>
+            prev.includes(viewKey)
+                ? prev.filter(v => v !== viewKey)
+                : [...prev, viewKey]
+        );
+    };
+
+    const handleSaveViews = async () => {
+        if (!editingUser) return;
+        setSavingViews(true);
+        try {
+            await axios.post(`/admin/users/${editingUser.id}/views`, { views: selectedViews });
+            toast.success('Permisos actualizados correctamente');
+            setEditingUser(null);
+            router.reload();
+        } catch {
+            toast.error('Error al actualizar permisos');
+        } finally {
+            setSavingViews(false);
+        }
+    };
 
     const columns = [
         {
@@ -119,6 +173,22 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
                 </Tag>
             ),
         },
+        {
+            title: 'Acciones',
+            key: 'acciones',
+            width: 90,
+            align: 'center' as const,
+            render: (_: any, record: User) => (
+                <Tooltip title="Editar permisos de vistas">
+                    <Button
+                        size="small"
+                        icon={<Settings2 className="h-3.5 w-3.5" />}
+                        onClick={() => openEditModal(record)}
+                        className="border-slate-200 text-slate-500 hover:border-tuteur-red! hover:text-tuteur-red! transition-all"
+                    />
+                </Tooltip>
+            ),
+        },
     ];
 
     const filteredUsers = users.data.filter(user => {
@@ -172,6 +242,10 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
         : (metadata.departamentos || []);
 
     const errorUsersList = usersWithErrors || [];
+
+    // Group views by category
+    const colaboradorViews = AVAILABLE_VIEWS.filter(v => v.group === 'Colaborador');
+    const adminViews = AVAILABLE_VIEWS.filter(v => v.group === 'Administración');
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Administración', href: '/admin' }, { title: 'Usuarios', href: '/admin/users' }]}>
@@ -344,6 +418,118 @@ export default function UserIndex({ users, usersWithErrors, metadata }: { users:
                         className="tuteur-table"
                     />
                 </Card>
+
+                {/* Edit Permissions Modal */}
+                <Modal
+                    open={!!editingUser}
+                    onCancel={() => setEditingUser(null)}
+                    footer={null}
+                    width={640}
+                    centered
+                    closable={false}
+                >
+                    <div className="bg-slate-700 py-6 px-8 border-b border-slate-600 rounded-t-xl">
+                        <h2 className="text-xl font-semibold text-white uppercase tracking-tight">
+                            Permisos de Vistas
+                        </h2>
+                        <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-widest mt-1">
+                            {editingUser?.name}
+                        </p>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="flex gap-8">
+                            {/* Left: Views checkboxes */}
+                            <div className="flex-1 space-y-5">
+                                {/* Colaborador views */}
+                                <div>
+                                    <h4 className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-3">Colaborador</h4>
+                                    <div className="space-y-2">
+                                        {colaboradorViews.map(view => (
+                                            <label
+                                                key={view.key}
+                                                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all cursor-pointer group"
+                                            >
+                                                <Checkbox
+                                                    checked={selectedViews.includes(view.key) || editingUser?.role === 'admin'}
+                                                    disabled={editingUser?.role === 'admin' || view.key === 'dashboard'}
+                                                    onChange={() => handleToggleView(view.key)}
+                                                />
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-semibold text-slate-700">{view.label}</span>
+                                                    <span className="text-[10px] text-slate-400">{view.description}</span>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Admin views */}
+                                <div>
+                                    <h4 className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-3">Administración</h4>
+                                    <div className="space-y-2">
+                                        {adminViews.map(view => (
+                                            <label
+                                                key={view.key}
+                                                className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all cursor-pointer group"
+                                            >
+                                                <Checkbox
+                                                    checked={selectedViews.includes(view.key) || editingUser?.role === 'admin'}
+                                                    disabled={editingUser?.role === 'admin'}
+                                                    onChange={() => handleToggleView(view.key)}
+                                                />
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-semibold text-slate-700">{view.label}</span>
+                                                    <span className="text-[10px] text-slate-400">{view.description}</span>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right: Role info */}
+                            <div className="w-44 shrink-0">
+                                <h4 className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-3">Rol Actual</h4>
+                                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 text-center">
+                                    <Tag color={editingUser?.role === 'admin' ? 'red' : 'default'}
+                                         className="font-bold uppercase text-xs border-none">
+                                        {editingUser?.role}
+                                    </Tag>
+                                    {editingUser?.role === 'admin' && (
+                                        <p className="text-[10px] text-slate-400 mt-3 leading-relaxed">
+                                            Los administradores tienen acceso total a todas las vistas automáticamente.
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="mt-4 bg-amber-50 rounded-xl p-4 border border-amber-100">
+                                    <p className="text-[10px] text-amber-600 font-medium leading-relaxed">
+                                        <strong>Dashboard</strong> está habilitado por defecto para todos los usuarios.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-slate-50 border-t-2 border-slate-100 flex justify-end gap-3 rounded-b-xl">
+                        <Button
+                            onClick={() => setEditingUser(null)}
+                            className="font-semibold uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl border-2 border-slate-200"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="primary"
+                            onClick={handleSaveViews}
+                            loading={savingViews}
+                            disabled={editingUser?.role === 'admin'}
+                            className="bg-tuteur-red hover:bg-tuteur-red-dark! border-none font-semibold uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl shadow-md"
+                        >
+                            Guardar Permisos
+                        </Button>
+                    </div>
+                </Modal>
             </div>
         </AppLayout>
     );
