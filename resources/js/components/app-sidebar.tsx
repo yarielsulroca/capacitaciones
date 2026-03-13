@@ -21,7 +21,7 @@ export function AppSidebar() {
             viewKey: 'dashboard',
         },
         ...(views.includes('courses') ? [{
-            title: 'Catálogo de Cursos',
+            title: 'Gestión de Cursos',
             href: '/courses',
             icon: BookOpen,
             viewKey: 'courses',

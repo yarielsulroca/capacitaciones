@@ -145,6 +145,11 @@ class AdminController extends Controller
             $input['id_proveedor'] = \App\Models\Proveedor::firstOrCreate(['provedor' => $input['id_proveedor']])->id;
         }
 
+        // Sanitize id_presupuesto: convert 0/empty to null to avoid FK violations
+        if (empty($input['id_presupuesto']) || $input['id_presupuesto'] == 0) {
+            $input['id_presupuesto'] = null;
+        }
+
         $validated = \Illuminate\Support\Facades\Validator::make($input, [
             'nombre'              => 'required|string|max:255',
             'descripcion'         => 'required|string',
@@ -188,24 +193,41 @@ class AdminController extends Controller
             unset($courseData['id_categoria']);
         }
 
-        $course = Curso::create($courseData);
+        try {
+            $course = Curso::create($courseData);
 
-        // We will sync users first, so we know who is enrolled, then sync the CDC fractions
-        if ($request->has('selected_users') && is_array($request->selected_users)) {
-            $estadoMatriculado = \App\Models\EstadoCurso::where('estado', 'matriculado')->first();
-            if ($estadoMatriculado) {
-                foreach ($request->selected_users as $userId) {
-                    $this->attachUserToCourse($course, $userId, $estadoMatriculado->id, $request->user()?->id);
+            // We will sync users first, so we know who is enrolled, then sync the CDC fractions
+            if ($request->has('selected_users') && is_array($request->selected_users)) {
+                $estadoMatriculado = \App\Models\EstadoCurso::where('estado', 'matriculado')->first();
+                if ($estadoMatriculado) {
+                    foreach ($request->selected_users as $userId) {
+                        $this->attachUserToCourse($course, $userId, $estadoMatriculado->id, $request->user()?->id);
+                    }
                 }
             }
-        }
 
-        // Sync CDCs pivot and deduct global budget (distributing among users if any)
-        if (!empty($cdcItems)) {
-            $this->distributeCdcFractions($course, $cdcItems, true);
-        }
+            // Sync CDCs pivot and deduct global budget (distributing among users if any)
+            if (!empty($cdcItems)) {
+                $this->distributeCdcFractions($course, $cdcItems, true);
+            }
 
-        return redirect()->back();
+            return redirect()->back();
+        } catch (\Illuminate\Database\QueryException $e) {
+            $msg = $e->getMessage();
+            if (str_contains($msg, 'id_presupuesto') || str_contains($msg, 'presupuesto')) {
+                return redirect()->back()->withErrors([
+                    'id_presupuesto' => 'El grupo de presupuesto seleccionado no es válido. Verifique que exista un presupuesto creado en Administración > Estructura > Presupuestos.'
+                ])->withInput();
+            }
+            if (str_contains($msg, 'FOREIGN KEY')) {
+                return redirect()->back()->withErrors([
+                    'general' => 'Error de referencia: uno de los valores seleccionados (proveedor, modalidad, categoría, etc.) no existe en la base de datos. Verifique los campos e intente nuevamente.'
+                ])->withInput();
+            }
+            return redirect()->back()->withErrors([
+                'general' => 'Error inesperado al guardar el curso. Contacte al administrador del sistema.'
+            ])->withInput();
+        }
     }
 
     /**
@@ -213,6 +235,12 @@ class AdminController extends Controller
      */
     public function updateCourse(Request $request, Curso $course)
     {
+        // Sanitize id_presupuesto: convert 0/empty to null to avoid FK violations
+        $input = $request->all();
+        if (isset($input['id_presupuesto']) && (empty($input['id_presupuesto']) || $input['id_presupuesto'] == 0)) {
+            $request->merge(['id_presupuesto' => null]);
+        }
+
         $validated = $request->validate([
             'nombre'              => 'sometimes|string|max:255',
             'descripcion'         => 'nullable|string',

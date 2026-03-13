@@ -233,10 +233,10 @@ export default function Index({ courses, filters, metadata, stats, is_admin, is_
             <div className="flex flex-col gap-8 p-6 lg:p-10 max-w-7xl mx-auto w-full">
                 <div className="flex flex-col gap-2">
                     <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
-                        Catálogo y <span className="bg-clip-text text-transparent bg-linear-to-r from-primary to-indigo-600">Gestión de Cursos</span>
+                        <span className="bg-clip-text text-transparent bg-linear-to-r from-primary to-indigo-600">Gestión de Cursos</span>
                     </h1>
                     <p className="text-slate-500 text-lg max-w-2xl">
-                        Explora nuestra oferta académica y gestiona las capacitaciones de tu equipo en un solo lugar.
+                        Como líder, puedes visualizar los cursos en los que participan tus colaboradores, cancelar sus solicitudes de inscripción y gestionar las capacitaciones de tu equipo de trabajo.
                     </p>
                 </div>
 
@@ -261,7 +261,7 @@ export default function Index({ courses, filters, metadata, stats, is_admin, is_
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
                         <Input
-                            placeholder="Buscar cursos..."
+                            placeholder="Buscar Cursos por Nombre..."
                             className="pl-10 h-10 bg-white/50 border-none shadow-inner rounded-xl w-full"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}

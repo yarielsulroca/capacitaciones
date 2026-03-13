@@ -23,7 +23,7 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Catálogo de Cursos',
+        title: 'Gestión de Cursos',
         href: '/courses',
         icon: BookOpen,
     },

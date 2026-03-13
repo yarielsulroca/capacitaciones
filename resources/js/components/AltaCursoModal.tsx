@@ -4,6 +4,7 @@ import { router, usePage } from '@inertiajs/react';
 import { Cdc, Habilidad, Presupuesto, Categoria, Proveedor, Modalidad, CursoTipo, User, PresupuestoGrupo, Curso, Area, Departamento } from '@/types/capacitaciones';
 import { SelectableInput } from './SelectableInput';
 import { Plus, Trash2, AlertCircle, CheckCircle2, DollarSign } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CdcItem {
     [key: string]: any;
@@ -264,10 +265,37 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
             cdc_items: validCdcItems,
         };
 
+        const handleErrors = (errors: Record<string, string>) => {
+            const errorMessages: Record<string, string> = {
+                nombre: 'El nombre del curso es obligatorio.',
+                descripcion: 'La descripción es obligatoria.',
+                inicio: 'La fecha de inicio es obligatoria.',
+                fin: 'La fecha de fin es obligatoria o debe ser posterior al inicio.',
+                capacidad: 'La capacidad debe ser al menos 1.',
+                costo: 'El costo es obligatorio.',
+                id_habilidad: 'Seleccione una habilidad / tipo de curso.',
+                id_categoria: 'Seleccione una categoría.',
+                id_tipo: 'El tipo de curso es obligatorio.',
+                id_presupuesto: 'El presupuesto seleccionado no es válido. Verifique que exista un grupo de presupuesto creado en Administración > Estructura.',
+            };
+
+            const firstKey = Object.keys(errors)[0];
+            const friendlyMsg = errorMessages[firstKey] || Object.values(errors)[0];
+            toast.error(friendlyMsg, { duration: 6000 });
+
+            // Show all validation errors if multiple
+            if (Object.keys(errors).length > 1) {
+                const allErrors = Object.entries(errors)
+                    .map(([key, msg]) => errorMessages[key] || msg)
+                    .join('\n• ');
+                toast.error('Errores de validación:\n• ' + allErrors, { duration: 8000 });
+            }
+        };
+
         if (isEditing && editCourse) {
             router.patch(`/admin/courses/${editCourse.id}`, payload, {
-                onSuccess: () => onClose(),
-                onError: (errors) => console.error('[AltaCursoModal] PATCH errors:', errors),
+                onSuccess: () => { toast.success('Curso actualizado correctamente.'); onClose(); },
+                onError: handleErrors,
                 preserveScroll: true,
             });
         } else {
@@ -275,8 +303,8 @@ export default function AltaCursoModal({ isOpen, onClose, editCourse, metadata }
                 ...payload,
                 selected_users: selectedUsers,
             }, {
-                onSuccess: () => onClose(),
-                onError: (errors) => console.error('[AltaCursoModal] POST errors:', errors),
+                onSuccess: () => { toast.success('Curso creado correctamente.'); onClose(); },
+                onError: handleErrors,
             });
         }
     };

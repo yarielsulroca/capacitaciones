@@ -35,7 +35,7 @@ export default function Login({ status }: Props) {
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-200 to-white">Crecimiento Profesional</span>
                     </h2>
                     <p className="text-white/80 text-lg leading-relaxed max-w-md font-medium">
-                        Accede a tu plataforma de capacitación, gestiona tus cursos y obtén tus certificados con tus credenciales de dominio.
+                        Accede a tu plataforma de capacitación, gestiona tus cursos con tus credenciales de Windows (Directorio Activo).
                     </p>
                 </div>
 

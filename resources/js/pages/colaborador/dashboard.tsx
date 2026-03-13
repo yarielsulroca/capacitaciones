@@ -185,11 +185,12 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                             )}
                         </div>
 
-                        {!activeStatus && (
-                            <Link href="/courses" className="text-sm font-semibold text-[#E30613] hover:underline flex items-center gap-1">
-                                Ver todos <ArrowRight size={14} />
-                            </Link>
-                        )}
+                        <button
+                            onClick={() => handleFilter(null)}
+                            className="text-sm font-semibold text-[#E30613] hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                            Ver todos <ArrowRight size={14} />
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
