@@ -298,6 +298,63 @@ class LdapService
             }
         }
 
+        // 4) Propagate id_area down through jefe hierarchy
+        $areaFixes = 0;
+        for ($pass = 0; $pass < 10; $pass++) {
+            $fixed = \App\Models\User::whereNull('id_area')
+                ->whereNotNull('id_jefe')
+                ->whereHas('jefe', fn ($q) => $q->whereNotNull('id_area'))
+                ->get();
+
+            if ($fixed->isEmpty()) break;
+
+            foreach ($fixed as $u) {
+                $jefeArea = \App\Models\User::where('id', $u->id_jefe)->value('id_area');
+                if ($jefeArea) {
+                    $u->update(['id_area' => $jefeArea]);
+                    $areaFixes++;
+                }
+            }
+        }
+
+        // 5) Propagate id_departamento down through jefe hierarchy for users missing it
+        $deptFixes = 0;
+        for ($pass = 0; $pass < 10; $pass++) {
+            $fixed = \App\Models\User::whereNull('id_departamento')
+                ->whereNotNull('id_jefe')
+                ->whereHas('jefe', fn ($q) => $q->whereNotNull('id_departamento'))
+                ->get();
+
+            if ($fixed->isEmpty()) break;
+
+            foreach ($fixed as $u) {
+                $jefeDept = \App\Models\User::where('id', $u->id_jefe)->value('id_departamento');
+                if ($jefeDept) {
+                    $u->update(['id_departamento' => $jefeDept]);
+                    $deptFixes++;
+                }
+            }
+        }
+
+        // 6) Re-run orphaned dept->area linkage after propagation
+        $orphanedDepts2 = \App\Models\Departamento::whereNull('id_area')->pluck('id');
+        foreach ($orphanedDepts2 as $deptIdToFix) {
+            $mostCommonAreaId = \App\Models\User::where('id_departamento', $deptIdToFix)
+                ->whereNotNull('id_area')
+                ->selectRaw('id_area, COUNT(*) as cnt')
+                ->groupBy('id_area')
+                ->orderByRaw('COUNT(*) DESC')
+                ->value('id_area');
+
+            if ($mostCommonAreaId) {
+                \App\Models\Departamento::where('id', $deptIdToFix)->update(['id_area' => $mostCommonAreaId]);
+            }
+        }
+
+        if ($areaFixes > 0 || $deptFixes > 0) {
+            \Illuminate\Support\Facades\Log::info("LDAP Hierarchy Propagation: {$areaFixes} users got id_area, {$deptFixes} users got id_departamento from jefe chain.");
+        }
+
         $cleanedAreas = count($invalidAreaIds);
         $cleanedDepts = $ticketDepts->count();
 

@@ -9,29 +9,32 @@ import { NavUser } from '@/components/nav-user';
 const { Sider } = Layout;
 
 export function AppSidebar() {
-    const { auth, sidebarOpen } = usePage().props as any;
+    const { auth, sidebarOpen, user_views } = usePage().props as any;
     const { isCurrentUrl } = useCurrentUrl();
+    const views: string[] = user_views || [];
 
-    const mainNavItems: NavItem[] = [
+    const allNavItems: (NavItem & { viewKey?: string })[] = [
         {
             title: 'Mis Capacitaciones',
             href: '/dashboard',
             icon: LayoutGrid,
+            viewKey: 'dashboard',
         },
-        {
+        ...(views.includes('courses') ? [{
             title: 'Catálogo de Cursos',
             href: '/courses',
             icon: BookOpen,
-        },
-        {
+            viewKey: 'courses',
+        }] : []),
+        ...(views.some(v => v.startsWith('admin.')) ? [{
             title: 'Administración',
             href: '/admin',
             icon: Folder,
-        }
+        }] : []),
     ];
 
-    const menuItems = mainNavItems.map(item => ({
-        key: item.href,
+    const menuItems = allNavItems.map(item => ({
+        key: item.href as string,
         icon: item.icon ? <item.icon className="h-4 w-4" /> : null,
         label: <Link href={item.href}>{item.title}</Link>,
     }));

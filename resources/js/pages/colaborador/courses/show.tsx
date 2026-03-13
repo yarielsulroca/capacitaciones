@@ -135,12 +135,14 @@ export default function Show({ curso, status }: ShowProps) {
                                         <p className="text-xs text-slate-400 mb-2">Tu estado actual:</p>
                                         <StatusBadge status={status} className="w-full text-center py-2" />
                                     </div>
-                                    <Button
-                                        className="w-full h-14 bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white hover:border-white/40 font-bold uppercase tracking-wider rounded-xl transition-all"
-                                        onClick={() => router.post(`/courses/${curso.id}/cancelado`)}
-                                    >
-                                        Cancelar Inscripción
-                                    </Button>
+                                    {status === 'solicitado' && (
+                                        <Button
+                                            className="w-full h-14 bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white hover:border-white/40 font-bold uppercase tracking-wider rounded-xl transition-all"
+                                            onClick={() => router.post(`/courses/${curso.id}/cancelado`)}
+                                        >
+                                            Cancelar Solicitud
+                                        </Button>
+                                    )}
                                 </div>
                             ) : (
                                 <Button

@@ -322,7 +322,46 @@ class AdminController extends Controller
                 $request->user()
             );
 
+            // Send admin cancellation email when status is changed to cancelado from admin panel
+            if ($validated['estado'] === 'cancelado') {
+                \Illuminate\Support\Facades\Mail::to($user->email)->send(
+                    new \App\Mail\EnrollmentAdminCancelled($user, $curso)
+                );
+            }
+
             return response()->json(['message' => 'Estado actualizado correctamente.']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Reject an enrollment: set status to cancelado + send rejection email
+     */
+    public function rejectEnrollment(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'user_id'  => 'required|exists:users,id',
+            'curso_id' => 'required|exists:cursos,id',
+        ]);
+
+        $user  = User::findOrFail($validated['user_id']);
+        $curso = Curso::findOrFail($validated['curso_id']);
+
+        try {
+            app(\App\Services\EnrollmentService::class)->updateState(
+                $user,
+                $curso,
+                'cancelado',
+                $request->user()
+            );
+
+            // Send specific rejection email
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(
+                new \App\Mail\EnrollmentRejected($user, $curso)
+            );
+
+            return response()->json(['message' => 'Solicitud rechazada y email enviado.']);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
@@ -576,13 +615,13 @@ class AdminController extends Controller
     {
         $user = $request->user();
         $is_admin = $user->role === 'admin';
-        $is_lider = $user->role === 'lider' || \App\Models\User::where('id_jefe', $user->id)->exists();
+        $is_lider = $user->isJefe();
 
         $query = $course->users()->with(['departamento.area']);
 
         if ($is_lider && !$is_admin) {
-            $teamMemberIds = \App\Models\User::where('id_jefe', $user->id)->pluck('id');
-            $query->whereIn('cursos_users.id_user', $teamMemberIds);
+            $subordinateIds = $user->getAllSubordinateIds();
+            $query->whereIn('cursos_users.id_user', $subordinateIds);
         }
 
         $enrollments = $query->get()
@@ -668,6 +707,37 @@ class AdminController extends Controller
         if (!empty($cdcItems)) {
             $this->distributeCdcFractions($course, $cdcItems, false);
         }
+    }
+
+    // ── User View Permissions ──────────────────────────────────────────
+
+    /**
+     * Get the view permissions for a specific user.
+     */
+    public function getUserViews(User $user): JsonResponse
+    {
+        $views = $user->views()->pluck('view_key')->toArray();
+        return response()->json(['views' => $views]);
+    }
+
+    /**
+     * Update the view permissions for a specific user.
+     */
+    public function updateUserViews(Request $request, User $user): JsonResponse
+    {
+        $validated = $request->validate([
+            'views' => 'required|array',
+            'views.*' => 'string',
+        ]);
+
+        // Delete existing views and re-insert
+        $user->views()->delete();
+
+        foreach ($validated['views'] as $viewKey) {
+            $user->views()->create(['view_key' => $viewKey]);
+        }
+
+        return response()->json(['message' => 'Permisos actualizados correctamente.']);
     }
 }
 

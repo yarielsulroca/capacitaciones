@@ -161,7 +161,7 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
             setBudgetItems([]);
             setSelectedBudgetArea(undefined);
             if (label && typeof label === 'number') { // If group ID passed via label
-                 setFormData(prev => ({ ...prev, id_grupo: label.toString() }));
+                 setFormData((prev: any) => ({ ...prev, id_grupo: String(label) }));
             }
         }
         setIsDialogOpen(true);
@@ -203,6 +203,12 @@ export default function Structure({ empresas, areas, departamentos, cdcs, catego
 
     const handleSubmit = () => {
         if (!editingItem) return;
+
+        // Validate required fields for cursos
+        if (editingItem.type === 'cursos') {
+            if (!formData.nombre?.trim()) { toast.error('El nombre del curso es obligatorio'); return; }
+            if (!formData.fin) { toast.error('La fecha de fin es obligatoria'); return; }
+        }
 
         let payload: any = {};
 

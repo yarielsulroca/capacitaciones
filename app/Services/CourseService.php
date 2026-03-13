@@ -22,9 +22,12 @@ class CourseService
     {
         $query = Curso::query()->with(['habilidad', 'categoria', 'programa', 'proveedor', 'cdc']);
 
-        // Visibility filter: non-admins only see published courses
+        // Visibility filter: non-admins only see published, non-finished courses
         if (!$isAdmin) {
             $query->where('publicado', 1);
+            $query->where(function ($q) {
+                $q->whereNull('fin')->orWhere('fin', '>=', now()->startOfDay());
+            });
         }
 
         if ($request->filled('search')) {

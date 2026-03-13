@@ -24,7 +24,6 @@ interface DashboardProps {
         cancelado: number;
         terminado: number;
         incompleto: number;
-        certificado: number;
     };
     featured: (Curso & { status?: EnrollmentStatus })[];
     activeStatus?: string;
@@ -229,7 +228,7 @@ export default function Dashboard({ stats, featured, activeStatus }: DashboardPr
                     footer={null}
                     width={640}
                     centered
-                    destroyOnClose
+                    destroyOnHidden
                     closable={false}
                     styles={{ body: { padding: 0 } }}
                 >

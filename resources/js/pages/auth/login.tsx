@@ -1,7 +1,7 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import { Button, Input } from 'antd';
-import AppLogoIcon from '@/components/app-logo-icon';
+
 import { store } from '@/routes/login';
 import { Lock, Mail } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export default function Login({ status }: Props) {
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="bg-white/10 p-2 rounded-xl backdrop-blur-sm border border-white/20">
-                            <AppLogoIcon className="size-8 fill-current text-white" />
+                            <img src="/logo_tuteur_transparente.png" alt="Tuteur" className="h-8 w-auto object-contain brightness-0 invert" />
                         </div>
                         <span className="text-2xl font-black tracking-tight">Hub de Aprendizaje Tuteur</span>
                     </div>
@@ -51,7 +51,7 @@ export default function Login({ status }: Props) {
                 {/* Mobile logo */}
                 <div className="lg:hidden mb-10 flex flex-col items-center gap-3">
                     <div className="bg-red-50 p-3 rounded-2xl border border-red-100 shadow-sm">
-                        <AppLogoIcon className="size-10 fill-current text-tuteur-red" />
+                        <img src="/logo_tuteur_transparente.png" alt="Tuteur" className="h-10 w-auto object-contain" />
                     </div>
                     <span className="text-xl font-bold text-tuteur-grey tracking-tight text-center">Hub de Aprendizaje Tuteur</span>
                 </div>

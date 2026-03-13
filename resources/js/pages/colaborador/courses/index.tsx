@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { Categoria, Cdc, Curso, Habilidad } from '@/types/capacitaciones';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
+import axios from 'axios';
 import { Search, SlidersHorizontal, Loader2, BookOpen, Award, Layers } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -35,7 +36,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Cursos y Capacitaciones', href: '/courses' },
 ];
 
-export default function Index({ courses, filters, metadata, stats, is_admin, is_lider }: CourseGalleryProps & { metadata: Metadata, is_admin: boolean, is_lider: boolean }) {
+export default function Index({ courses, filters, metadata, stats, is_admin, is_lider, team_enrollments }: CourseGalleryProps & { metadata: Metadata, is_admin: boolean, is_lider: boolean, team_enrollments?: Record<number, number> }) {
     const { auth } = usePage().props as any;
 
     const isAdmin = is_admin;
@@ -106,7 +107,13 @@ export default function Index({ courses, filters, metadata, stats, is_admin, is_
             setLoadingEnrollments(true);
             fetch(`/admin/courses/${selectedCourse.id}/enrollments`)
                 .then(res => res.json())
-                .then(data => setEnrollments(data))
+                .then(data => {
+                    // Deduplicate by user id (keep last occurrence)
+                    const unique = Object.values(
+                        (data as any[]).reduce((acc: any, e: any) => ({ ...acc, [e.id]: e }), {})
+                    );
+                    setEnrollments(unique as any[]);
+                })
                 .finally(() => setLoadingEnrollments(false));
         } else {
             setEnrollments([]);
@@ -196,49 +203,25 @@ export default function Index({ courses, filters, metadata, stats, is_admin, is_
         )},
         { title: 'Acciones', key: 'acciones', align: 'right' as const, render: (_: any, r: any) => (
             r.estado === 'solicitado' ? (
-                <div className="flex gap-1 justify-end">
-                    <Button
-                        size="small"
-                        type="primary"
-                        className="bg-emerald-500 text-white border-none font-semibold uppercase text-[10px] px-3 h-7 rounded-md"
-                        onClick={() => {
-                            router.post('/admin/enrollments/update-status', {
-                                user_id: r.id,
-                                curso_id: selectedCourse?.id,
-                                estado_slug: 'matriculado'
-                            }, {
-                                onSuccess: () => {
-                                    toast.success("Estado actualizado");
-                                    fetch(`/admin/courses/${selectedCourse?.id}/enrollments`)
-                                        .then(res => res.json())
-                                        .then(data => setEnrollments(data));
-                                }
-                            });
-                        }}
-                    >
-                        Aprobar
-                    </Button>
-                    <Button
-                        size="small"
-                        className="text-tuteur-red border-tuteur-red/20 bg-red-50 hover:bg-tuteur-red hover:text-white transition-colors font-semibold uppercase text-[10px] px-3 h-7 rounded-md"
-                        onClick={() => {
-                            router.post('/admin/enrollments/update-status', {
-                                user_id: r.id,
-                                curso_id: selectedCourse?.id,
-                                estado_slug: 'cancelado'
-                            }, {
-                                onSuccess: () => {
-                                    toast.success("Solicitud rechazada");
-                                    fetch(`/admin/courses/${selectedCourse?.id}/enrollments`)
-                                        .then(res => res.json())
-                                        .then(data => setEnrollments(data));
-                                }
-                            });
-                        }}
-                    >
-                        Rechazar
-                    </Button>
-                </div>
+                <Button
+                    size="small"
+                    className="text-tuteur-red border-tuteur-red/20 bg-red-50 hover:bg-tuteur-red hover:text-white transition-colors font-semibold uppercase text-[10px] px-3 h-7 rounded-md"
+                    onClick={() => {
+                        axios.post('/admin/enrollments/reject', {
+                            user_id: r.id,
+                            curso_id: selectedCourse?.id,
+                        }).then(() => {
+                            toast.success("Solicitud rechazada");
+                            fetch(`/admin/courses/${selectedCourse?.id}/enrollments`)
+                                .then(res => res.json())
+                                .then(data => setEnrollments(data));
+                        }).catch(() => {
+                            toast.error("Error al rechazar la solicitud");
+                        });
+                    }}
+                >
+                    Rechazar
+                </Button>
             ) : null
         )}
     ];
@@ -257,9 +240,8 @@ export default function Index({ courses, filters, metadata, stats, is_admin, is_
                     </p>
                 </div>
 
-                {/* Summary Cards Section */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    {/* Total Courses */}
+                {/* Summary Card */}
+                <div className="max-w-xs">
                     <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-100 transition-all hover:shadow-md hover:border-primary/20">
                         <div className="flex items-center gap-4">
                             <div className="rounded-xl bg-red-50 p-3 text-primary">
@@ -272,39 +254,11 @@ export default function Index({ courses, filters, metadata, stats, is_admin, is_
                         </div>
                         <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-primary/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-
-                    {/* Total Skills */}
-                    <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-100 transition-all hover:shadow-md hover:border-amber-200/50">
-                        <div className="flex items-center gap-4">
-                            <div className="rounded-xl bg-amber-50 p-3 text-amber-600">
-                                <Award size={24} />
-                            </div>
-                            <div>
-                                <h3 className="text-2xl font-semibold text-slate-900">{stats?.total_habilidades || 0}</h3>
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Habilidades</p>
-                            </div>
-                        </div>
-                        <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-amber-500/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-
-                    {/* Total Categories */}
-                    <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-100 transition-all hover:shadow-md hover:border-indigo-200/50">
-                        <div className="flex items-center gap-4">
-                            <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
-                                <Layers size={24} />
-                            </div>
-                            <div>
-                                <h3 className="text-2xl font-semibold text-slate-900">{stats?.total_categorias || 0}</h3>
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Categorías</p>
-                            </div>
-                        </div>
-                        <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-indigo-500/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
                 </div>
 
-                {/* Glassmorphism Filter Bar */}
-                <div className="sticky top-4 z-10 backdrop-blur-xl bg-white/70 border border-white/20 shadow-premium-sm rounded-2xl p-4 flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-1">
+                {/* Search Bar */}
+                <div className="sticky top-4 z-10 backdrop-blur-xl bg-white/70 border border-white/20 shadow-premium-sm rounded-2xl p-4">
+                    <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
                         <Input
                             placeholder="Buscar cursos..."
@@ -313,53 +267,6 @@ export default function Index({ courses, filters, metadata, stats, is_admin, is_
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-
-                    {(!isLider || isAdmin) && (
-                        <div className="flex gap-2 items-center overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-                            <Select
-                                className="w-[160px]"
-                                size="large"
-                                value={filters.habilidad_id || undefined}
-                                onChange={(val) => handleFilterChange('habilidad_id', val)}
-                                placeholder="Habilidad"
-                                allowClear
-                            >
-                                {metadata?.habilidades.map(h => (
-                                    <Select.Option key={h.id} value={h.id.toString()}>{h.habilidad}</Select.Option>
-                                ))}
-                            </Select>
-
-                            <Select
-                                className="w-[160px]"
-                                size="large"
-                                value={filters.cdc_id || undefined}
-                                onChange={(val) => handleFilterChange('cdc_id', val)}
-                                placeholder="Centro de Costo"
-                                allowClear
-                            >
-                                {metadata?.cdcs.map(c => (
-                                    <Select.Option key={c.id} value={c.id.toString()}>{c.cdc}</Select.Option>
-                                ))}
-                            </Select>
-
-                            <Select
-                                className="w-[160px]"
-                                size="large"
-                                value={filters.categoria_id || undefined}
-                                onChange={(val) => handleFilterChange('categoria_id', val)}
-                                placeholder="Categoría"
-                                allowClear
-                            >
-                                {metadata?.categorias.map(c => (
-                                    <Select.Option key={c.id} value={c.id.toString()}>{c.categoria}</Select.Option>
-                                ))}
-                            </Select>
-
-                            <Button type="text" className="shrink-0 hover:bg-white/50 h-10 w-10 p-0 flex items-center justify-center">
-                                <SlidersHorizontal className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    )}
                 </div>
 
                 {/* Grid */}
@@ -371,6 +278,7 @@ export default function Index({ courses, filters, metadata, stats, is_admin, is_
                                 curso={curso}
                                 isAdmin={isAdmin}
                                 isLider={isLider && !isAdmin}
+                                teamCount={team_enrollments?.[curso.id]}
                                 onEdit={handleEdit}
                                 onManageUsers={(c) => { setSelectedCourse(c); setIsManagingUsers(true); }}
                                 onManageEnrollments={(c) => { setSelectedCourse(c); setIsManagingEnrollments(true); }}

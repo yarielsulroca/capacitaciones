@@ -12,7 +12,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface JefeOption { id: number; name: string; }
-interface UserHierarchy { id: number; name: string; id_departamento?: number; id_jefe?: number; deptNombre: string; }
+interface UserHierarchy { id: number; name: string; id_departamento?: number; id_area?: number; id_jefe?: number; deptNombre: string; }
 
 interface Props {
     cursos: Curso[];
@@ -76,11 +76,23 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
         return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
     }, [cursos]);
 
-    // Derived standard dropdowns
+    // Derived standard dropdowns — exclude empty departments (0 users)
+    const activeDepts = useMemo(() => {
+        return departamentos.filter(d => {
+            const count = (d as any).users_count;
+            // If users_count is not provided, include all departments
+            return count === undefined || count === null || count > 0;
+        });
+    }, [departamentos]);
+
+    const activeAreas = useMemo(() => {
+        return areas;
+    }, [areas]);
+
     const filteredDepts = useMemo(() => {
-        if (!filterArea) return departamentos;
-        return departamentos.filter(d => d.id_area === filterArea);
-    }, [filterArea, departamentos]);
+        if (!filterArea) return activeDepts;
+        return activeDepts.filter(d => d.id_area === filterArea);
+    }, [filterArea, activeDepts]);
 
     const years = useMemo(() => {
         const y = new Set<string>();
@@ -157,7 +169,8 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
 
         filteredCursos.forEach(c => {
             const horas = Number(c.cant_horas || 0);
-            const enrolledUsers = c.users || [];
+            // Filter out 'incompleto' (interrumpido) users — they don't count hours
+            const enrolledUsers = (c.users || []).filter((u: any) => u.pivot?.curso_estado !== 6);
 
             enrolledUsers.forEach(u => {
                 const dId = u.departamento?.id ?? u.id_departamento;
@@ -196,9 +209,10 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
         const map: Record<string, { nombre: string; cursos: number; personaHoras: number; inscripciones: number }> = {};
 
         filteredCursos.forEach(c => {
-            const hab = (typeof c.habilidad === 'string' ? c.habilidad : null) || 'Sin habilidad';
+            const hab = (c.habilidad as any)?.habilidad || 'Sin habilidad';
             const horas = Number(c.cant_horas || 0);
-            const enrolledCount = (c.users || []).length;
+            // Filter out 'incompleto' (interrumpido) — hours don't count
+            const enrolledCount = (c.users || []).filter((u: any) => u.pivot?.curso_estado !== 6).length;
 
             if (!map[hab]) map[hab] = { nombre: hab, cursos: 0, personaHoras: 0, inscripciones: 0 };
             map[hab].cursos++;
@@ -307,6 +321,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
             const horas = Number(c.cant_horas || 0);
 
             (c.users || []).forEach(u => {
+                if ((u as any).pivot?.curso_estado === 6) return; // Skip incompleto (interrumpido) — hours don't count
                 if ((u.departamento?.id ?? u.id_departamento) !== filterDept) return;
                 if (!map[u.id]) map[u.id] = { user: u, horasTotales: 0, horasPorHabilidad: 0, cursosCount: 0 };
                 map[u.id].horasTotales += horas;
@@ -562,20 +577,42 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
         },
     ];
 
+    // ─── Logo loader ─────────────────────────────────────────
+    const loadLogo = useCallback((): Promise<string> => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                canvas.getContext('2d')!.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => resolve('');
+            img.src = '/logo_tuteur_transparente.png';
+        });
+    }, []);
+
     // ─── PDF Export ─────────────────────────────────────────
-    const exportMetricsToPDF = useCallback(() => {
+    const exportMetricsToPDF = useCallback(async () => {
         const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
         const pageW = doc.internal.pageSize.getWidth();
+        const logoData = await loadLogo();
         let y = 12;
 
         // ── Header ──
         doc.setFillColor(185, 28, 28);  // Tuteur red
         doc.rect(0, 0, pageW, 28, 'F');
+        const textX = logoData ? 36 : 14;
+        if (logoData) {
+            doc.addImage(logoData, 'PNG', 10, 4, 22, 20);
+        }
         doc.setFontSize(22);
         doc.setTextColor(255, 255, 255);
-        doc.text('TUTEUR', 14, 14);
+        doc.text('TUTEUR', textX, 14);
         doc.setFontSize(10);
-        doc.text('Informe de Métricas de Capacitación', 14, 21);
+        doc.text('Informe de Métricas de Capacitación', textX, 21);
         doc.setFontSize(8);
         doc.text(`Generado: ${new Date().toLocaleString()}`, pageW - 14, 14, { align: 'right' });
         doc.text(`Filtros activos: ${[filterArea ? `Área #${filterArea}` : null, filterDept ? `Depto #${filterDept}` : null, filterMonth, filterYear].filter(Boolean).join(', ') || 'Ninguno'}`, pageW - 14, 20, { align: 'right' });
@@ -777,7 +814,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
         }
 
         doc.save(`informe_metricas_tuteur_${new Date().toISOString().slice(0, 10)}.pdf`);
-    }, [stats, users, pctGastado, presupuestoDisponible, deptBudgets, totalAccumulatedGastado, deptHours, totalHorasPersona, habilidadStats, totalHabCursos, monthlyMatrix, filterArea, filterDept, filterMonth, filterYear]);
+    }, [stats, users, pctGastado, presupuestoDisponible, deptBudgets, totalAccumulatedGastado, deptHours, totalHorasPersona, habilidadStats, totalHabCursos, monthlyMatrix, filterArea, filterDept, filterMonth, filterYear, loadLogo]);
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Administración', href: '/admin' }, { title: 'Métricas', href: '/admin/metrics' }]}>
@@ -899,7 +936,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                 className="w-48 [&_.ant-select-selector]:rounded-lg [&_.ant-select-selector]:border-slate-200 [&_.ant-select-selection-item]:text-xs [&_.ant-select-selection-item]:font-bold"
                                 value={filterArea}
                                 onChange={v => { setFilterArea(v); setFilterDept(null); }}
-                                options={areas.map(a => ({ value: a.id, label: a.nombre }))}
+                                options={activeAreas.map(a => ({ value: a.id, label: a.nombre }))}
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
@@ -979,7 +1016,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
 
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-0 border-b border-slate-100">
                             <div className="p-5 text-center border-r border-slate-100">
-                                <div className="text-[9px] font-semibold uppercase text-slate-400 mb-1">Cursos Matriculados</div>
+                                <div className="text-[9px] font-semibold uppercase text-slate-400 mb-1">Cursos Inscriptos</div>
                                 <div className="text-xl font-semibold text-indigo-600">{userAnalysis.totalCursos}</div>
                             </div>
                             <div className="p-5 text-center border-r border-slate-100">
@@ -1724,7 +1761,7 @@ export default function Metrics({ cursos, presupuestoGrupos, areas, departamento
                                             )
                                         },
                                         {
-                                            title: 'Cursos Matriculados', dataIndex: 'cursosCount', key: 'cc', align: 'center',
+                                            title: 'Cursos Inscriptos', dataIndex: 'cursosCount', key: 'cc', align: 'center',
                                             sorter: (a: any, b: any) => a.cursosCount - b.cursosCount,
                                             render: (v: number) => <span className="text-xs font-bold text-indigo-600">{v}</span>
                                         },
