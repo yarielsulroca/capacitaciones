@@ -83,7 +83,7 @@
 <section id="tech">
     <h2>1. Tech Stack</h2>
     <div class="tech-grid">
-        <div class="tech-card"><strong>Laravel 11</strong><span>Backend PHP 8.2+</span></div>
+        <div class="tech-card"><strong>Laravel</strong><span>Backend PHP 8.2+</span></div>
         <div class="tech-card"><strong>React 19</strong><span>Frontend + TypeScript</span></div>
         <div class="tech-card"><strong>Inertia.js</strong><span>SPA Bridge</span></div>
         <div class="tech-card"><strong>Vite</strong><span>Build Tool</span></div>
@@ -334,16 +334,17 @@
     graph TD
         HAHN["HAHN JONATHAN<br/>jhahn@tuteurgroup.com<br/><em>590+ subordinados</em>"]
         HAHN --> GALL["GALLUZZO FEDERICO"]
-        HAHN --> DUAR["DUARTE VIAGGIO J.M."]
-        HAHN --> NIETO["NIETO LUCIANO<br/>lnieto@tuteurgroup.com"]
+        HAHN --> DUAR["DUARTE VIAGGIO J.M.<br/>jmduarte@tuteurgroup.com"]
+        DUAR --> NIETO["NIETO LUCIANO<br/>lnieto@tuteurgroup.com"]
         NIETO --> RUIZ["RUIZ OVEJERO J.I."]
         NIETO --> VILL["VILLEGAS CARRERA A.L."]
         NIETO --> WEISS["WEISS CAROLINA"]
         NIETO --> YARI["Yariel Sulroca"]
         GALL --> SUB1["...subordinados"]
-        DUAR --> SUB2["...subordinados"]
+        DUAR --> SUB2["...otros subordinados"]
         style HAHN fill:#C8102E,color:#fff
         style NIETO fill:#C8102E,color:#fff
+        style DUAR fill:#1e3a5f,color:#fff
     </div>
 
     <h3>Implementación</h3>
@@ -371,6 +372,55 @@
     <div class="alert alert-warn">
         <strong>Multi-CDC:</strong> Un curso puede ser financiado por múltiples CDCs, cada uno con su monto en la tabla pivot <code>cdc_curso</code>.
     </div>
+
+    <h3>Centros de Costo (CDC) — Detalle</h3>
+
+    <h4>Tabla <code>cdcs</code></h4>
+    <table>
+        <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+        <tr><td><code>id</code></td><td>PK</td><td>Identificador</td></tr>
+        <tr><td><code>cdc</code></td><td>string</td><td>Nombre/código del centro de costo (ej: "MKT-001")</td></tr>
+        <tr><td><code>inversion</code></td><td>decimal</td><td>Monto de inversión</td></tr>
+        <tr><td><code>descripcion</code></td><td>string</td><td>Descripción opcional</td></tr>
+        <tr><td><code>id_departamento</code></td><td>FK → Departamento</td><td>Departamento al que pertenece</td></tr>
+    </table>
+
+    <h4>Tabla pivot <code>cdc_curso</code></h4>
+    <table>
+        <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+        <tr><td><code>curso_id</code></td><td>FK → Curso</td><td>Curso financiado</td></tr>
+        <tr><td><code>cdc_id</code></td><td>FK → CDC</td><td>Centro de costo que financia</td></tr>
+        <tr><td><code>monto</code></td><td>decimal</td><td>Monto asignado desde este CDC</td></tr>
+    </table>
+
+    <h4>Cadena de datos requerida</h4>
+    <div class="mermaid">
+    graph LR
+        E2["Empresa"] --> A2["Área"]
+        A2 --> D2["Departamento"]
+        D2 --> CDC2["CDC"]
+        D2 --> P2["Presupuesto"]
+        style CDC2 fill:#C8102E,color:#fff
+        style P2 fill:#2563eb,color:#fff
+    </div>
+
+    <h4>Selección en cascada (AltaCursoModal)</h4>
+    <p>Al crear un curso, el admin asigna CDCs mediante un flujo de 3 pasos:</p>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-text"><strong>Seleccionar Área</strong> — dropdown con todas las áreas. Muestra el saldo disponible del presupuesto por área.</div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-text"><strong>Seleccionar Departamento</strong> — filtrado por el área elegida. Muestra saldo del presupuesto del departamento.</div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-text"><strong>Seleccionar CDC</strong> — filtrado por departamento (<code>cdcs.id_departamento</code>). Si hay un solo CDC, se auto-selecciona.</div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-text"><strong>Definir monto</strong> — el admin indica cuánto se descuenta de ese CDC. Puede agregar múltiples CDCs.</div></div>
+
+    <div class="alert alert-warn">
+        <strong>⚠️ Prerequisito:</strong> La tabla <code>cdcs</code> debe estar poblada con al menos un registro por departamento para que la asignación funcione. Los CDCs se crean desde <strong>Administración → Estructura → tab CDCs</strong>. Sin CDCs cargados, el dropdown del paso 3 quedará vacío y no se podrá asignar financiamiento al curso.
+    </div>
+
+    <h4>Deducción y restauración de presupuesto</h4>
+    <table>
+        <tr><th>Acción</th><th>Método</th><th>Efecto</th></tr>
+        <tr><td>Matricular usuario</td><td><code>Presupuesto::deduct($monto)</code></td><td>Resta del campo <code>actual</code> del presupuesto del departamento del CDC</td></tr>
+        <tr><td>Cancelar inscripción</td><td><code>Presupuesto::restore($monto)</code></td><td>Devuelve al campo <code>actual</code></td></tr>
+    </table>
 </section>
 
 <!-- 9. EMAILS -->

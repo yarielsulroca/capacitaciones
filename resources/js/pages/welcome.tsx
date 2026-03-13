@@ -13,7 +13,7 @@ export default function Welcome() {
             {/* Navigation */}
             <nav className="fixed top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md">
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-                    <AppLogo />
+                    <AppLogo variant="dark" />
                     <div className="flex items-center gap-4">
                         {auth.user ? (
                             <Link
@@ -50,7 +50,7 @@ export default function Welcome() {
                             </h1>
                             <p className="mt-6 text-lg leading-relaxed text-tuteur-grey-mid max-w-2xl mx-auto lg:mx-0">
                                 Accede a una plataforma de capacitación diseñada exclusivamente para el equipo de Tuteur.
-                                Gestiona tus cursos, obtén certificados y sincroniza tu perfil con tus credenciales de dominio.
+                                Gestiona tus cursos.
                             </p>
                             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
                                 <Link

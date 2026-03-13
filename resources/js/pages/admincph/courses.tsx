@@ -452,10 +452,8 @@ export default function CourseIndex({ cursos, enrollments, presupuestos, enrollm
                                             matriculado: 'green', solicitado: 'gold', cancelado: 'red', terminado: 'cyan', incompleto: 'orange'
                                         };
                                         const options = [
-                                            { value: 'solicitado', label: 'Solicitado' },
                                             { value: 'matriculado', label: 'Inscripto' },
                                             { value: 'cancelado', label: 'Cancelado' },
-                                            { value: 'terminado', label: 'Terminado' },
                                             { value: 'incompleto', label: 'Interrumpido' },
                                         ];
                                         return (
